@@ -488,7 +488,6 @@ app.get('/random',
   function (req, res) {
 
     sqldb.get("SELECT * FROM tils WHERE user_id = ? ORDER BY RANDOM() LIMIT 1", req.user.id, (err, row) => {
-      console.log(row)
       if (row) {
         res.redirect('/view/' + row.id);
       } else {
