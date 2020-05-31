@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <% include ./partials/head %>
+    <title>TodayIngoLearned</title>
+</head>
+
+<body>
+<% include ./partials/navigation %>
+
+
+<main role="main" class="container">
+    <div class="container">
+
+        <h2>Study Mode</h2><br/>
+
+        <p>
+            This is <strong>repetition no. <%=til.repetitions %></strong>. You last looked at this in study mode on <em><%=til.last_repetition.toDateString() %></em>.
+        </p>
+
+        <hr>
+            <a href="/study/<%= til.til_id %>/easy"><button class="btn btn-success">Easy</button></a>
+            <a href="/study/<%= til.til_id %>/ok"><button class="btn btn-warning">OK</button></a>
+            <a href="/study/<%= til.til_id %>/hard"><button class="btn btn-danger">Hard</button></a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="/study/<%= til.til_id %>/mute"><button class="btn btn-dark">Mute</button></a>
+        <hr>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><%= til.title %></h5>
+                <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
+                <% for (let tag in til.tags) { %>
+                    <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
+                <% } %>
+
+                <hr>
+                <p class="card-text md description"><%=til.description %></p>
+                <hr>
+
+                <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-secondary">Add Comment</a>
+                <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+            </div>
+        </div><br>
+
+        
+        <% for (var i = 0; i < comments.length; i++) { %>
+            <div class="card">
+                <div class="card-body">
+                    <span class="md description"><%=comments[i].comment %></span>
+                    <hr>
+                    <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-dark">Edit</button></a>
+                </div>
+            </div><br>
+        <% } %>
+
+    </div>
+</main>
+
+<% include ./partials/footer_text %>
+
+<% include ./partials/footer %>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <% include ./partials/head %>
+    <title>TodayIngoLearned</title>
+</head>
+
+<body>
+<% include ./partials/navigation %>
+
+<main role="main" class="container">
+    <div class="container">
+        <form method="POST" target="/add">
+            <div class="form-group row">
+              <label for="title" class="col-2 col-form-label">Title</label> 
+              <div class="col-10">
+                <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control">
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="date" class="col-2 col-form-label">Day</label> 
+              <div class="col-10">
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fa fa-calendar-check-o"></i>
+                    </div>
+                  </div> 
+                  <input id="date" name="date" type="date" class="form-control" value="<%=today %>">
+                </div>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="description" class="col-2 col-form-label">Description</label> 
+              <div class="col-10">
+                <textarea id="description" name="description" cols="40" rows="5" aria-describedby="descriptionHelpBlock" class="form-control"></textarea> 
+                <span id="descriptionHelpBlock" class="form-text text-muted">You can simply use hashtags in here that will then be converted to "Tags".</span>
+              </div>
+            </div> 
+            <div class="form-group row">
+              <div class="offset-2 col-10">
+                <button name="submit" type="submit" class="btn btn-primary">Add</button>
+              </div>
+            </div>
+          </form>          
+    </div>
+</main>
+
+
+<% include ./partials/footer_text %>
+
+<% include ./partials/footer %>
+</body>
+
+</html>

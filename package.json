@@ -1,0 +1,38 @@
+{
+  "name": "todayingolearned",
+  "version": "1.0.0",
+  "description": "A simple PWA that serves as a personal knowledge/learning database.",
+  "keywords": [
+    "learning",
+    "knowledge"
+  ],
+  "author": "Ingo Kleiber",
+  "license": "MIT",
+  "homepage": "https://kleiber.me",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/IngoKl/TodayIngoLearned.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IngoKl/TodayIngoLearned/issues"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "bootstrap": "^4.4.1",
+    "connect-ensure-login": "^0.1.1",
+    "ejs": "^2.6.2",
+    "express": "^4.17.1",
+    "express-session": "^1.16.1",
+    "generate-password": "^1.5.1",
+    "jquery": "^3.4.1",
+    "js-autocomplete": "^1.0.4",
+    "moment": "^2.24.0",
+    "morgan": "^1.9.1",
+    "parse-hashtags": "^1.0.0",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "popper.js": "^1.16.1",
+    "showdown": "^1.9.1",
+    "sqlite3": "^4.1.1"
+  }
+}

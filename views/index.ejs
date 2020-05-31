@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <% include ./partials/head %>
+    <title>TodayIngoLearned</title>
+</head>
+
+<body>
+<% include ./partials/navigation %>
+
+
+<main role="main" class="container">
+    <div class="container">
+
+        <form class="form-inline" method="POST" action="/">
+            <div class="form-group mr-2">
+                <label class="sr-only" for="searchtype">Search Type</label>
+                <select class="custom-select form-control" id="searchtype" name="searchtype">
+                    <option value="title">Title</option>
+                    <option value="tag">Tag</option>
+                    <option value="date">Date</option>
+                  </select>
+            </div>
+            <div class="form-group mr-2">
+                <label class="sr-only" for="search">Tag</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="Search">
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="/add"><button style="margin: 5px;" type="button" class="btn btn-dark">+</button></a>
+        </form>
+
+        <hr>
+
+        <p style="font-size: 1.5em;">Hey <strong><%= user.username %></strong>, here are your last TILs:</p>
+        <% for (let i in tils_keys) { %>
+        <% let til = tils_objects[tils_keys[i]]; %>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><%= til.title %></h5>
+                <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
+                <% for (let tag in til.tags) { %>
+                    <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
+                <% } %>
+                <hr>
+                <p class="card-text md description"><%=til.description %></p>
+                <hr>
+                <a href="/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
+                <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
+                <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+            </div>
+        </div><br>
+         <% } %>
+
+    </div>
+
+    <a class="d-flex justify-content-center" href="/add"><button style="margin: 20px;" type="button" class="btn btn-dark circle pop">+</button></a>
+</main>
+
+
+<% include ./partials/footer_text %>
+
+<% include ./partials/footer %>
+</body>
+
+</html>
