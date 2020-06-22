@@ -210,6 +210,8 @@ app.get('/view/:til_id',
       tils = tils_object([row]);
 
       til = tils[0][tils[1][0]];
+
+      // Find all urls in the description
       til_urls = til.description.match(/\bhttps?:\/\/\S+/gi);
 
       sqldb.get("SELECT * FROM bookmarks WHERE til_id = ? AND user_id = ?", [req.params.til_id, req.user.id], (err, row) => {
