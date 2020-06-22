@@ -40,6 +40,9 @@ if (command == 'createdb') {
 else if (command == 'populatedb') {
     db.createdb.populateDb();
 }
+else if (command == 'backupdb') {
+    backupDb('copy');
+}
 else if (command == 'adduser') {
     helpers.addUser(process.argv.slice(2)[1], process.argv.slice(2)[2])
 }
@@ -50,5 +53,5 @@ else if (command == 'refreshtags') {
     refreshTags();
 }
 else {
-    console.log('install.js createdb|populatedb|adduser|setuserpassword|refreshtags');
+    console.log('install.js createdb|populatedb|backupdb|adduser|setuserpassword|refreshtags');
 }
