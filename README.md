@@ -39,6 +39,8 @@ node install.js populatedb
 node server.js
 ```
 
+Also consider the settings in `config.json`. If the option `lowercasetags` is `true`, all tags will be converted to lowercase. Also make sure to change the `expresssessionsecret`.
+
 If you plan on running this 'in production' 😅, I would recommend using [pm2](https://pm2.keymetrics.io) to run the server.
 
 ```bash

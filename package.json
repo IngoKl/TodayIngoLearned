@@ -1,6 +1,6 @@
 {
   "name": "todayingolearned",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple PWA that serves as a personal knowledge/learning database.",
   "keywords": [
     "learning",
