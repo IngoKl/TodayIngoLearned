@@ -38,6 +38,9 @@ var app = express();
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+// Trust the proxy
+app.set('trust proxy', 1)
+
 // Make all necessary node_module files available
 app.use('/static/js', express.static(__dirname + '/node_modules/bootstrap/dist/js'));
 app.use('/static/css', express.static(__dirname + '/node_modules/bootstrap/dist/css'));
@@ -54,7 +57,13 @@ app.use('/', express.static('public'));
 // Middleware
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('express-session')({ secret: config.expresssessionsecret, resave: false, saveUninitialized: false }));
+app.use(require('express-session')({ 
+  secret: config.expresssessionsecret, 
+  resave: false, 
+  saveUninitialized: false,
+  // set secure to true if possible (i.e., when using HTTPS)
+  cookie: {secure: config.securecoockies, maxAge: 7776000000}
+}));
 
 // Initialize Passport and restore authentication state from the session.
 app.use(passport.initialize());
