@@ -6,12 +6,15 @@ var LocalStrategy = require('passport-local').Strategy;
 var db = require('./db');
 var helpers = require('./helpers');
 
+var config = require('./config.json');
+
 const sqlite3 = require('sqlite3').verbose();
-var sqldb = new sqlite3.Database('./db/til.db');
+var sqldb = new sqlite3.Database(config.dbpath);
 
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {
   sqldb.get("SELECT username, id FROM users WHERE username = ? AND password = ?", username, helpers.hashPassword(password), function (err, row) {
+    console.log(row)
     if (!row) return cb(null, false);
     return cb(null, row);
   });
@@ -51,7 +54,7 @@ app.use('/', express.static('public'));
 // Middleware
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
+app.use(require('express-session')({ secret: config.expresssessionsecret, resave: false, saveUninitialized: false }));
 
 // Initialize Passport and restore authentication state from the session.
 app.use(passport.initialize());
@@ -80,42 +83,6 @@ function tils_object(tils) {
   return [tils_combined, tils_keys];
 }
 
-// Return the id of the given tag. If the tag doesn't exist, it gets created.
-function get_add_tag(tag, callback) {
-
-  sqldb.get("SELECT * FROM tags where tag = ?", [tag], (err, row) => {
-    if (row == null) {
-      sqldb.run("INSERT INTO tags(tag) VALUES (?)", [tag], function (err) {
-        if (err) {
-          return console.log(err.message);
-        }
-
-        return callback(this.lastID)
-      });
-    } else {
-      return callback(row.id);
-    }
-  });
-
-}
-
-// Add/Update the tags for a TIL
-function update_tags(til_id, tags) {
-  // Delete all associations
-  sqldb.run("DELETE FROM tags_join WHERE til_id = ?", til_id);
-
-  // Create new associations
-  tags.forEach(function (tag) {
-    get_add_tag(tag, function (tag_id) {
-      sqldb.run("INSERT INTO tags_join(til_id, tag_id) VALUES (?,?)", [til_id, tag_id], function (err) {
-        if (err) {
-          return console.log(err.message);
-        }
-      });
-    });
-  });
-
-}
 
 // Get the start/end timestamp of a given day
 function get_day_range(timestamp) {
@@ -358,7 +325,7 @@ app.post('/add',
     }
 
     sqldb.run("INSERT INTO tils(user_id, title, description, date) VALUES (?,?,?,?)", [req.user.id, title, description, date], function (err) {
-      update_tags(this.lastID, tags);
+      helpers.update_tags(this.lastID, tags);
 
       res.redirect(`/view/${this.lastID}`);
     });
@@ -391,7 +358,7 @@ app.post('/edit/:til_id',
     }
 
     sqldb.run("UPDATE tils SET title = ?, date = ?, description = ? WHERE id = ? AND user_id = ?", [title, date, description, req.params.til_id, req.user.id], function (err) {
-      update_tags(req.params.til_id, tags);
+      helpers.update_tags(req.params.til_id, tags);
 
       res.redirect(`/view/${req.params.til_id}`);
     });
@@ -545,6 +512,7 @@ app.get('/json/tags',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     var sql = "SELECT * FROM tags";
+
     sqldb.all(sql, (err, rows) => {
       if (err) {
         res.status(400).json({ "error": err.message });
@@ -553,8 +521,18 @@ app.get('/json/tags',
 
       var tags = []
       rows.forEach(function (tag) {
-        tags.push(tag.tag)
+
+        if (config.lowercasetags) {
+          tags.push(tag.tag.toLowerCase());
+        } else {
+          tags.push(tag.tag)
+        }
+
       });
+
+      console.log(tags);
+      tags = [...new Set(tags)]
+      console.log(tags);
 
       res.json({
         tags
