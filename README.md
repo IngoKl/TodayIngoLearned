@@ -48,7 +48,7 @@ npm install pm2 -g
 pm2 start server.js
 ```
 
-The `install.js` script also will allow you to create new users (`node install.js newuser username password`) and to change a user's password (`node install.js setuserpassword username new_password`).
+The `install.js` script also will allow you to create new users (`node install.js newuser username password`) and to change a user's password (`node install.js setuserpassword username new_password`). Use `node install.js refreshtags` to refresh/rebuild all tags.
 
 ### Docker
 

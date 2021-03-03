@@ -1,6 +1,6 @@
 {
   "name": "todayingolearned",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple PWA that serves as a personal knowledge/learning database.",
   "keywords": [
     "learning",
@@ -24,7 +24,7 @@
     "express": "^4.17.1",
     "express-session": "^1.16.1",
     "generate-password": "^1.5.1",
-    "jquery": "3.4.1",
+    "jquery": "^3.6.0",
     "js-autocomplete": "^1.0.4",
     "moment": "^2.24.0",
     "morgan": "^1.9.1",
