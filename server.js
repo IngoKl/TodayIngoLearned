@@ -14,7 +14,6 @@ var sqldb = new sqlite3.Database(config.dbpath);
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {
   sqldb.get("SELECT username, id FROM users WHERE username = ? AND password = ?", username, helpers.hashPassword(password), function (err, row) {
-    console.log(row)
     if (!row) return cb(null, false);
     return cb(null, row);
   });
@@ -221,7 +220,7 @@ app.get('/view/:til_id',
       til = tils[0][tils[1][0]];
 
       // Find all urls in the description
-      til_urls = til.description.match(/\bhttps?:\/\/\S+/gi);
+      til_urls = til.description.match(/\bhttps?:\/\/(\S(?<!\)))+/gi);
 
       sqldb.get("SELECT * FROM bookmarks WHERE til_id = ? AND user_id = ?", [req.params.til_id, req.user.id], (err, row) => {
         if (row) {
@@ -541,9 +540,7 @@ app.get('/json/tags',
 
       });
 
-      console.log(tags);
       tags = [...new Set(tags)]
-      console.log(tags);
 
       res.json({
         tags
