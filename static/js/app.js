@@ -9,19 +9,25 @@ if ('serviceWorker' in navigator) {
 }
 
 
-// Markdown Support
+// Markdown Support & Tag Highlighting
 var converter = new showdown.Converter(),
-md_elements = document.getElementsByClassName('md');
-for (let mde of md_elements) {
+mdElements = document.getElementsByClassName('md');
+for (let mde of mdElements) {
     mde.innerHTML = converter.makeHtml(mde.textContent);
+
+    var tagRegEx = /\B(\#([a-zA-Z]+\b)(?!;))/ig;
+    mde.innerHTML = mde.innerHTML.replace(tagRegEx, '<a class="tag" href="/tag/$2">$1</a>');
 };
 
 
 // Markdown Editor
-document.getElementById("md-bold").addEventListener("click", mdBold);
-document.getElementById("md-italics").addEventListener("click", mdItalics);
-document.getElementById("md-link").addEventListener("click", mdLink);
-document.getElementById("md-tag").addEventListener("click", mdTag);
+editTil = document.getElementById("md-bold");
+if (editTil != null) {
+  document.getElementById("md-bold").addEventListener("click", mdBold);
+  document.getElementById("md-italics").addEventListener("click", mdItalics);
+  document.getElementById("md-link").addEventListener("click", mdLink);
+  document.getElementById("md-tag").addEventListener("click", mdTag);
+}
 
 function mdBold() {
   addMd('**');
@@ -65,7 +71,7 @@ function addMd(md_to_add, prefix_only, add_only) {
 // Search
 var searchtype = document.getElementsByName('searchtype')[0];
 var search = document.getElementsByName('search')[0];
-if (searchtype) {
+if (searchtype != null) {
   searchtype.addEventListener('change', function() {
       if (searchtype.value == 'date') {
         search.type = 'date';

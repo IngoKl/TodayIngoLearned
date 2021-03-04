@@ -43,3 +43,19 @@ main > .container {
     margin: 5px;
     font-size: 1.2em;
 }
+
+.tag {
+    border-radius: .25rem;
+    background-color: #343a40 !important;
+    color: rgb(255, 255, 255);
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.tag:hover {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+    background-color: #646f7a !important;
+}
