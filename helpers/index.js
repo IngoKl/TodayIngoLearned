@@ -15,7 +15,7 @@ exports.hashPassword = function(password) {
 
 
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
-exports.get_add_tag = function(tag, callback) {
+exports.getAddTag = function(tag, callback) {
     let sqldb = new sqlite3.Database(config.dbpath)
 
     if (config.lowercasetags) {
@@ -40,7 +40,7 @@ exports.get_add_tag = function(tag, callback) {
 
 
 // Add/Update the tags for a TIL
-exports.update_tags = function(til_id, tags) {
+exports.updateTags = function(til_id, tags) {
     let sqldb = new sqlite3.Database(config.dbpath)
 
     // Delete all associations
@@ -53,7 +53,7 @@ exports.update_tags = function(til_id, tags) {
         tag = tag.toLowerCase();
       }
   
-      module.exports.get_add_tag(tag, function (tag_id) {
+      module.exports.getAddTag(tag, function (tag_id) {
         sqldb.run("INSERT INTO tags_join(til_id, tag_id) VALUES (?,?)", [til_id, tag_id], function (err) {
           if (err) {
             return console.log(err.message);
@@ -73,6 +73,7 @@ exports.changeUserPassword = function(username, new_password) {
     sqldb.close()
 }
 
+
 // Creating a new user
 exports.addUser = function(username, password) {
     let sqldb = new sqlite3.Database(config.dbpath)
@@ -83,6 +84,7 @@ exports.addUser = function(username, password) {
     sqldb.close()
 }
 
+
 // Refreshing all tags
 exports.refreshTags = function() {
     let sqldb = new sqlite3.Database(config.dbpath)
@@ -91,7 +93,7 @@ exports.refreshTags = function() {
         rows.forEach(function(row){
             tags = parseHashtags(row.description);
             if (tags) {
-                module.exports.update_tags(row.id, tags);
+                module.exports.updateTags(row.id, tags);
             }
         });
     });

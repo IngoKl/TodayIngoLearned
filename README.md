@@ -24,6 +24,12 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Viewing random TILs
 * Basic spaced repetition system for studying TILs
 
+## Usage
+
+### Internal Linking
+
+You can link to other TILs using the `[[Title]]` syntax.
+
 ## Installation
 
 ### Traditional Way

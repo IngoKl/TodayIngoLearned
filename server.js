@@ -335,7 +335,7 @@ app.post('/add',
     }
 
     sqldb.run("INSERT INTO tils(user_id, title, description, date) VALUES (?,?,?,?)", [req.user.id, title, description, date], function (err) {
-      helpers.update_tags(this.lastID, tags);
+      helpers.updateTags(this.lastID, tags);
 
       res.redirect(`/view/${this.lastID}`);
     });
@@ -368,7 +368,7 @@ app.post('/edit/:til_id',
     }
 
     sqldb.run("UPDATE tils SET title = ?, date = ?, description = ? WHERE id = ? AND user_id = ?", [title, date, description, req.params.til_id, req.user.id], function (err) {
-      helpers.update_tags(req.params.til_id, tags);
+      helpers.updateTags(req.params.til_id, tags);
 
       res.redirect(`/view/${req.params.til_id}`);
     });
@@ -549,6 +549,28 @@ app.get('/json/tags',
   });
 
 
+// JSON endpoint for linking between TILs
+app.get('/json/findid/:title',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res, next) {
+    sqldb.all(`SELECT * FROM tils WHERE title == ? AND user_id == ? LIMIT 1`, [req.params.title, req.user.id], (err, rows) => {
+      if (err) {
+        res.status(400).json({ "error": err.message });
+        return;
+      }
+
+      var id = false;
+      rows.forEach(function (row) {
+        id = row.id;
+      });
+
+      res.json({
+        id
+      })
+    });
+  });
+
+
 app.use(function (req, res, next) {
   res.status(404);
 
@@ -559,4 +581,4 @@ app.use(function (req, res, next) {
 });
 
 
-app.listen(3000, '127.0.0.1');
+app.listen(config.port, '127.0.0.1');

@@ -9,14 +9,36 @@ if ('serviceWorker' in navigator) {
 }
 
 
-// Markdown Support & Tag Highlighting
+function AddILink(iLink, mde) {
+    fetch('/json/findid/' + iLink)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+      mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/view/' + data['id'] + '">' + iLink + '</a>');
+    });
+}
+
+
+// Markdown Support, Tag Highlighting, Internal Links
 var converter = new showdown.Converter(),
 mdElements = document.getElementsByClassName('md');
 for (let mde of mdElements) {
+    // Markdown
     mde.innerHTML = converter.makeHtml(mde.textContent);
 
+    // Tags
     var tagRegEx = /\B(\#([a-zA-Z]+\b)(?!;))/ig;
     mde.innerHTML = mde.innerHTML.replace(tagRegEx, '<a class="tag" href="/tag/$2">$1</a>');
+
+    // Internal Links
+    var iLinkRegEx = /\[\[(.*?)\]\]/ig;
+    var iLinks = mde.innerHTML.matchAll(iLinkRegEx);
+
+    Array.from(iLinks).forEach(function(iLink) {
+      AddILink(iLink[1], mde)
+    });
 };
 
 
@@ -26,6 +48,7 @@ if (editTil != null) {
   document.getElementById("md-bold").addEventListener("click", mdBold);
   document.getElementById("md-italics").addEventListener("click", mdItalics);
   document.getElementById("md-link").addEventListener("click", mdLink);
+  document.getElementById("md-ilink").addEventListener("click", mdILink);
   document.getElementById("md-tag").addEventListener("click", mdTag);
 }
 
@@ -39,6 +62,10 @@ function mdItalics() {
 
 function mdLink() {
   addMd('[Title](https://)', add_only=true);
+}
+
+function mdILink() {
+  addMd('[[ ]]', add_only=true);
 }
 
 function mdTag() {
