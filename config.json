@@ -3,5 +3,5 @@
     "lowercasetags": true,
     "expresssessionsecret": "WlMAkFp1x1AkJBoJySNq",
     "securecoockies": false,
-    "port": 9000
+    "port": 3000
 }
