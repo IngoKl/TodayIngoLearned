@@ -316,7 +316,13 @@ app.get('/study/:til_id/:study_result',
 app.get('/add',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    res.render('add', { user: req.user, today: moment().format('YYYY-MM-DD') });
+
+    var title = false;
+    if (req.query.title) {
+      title = req.query.title;
+    }
+
+    res.render('add', { user: req.user, title: title, today: moment().format('YYYY-MM-DD') });
   });
 
 

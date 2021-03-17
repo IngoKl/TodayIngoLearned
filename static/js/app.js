@@ -16,7 +16,12 @@ function AddILink(iLink, mde) {
     })
     .then((data) => {
       console.log(data);
-      mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/view/' + data['id'] + '">' + iLink + '</a>');
+      if (data.id) {
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/view/' + data['id'] + '">' + iLink + '</a>');
+      } else {
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/add?title=' + iLink + '">' + iLink + '</a>');
+      }
+      
     });
 }
 

@@ -17,7 +17,11 @@
             <div class="form-group row">
               <label for="title" class="col-2 col-form-label">Title</label> 
               <div class="col-10">
+              <% if(title){ %>
+                <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control" value="<%= title %>">
+              <% } else{ %>  
                 <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control">
+              <% } %>  
               </div>
             </div>
             <div class="form-group row">
