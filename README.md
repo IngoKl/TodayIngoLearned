@@ -30,6 +30,10 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 
 You can link to other TILs using the `[[Title]]` syntax.
 
+### ToDo
+
+I use a `#todo` tag to label TILs that require further works. For example, sometimes I don't have the time to immediately write a TIL. Hence, the navigation has a shortcut to `/tag/todo`.
+
 ## Installation
 
 ### Traditional Way
