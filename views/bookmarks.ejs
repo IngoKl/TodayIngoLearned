@@ -12,26 +12,32 @@
 <main role="main" class="container">
     <div class="container">
 
-    <h2>Bookmarks</h2><br><br>
+    <h2>Bookmarks</h2><br>
 
-    <% for (let i in tils_keys) { %>
-        <% let til = tils_objects[tils_keys[i]]; %>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><%= til.title %></h5>
-                <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
-                <% for (let tag in til.tags) { %>
-                    <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
-                <% } %>
-                <hr>
-                <p class="card-text md description"><%=til.description %></p>
-                <hr>
-                <a href="/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
-                <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
-                <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
-                <a href="/edit/<%= til.til_id %>/bookmark" class="btn btn-info">⚑</a>
-            </div>
-        </div><br>
+    <% if (tils_keys.length > 0) { %>
+        <% for (let i in tils_keys) { %>
+            <% let til = tils_objects[tils_keys[i]]; %>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><%= til.title %></h5>
+                    <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
+                    <% for (let tag in til.tags) { %>
+                        <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
+                    <% } %>
+                    <hr>
+                    <p class="card-text md description"><%=til.description %></p>
+                    <hr>
+                    <a href="/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
+                    <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
+                    <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+                    <a href="/edit/<%= til.til_id %>/bookmark" class="btn btn-info">⚑</a>
+                </div>
+            </div><br>
+        <% } %>
+    <% } %>
+
+    <% if (tils_keys.length == 0) { %>
+        Unfortunately, <em>no bookmarks</em> have been found.
     <% } %>
 
     </div>

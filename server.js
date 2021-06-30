@@ -185,6 +185,23 @@ app.get('/bookmarks',
   });
 
 
+app.get('/todo',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    var tils = null;
+
+    sqldb.all(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags FROM tils 
+              JOIN tags_join ON tags_join.til_id = tils.id 
+              JOIN tags ON tags.id = tags_join.tag_id
+              JOIN bookmarks ON bookmarks.til_id = tils.id
+              WHERE bookmarks.user_id = ? GROUP BY tils.id`, [req.user.id], (err, rows) => {
+
+      tils = tils_object(rows);
+      res.render('todo', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+    });
+  });
+
+
 app.get('/login',
   function (req, res) {
     res.render('login');
