@@ -135,6 +135,18 @@ app.post('/',
       });
 
     }
+    if (searchtype == 'text') {
+      var tils = null;
+      sqldb.all(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags 
+      FROM tils JOIN tags_join ON tags_join.til_id = tils.id 
+      JOIN tags ON tags.id = tags_join.tag_id 
+      WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`, [req.user.id, `%${search}%`], (err, rows) => {
+
+        tils = tils_object(rows);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+      });
+
+    }
     else if (searchtype == 'date') {
       var range = get_day_range(new Date(search).getTime());
 
@@ -471,7 +483,7 @@ app.get('/edit/:til_id/bookmark',
       if (row) {
         // Bookmark exists, delete
         sqldb.run("DELETE FROM bookmarks WHERE til_id = ? and user_id = ?", [req.params.til_id, req.user.id]);
-        res.redirect('/bookmarks');
+        res.redirect('/view/' + req.params.til_id);
 
       } else {
         // Bookmark doesn't exist, create
