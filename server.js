@@ -268,6 +268,31 @@ app.get('/view/:til_id',
   });
 
 
+app.get('/view/:til_id/markdown',
+require('connect-ensure-login').ensureLoggedIn(),
+function (req, res) {
+  var tils = null;
+
+  sqldb.get(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags 
+            FROM tils JOIN tags_join ON tags_join.til_id = tils.id 
+            JOIN tags ON tags.id = tags_join.tag_id 
+            WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`, [req.user.id, req.params.til_id], (err, row) => {
+    tils = tils_object([row]);
+
+    til = tils[0][tils[1][0]];
+
+    sqldb.all("SELECT * FROM til_comments WHERE til_id = ? and user_id = ?", [req.params.til_id, req.user.id], (err, rows) => {
+      comments = rows;
+
+      res.setHeader('content-type', 'text/markdown');
+      res.render('markdown', { til: til, comments: comments, user: req.user});
+    });
+
+    });
+  
+  });
+
+
 app.get('/study',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {

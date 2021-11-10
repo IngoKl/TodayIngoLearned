@@ -1,0 +1,17 @@
+# <%= til.title %>
+
+<%= til.date.toDateString() %>
+
+## Description
+
+<%=til.description %>
+
+<%if (comments.length > 0) { %>
+## Comments
+<% for (var i = 0; i < comments.length; i++) { %>
+<%=comments[i].comment %>
+
+***
+
+<% } %>
+<% } %>

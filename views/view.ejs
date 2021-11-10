@@ -32,6 +32,7 @@
                 <% } else {  %>
                     <a href="/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚐</a>
                 <% } %>
+                <a href="/view/<%= til.til_id %>/markdown" class="btn btn-secondary">🗎</a>
             </div>
         </div>
 
@@ -64,6 +65,8 @@
             </div>
             <br>
         <% } %>
+
+        <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
         <% } %>
 
     </div>
