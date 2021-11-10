@@ -24,8 +24,22 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Viewing random TILs
 * Basic spaced repetition system for studying TILs
 * Rudimentary dark mode
+* Export TILs as markdown
 
 ## Usage
+
+### CLI
+
+The CLI (`install.js`) support the following commands:
+
+| Command                   | Description                                |
+|---------------------------|--------------------------------------------|
+| createdb                  | Create an empty SQLite database.           |
+| populatedb                | Initiate an empty DB and add a first user. |
+| backupdb                  | Create a backup of the current DB.         |
+| adduser user pass         | Add a new user to the system.              |
+| setuserpassword user pass | Change a user's password.                  |
+| refreshtags               | Regenerate and refresh all tags.           |
 
 ### Internal Linking
 
