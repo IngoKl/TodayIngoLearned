@@ -63,4 +63,18 @@ The `install.js` script also will allow you to create new users (`node install.j
 
 ### Docker
 
-Alternatively, you can create your own [Docker](https://www.docker.com) container to run TodayIngoLearned. I've provided a very rudimentary Dockerfile (not based on pm2) in the repository to get you started.
+Alternatively, you can create your own [Docker](https://www.docker.com) container to run TodayIngoLearned.
+
+Configure the config.json accordingly and be sure docker-compse is in sync.
+
+To get started, create the database first on your local enviroment (preferred path is under your $HOME/.til).
+
+    npm install .
+    mkdir $HOME/.til
+    node install.js createdb
+    node install.js populatedb
+    node install.js setuserpassword Ingo trustn00ne
+    docker-compose up -d --build
+
+
+

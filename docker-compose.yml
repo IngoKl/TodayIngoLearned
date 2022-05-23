@@ -1,9 +1,12 @@
 version: '2'
 services:
-  todayilearned:
+  til:
     image: todayilearned:latest
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:3000"
+    volumes:
+      # EDIT ME if needed: map yourv local Database to container database
+      - $HOME/.til:/root/.til

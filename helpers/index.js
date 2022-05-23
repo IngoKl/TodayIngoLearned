@@ -4,6 +4,23 @@ var parseHashtags = require('parse-hashtags');
 
 var config = require('../config.json');
 
+const fs = require('fs')
+const path = require('path');
+const { get } = require('jquery');
+function getDBPath() {
+
+  // Ref https://stackoverflow.com/questions/21077670/expanding-resolving-in-node-js
+  if( config.dbpath[0]=="~" ) {
+    return path.join(process.env.HOME, config.dbpath.slice(1));
+  }else{
+    config.dbpath
+  }
+}
+
+exports.isDatabasePresent = function(){
+  return fs.existsSync(getDBPath());
+}
+
 /*Hashing passwords using SHA 256.
 Be aware that SHA256, especially unsalted, should definitely not be used in 
 production systems. */
@@ -16,7 +33,7 @@ exports.hashPassword = function(password) {
 
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
 exports.getAddTag = function(tag, callback) {
-    let sqldb = new sqlite3.Database(config.dbpath)
+    let sqldb = new sqlite3.Database(getDBPath())
 
     if (config.lowercasetags) {
       tag = tag.toLowerCase();
@@ -41,7 +58,7 @@ exports.getAddTag = function(tag, callback) {
 
 // Add/Update the tags for a TIL
 exports.updateTags = function(til_id, tags) {
-    let sqldb = new sqlite3.Database(config.dbpath)
+    let sqldb = new sqlite3.Database(getDBPath())
 
     // Delete all associations
     sqldb.run("DELETE FROM tags_join WHERE til_id = ?", til_id);
@@ -66,7 +83,7 @@ exports.updateTags = function(til_id, tags) {
 
 // Changing a user's password
 exports.changeUserPassword = function(username, new_password) {
-    let sqldb = new sqlite3.Database(config.dbpath)
+    let sqldb = new sqlite3.Database(getDBPath())
 
     var hashed_password = this.hashPassword(new_password);    
     sqldb.run(`UPDATE users SET username = ?, password = ? WHERE username = ?`, [username, hashed_password, username]);
@@ -76,7 +93,7 @@ exports.changeUserPassword = function(username, new_password) {
 
 // Creating a new user
 exports.addUser = function(username, password) {
-    let sqldb = new sqlite3.Database(config.dbpath)
+    let sqldb = new sqlite3.Database(getDBPath())
 
     var hashed_password = this.hashPassword(password);    
     sqldb.run(`INSERT INTO users(username, password, displayname) VALUES (?,?,?)`, [username, hashed_password, username]);
@@ -87,7 +104,7 @@ exports.addUser = function(username, password) {
 
 // Refreshing all tags
 exports.refreshTags = function() {
-    let sqldb = new sqlite3.Database(config.dbpath)
+    let sqldb = new sqlite3.Database(getDBPath())
 
     sqldb.all(`SELECT * FROM tils`, (err, rows) => {
         rows.forEach(function(row){
@@ -99,3 +116,5 @@ exports.refreshTags = function() {
     });
 
 }
+
+exports.getDBPath=getDBPath;

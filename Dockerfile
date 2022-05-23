@@ -8,8 +8,4 @@ COPY . .
 
 EXPOSE 3000
 
-RUN [ "node", "install.js", "createdb" ]
-RUN [ "node", "install.js", "populatedb" ]
-# This is a randomly generated password. Don't forget to change it!
-RUN [ "node", "install.js", "setuserpassword", "Ingo", "nUY5SeKpFj" ]
-CMD [ "node", "server.js" ]
+CMD  node server.js

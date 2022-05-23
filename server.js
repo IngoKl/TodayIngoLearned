@@ -9,7 +9,8 @@ var helpers = require('./helpers');
 var config = require('./config.json');
 
 const sqlite3 = require('sqlite3').verbose();
-var sqldb = new sqlite3.Database(config.dbpath);
+console.log("Opening DB="+helpers.getDBPath());
+var sqldb = new sqlite3.Database(helpers.getDBPath());
 
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {

@@ -2,9 +2,14 @@ const sqlite3 = require('sqlite3').verbose();
 var pwgenerator = require('generate-password');
 var helpers = require('../helpers');
 
+
 // Create a new SQLite database
 exports.newDb = function () {
-    let sqldb = new sqlite3.Database('./db/til.db');
+    // GG On a docker environment, refrain from uswing db directory
+    if(helpers.isDatabasePresent()) {
+        console.log("DB Already present");
+    }
+    let sqldb = new sqlite3.Database(helpers.getDBPath());
 
     sqldb.run('CREATE TABLE tils (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER, `title` TEXT, `description` INTEGER, `date` INTEGER, `repetitions` INTEGER DEFAULT 0, `last_repetition` INTEGER DEFAULT 0, `next_repetition` INTEGER DEFAULT 0)');
     sqldb.run('CREATE TABLE tags (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `tag` TEXT UNIQUE)');
@@ -14,12 +19,12 @@ exports.newDb = function () {
     sqldb.run('CREATE TABLE bookmarks (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`user_id` INTEGER,`til_id` INTEGER)');
 
     sqldb.close();
-    console.log('New database created (/db/til.db).');
+    console.log('New database created:'+helpers.getDBPath());
 }
 
 // Populate the database with some initial data
 exports.populateDb = function () {
-    let sqldb = new sqlite3.Database('./db/til.db')
+    let sqldb = new sqlite3.Database(helpers.getDBPath())
 
     // User
     var username = 'Ingo'
@@ -39,5 +44,5 @@ exports.populateDb = function () {
 
     sqldb.close()
 
-    console.log('Databased (/db/til.db) populated.');
+    console.log('Databased ('+helpers.getDBPath()+') populated.');
 }
