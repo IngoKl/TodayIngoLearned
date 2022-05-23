@@ -2,15 +2,15 @@
 <html lang="en">
 
 <head>
-    <% include ./partials/head %>
+    <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
 </head>
 
 <body>
-<% include ./partials/navigation %>
+<%- include ('partials/navigation.ejs') %>
 
 
-<main role="main" class="container">
+<main class="flex-shrink-0">
     <div class="container">
         <div class="alert alert-warning" role="alert">
             <strong>404</strong> couldn't find this page :(.
@@ -21,9 +21,9 @@
     </div>
 </main>
 
-<% include ./partials/footer_text %>
+<%- include ('partials/footer_text.ejs') %>
 
-<% include ./partials/footer %>
+<%- include ('partials/footer.ejs') %>
 </body>
 
 </html>

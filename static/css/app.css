@@ -3,6 +3,10 @@ body {
     padding-top: 5rem;
 }
 
+.dark_grey {
+    background-color: #353A3F !important;
+}
+
 .btn-primary {
     background-color: #a25776 !important;
     border-color: #a25776;
@@ -15,18 +19,19 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-  }
+}
 
 @media (min-width: 768px) {
     .bd-placeholder-img-lg {
-    font-size: 3.5rem;
+        font-size: 3.5rem;
     }
 }
 
-main > .container {
+main>.container {
     padding: 10px 15px 0;
+    max-width: 1200px;
 }
-  
+
 .circle {
     border-radius: 50%;
 }
@@ -52,10 +57,16 @@ main > .container {
     padding-right: 5px;
     padding-top: 2px;
     padding-bottom: 2px;
+    text-decoration: none;
 }
 
 .tag:hover {
     text-decoration: none;
     color: rgb(255, 255, 255);
     background-color: #646f7a !important;
+}
+
+.darkmode--activated .card {
+    color: #f5f5f5;
+    background-color: #2b353f;
 }

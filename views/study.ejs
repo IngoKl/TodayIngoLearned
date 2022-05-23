@@ -2,15 +2,15 @@
 <html lang="en">
 
 <head>
-    <% include ./partials/head %>
+    <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
 </head>
 
 <body>
-<% include ./partials/navigation %>
+<%- include ('partials/navigation.ejs') %>
 
 
-<main role="main" class="container">
+<main class="flex-shrink-0">
     <div class="container">
 
         <h2>Study Mode</h2><br/>
@@ -24,7 +24,7 @@
             <a href="/study/<%= til.til_id %>/ok"><button class="btn btn-warning">OK</button></a>
             <a href="/study/<%= til.til_id %>/hard"><button class="btn btn-danger">Hard</button></a>
             &nbsp;&nbsp;&nbsp;
-            <a href="/study/<%= til.til_id %>/mute"><button class="btn btn-dark">Mute</button></a>
+            <a href="/study/<%= til.til_id %>/mute"><button class="btn btn-secondary">Mute</button></a>
         <hr>
 
         <div class="card">
@@ -32,7 +32,7 @@
                 <h5 class="card-title"><%= til.title %></h5>
                 <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
                 <% for (let tag in til.tags) { %>
-                    <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
+                    <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
                 <% } %>
 
                 <hr>
@@ -48,19 +48,20 @@
         <% for (var i = 0; i < comments.length; i++) { %>
             <div class="card">
                 <div class="card-body">
-                    <span class="md description"><%=comments[i].comment %></span>
+                    <p class="md description"><%=comments[i].comment %></p>
                     <hr>
-                    <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-dark">Edit</button></a>
+                    <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
                 </div>
-            </div><br>
+            </div>
+            <br>
         <% } %>
 
     </div>
 </main>
 
-<% include ./partials/footer_text %>
+<%- include ('partials/footer_text.ejs') %>
 
-<% include ./partials/footer %>
+<%- include ('partials/footer.ejs') %>
 </body>
 
 </html>

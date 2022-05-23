@@ -2,32 +2,36 @@
 <html lang="en">
 
 <head>
-    <% include ./partials/head %>
+    <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
 </head>
 
 <body>
-<% include ./partials/navigation %>
+<%- include ('partials/navigation') %>
 
 
-<main role="main" class="container">
+<main class="flex-shrink-0">
     <div class="container">
-
-        <form class="form-inline" method="POST" action="/">
-            <div class="form-group mr-2">
-                <label class="sr-only" for="searchtype">Search Type</label>
-                <select class="custom-select form-control" id="searchtype" name="searchtype">
-                    <option value="title">Title</option>
-                    <option value="tag">Tag</option>
-                    <option value="date">Date</option>
-                  </select>
+        <form method="POST" action="/">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <label class="sr-only form-label" for="searchtype">Search Type</label>
+                    <select class="form-select" id="searchtype" name="searchtype">
+                        <option value="title">Title</option>
+                        <option value="text">Text</option>
+                        <option value="tag">Tag</option>
+                        <option value="date">Date</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="sr-only form-label" for="search">Tag</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Search">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a href="/add"><button style="margin: 5px;" type="button" class="btn btn-secondary">+</button></a>
+                </div>
             </div>
-            <div class="form-group mr-2">
-                <label class="sr-only" for="search">Tag</label>
-                <input type="text" class="form-control" id="search" name="search" placeholder="Search">
-            </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-            <a href="/add"><button style="margin: 5px;" type="button" class="btn btn-dark">+</button></a>
         </form>
 
         <hr>
@@ -42,7 +46,7 @@
                     <h5 class="card-title"><%= til.title %></h5>
                     <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
                     <% for (let tag in til.tags) { %>
-                        <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge badge-dark"><%=til.tags[tag] %></span></a>
+                        <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
                     <% } %>
                     <hr>
                     <p class="card-text md description"><%=til.description %></p>
@@ -61,13 +65,13 @@
 
     </div>
 
-    <a class="d-flex justify-content-center" href="/add"><button style="margin: 20px;" type="button" class="btn btn-dark circle pop">+</button></a>
+    <a class="d-flex justify-content-center" href="/add"><button style="margin: 20px;" type="button" class="btn btn-secondary circle pop">+</button></a>
 </main>
 
 
-<% include ./partials/footer_text %>
+<%- include ('partials/footer_text.ejs') %>
 
-<% include ./partials/footer %>
+<%- include ('partials/footer.ejs') %>
 </body>
 
 </html>

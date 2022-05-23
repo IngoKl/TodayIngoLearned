@@ -2,38 +2,36 @@
 <html lang="en">
 
 <head>
-    <% include ./partials/head %>
+    <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
 </head>
 
 <body>
-<% include ./partials/navigation %>
+<%- include ('partials/navigation.ejs') %>
 
-<main role="main" class="container">
+<main class="flex-shrink-0">
     <div class="container">   
       <h2>Edit <em><%= til.title %></em></h2>
       <br>
       <form id="edittil" method="POST" target="">
-          <div class="form-group row">
+          <div class="mb-3 row">
             <label for="title" class="col-2 col-form-label">Title</label> 
             <div class="col-10">
               <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control" value="<%= til.title %>">
             </div>
           </div>
-          <div class="form-group row">
+          <div class="mb-3 row">
             <label for="date" class="col-2 col-form-label">Day</label> 
             <div class="col-10">
-              <div class="input-group">
+              <div class="input-group mb-2">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fa fa-calendar-check-o"></i>
-                  </div>
+                  <i class="input-group-text fa-solid fa-calendar"></i>
                 </div>
                 <input id="date" name="date" type="date" class="form-control" value="<%= date %>">
               </div>
             </div>
           </div>
-          <div class="form-group row">
+          <div class="mb-3 row">
             <label for="description" class="col-2 col-form-label">Description</label> 
             <div class="col-10">
               
@@ -49,7 +47,7 @@
               <span id="descriptionHelpBlock" class="form-text text-muted">You can simply use hashtags in here that will then be converted to "Tags".</span>
             </div>
           </div> 
-          <div class="form-group row">
+          <div class="mb-3 row">
             <div class="offset-2 col-10">
               <button name="submit" type="submit" class="btn btn-primary">Save</button>
             </div>
@@ -61,9 +59,9 @@
 </main>
 
 
-<% include ./partials/footer_text %>
+<%- include ('partials/footer_text.ejs') %>
 
-<% include ./partials/footer %>
+<%- include ('partials/footer.ejs') %>
 </body>
 
 </html>

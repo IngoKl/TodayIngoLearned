@@ -23,6 +23,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Searching for titles, hashtags, and dates
 * Viewing random TILs
 * Basic spaced repetition system for studying TILs
+* Rudimentary dark mode
 
 ## Usage
 

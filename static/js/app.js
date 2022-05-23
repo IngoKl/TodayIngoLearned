@@ -141,3 +141,16 @@ if (searchtype != null) {
       }
   });
 }
+
+// Dark Mode
+
+const dm_options = {
+  right: 'unset',
+  left: '32px',
+  label: '🌓',
+}
+
+function addDarkmodeWidget() {
+  new Darkmode(dm_options).showWidget();
+}
+window.addEventListener('load', addDarkmodeWidget);

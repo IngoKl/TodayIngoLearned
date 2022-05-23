@@ -2,70 +2,71 @@
 <html lang="en">
 
 <head>
-    <% include ./partials/head %>
+    <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
 </head>
 
 <body>
-<% include ./partials/navigation %>
+<%- include ('partials/navigation.ejs') %>
 
-<main role="main" class="container">
+<main class="flex-shrink-0">
     <div class="container">
         <h2>Add New TIL</h2>
         <br>
-        <form id="edittil" method="POST" target="">
-            <div class="form-group row">
-              <label for="title" class="col-2 col-form-label">Title</label> 
-              <div class="col-10">
+
+
+        <form class="row g-2" id="edittil" method="POST" target="">
+          <div class="mb-3 row">
+            <label for="title" class="col-sm-2 col-form-label">Title</label> 
+            <div class="col-sm-10">
               <% if(title){ %>
                 <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control" value="<%= title %>">
               <% } else{ %>  
                 <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control">
-              <% } %>  
-              </div>
+              <% } %> 
             </div>
-            <div class="form-group row">
-              <label for="date" class="col-2 col-form-label">Day</label> 
-              <div class="col-10">
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      <i class="fa fa-calendar-check-o"></i>
-                    </div>
-                  </div> 
-                  <input id="date" name="date" type="date" class="form-control" value="<%=today %>">
+          </div>
+          <div class="mb-3 row">
+            <label for="date" class="col-2 col-form-label">Day</label> 
+            <div class="col-10">
+              <div class="input-group mb-2">
+                <div class="input-group-prepend">
+                  <i class="input-group-text fa-solid fa-calendar"></i>
                 </div>
+                <input id="date" name="date" type="date" class="form-control" value="<%=today %>">
               </div>
             </div>
-            <div class="form-group row">
-              <label for="description" class="col-2 col-form-label">Description</label> 
-              <div class="col-10">
+          </div>
+          <div class="mb-3 row">
+            <label for="description" class="col-2 col-form-label">Description</label> 
+            <div class="col-10">
 
-                <p>
-                  <button id="md-bold" type="button" class="btn btn-secondary"><strong>bold</strong></button>
-                  <button id="md-italics" type="button" class="btn btn-secondary"><em>italics</em></button>
-                  <button id="md-link" type="button" class="btn btn-secondary">link (e)</button>
-                  <button id="md-ilink" type="button" class="btn btn-secondary">link (i)</button>
-                  <button id="md-tag" type="button" class="btn btn-secondary">#tag</button>
-                </p>
+              <p>
+                <button id="md-bold" type="button" class="btn btn-secondary"><strong>bold</strong></button>
+                <button id="md-italics" type="button" class="btn btn-secondary"><em>italics</em></button>
+                <button id="md-link" type="button" class="btn btn-secondary">link (e)</button>
+                <button id="md-ilink" type="button" class="btn btn-secondary">link (i)</button>
+                <button id="md-tag" type="button" class="btn btn-secondary">#tag</button>
+              </p>
 
-                <textarea id="description" name="description" cols="40" rows="10" aria-describedby="descriptionHelpBlock" class="form-control"></textarea> 
-                <span id="descriptionHelpBlock" class="form-text text-muted">You can simply use hashtags in here that will then be converted to "Tags".</span>
-              </div>
-            </div> 
-            <div class="form-group row">
-              <div class="offset-2 col-10">
-                <button name="submit" type="submit" class="btn btn-primary">Add</button>
-              </div>
+              <textarea id="description" name="description" cols="40" rows="10" aria-describedby="descriptionHelpBlock" class="form-control"></textarea> 
+              <span id="descriptionHelpBlock" class="form-text text-muted">You can simply use hashtags in here that will then be converted to "Tags".</span>
             </div>
-          </form>          
+          </div> 
+          <div class="mb-3 row">
+            <div class="offset-2 col-10">
+              <button name="submit" type="submit" class="btn btn-primary">Add</button>
+            </div>
+          </div>
+        </form>  
+
     </div>
 </main>
 
 
-<% include ./partials/footer_text %>
+<%- include ('partials/footer_text.ejs') %>
 
-<% include ./partials/footer %>
+<%- include ('partials/footer.ejs') %>
 </body>
 
 </html>
