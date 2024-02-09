@@ -1,5 +1,5 @@
 {
-    "dbpath": "./db/til.db",
+    "dbpath": "~/.til/til.db",
     "lowercasetags": true,
     "expresssessionsecret": "WlMAkFp1x1AkJBoJySNq",
     "securecoockies": false,
