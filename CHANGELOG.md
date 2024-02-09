@@ -8,3 +8,8 @@
 * Updated template for `bootstrap` 5
 * Fixed a bookmarking redirect issue
 * Fixed comment formatting
+
+## Version 1.0.4 (2021-11-10)
+
+* Added CLI information to the readme file
+* Added TIL markdown export
