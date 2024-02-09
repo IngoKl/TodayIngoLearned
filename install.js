@@ -49,9 +49,12 @@ else if (command == 'adduser') {
 else if (command == 'setuserpassword') {
     helpers.changeUserPassword(process.argv.slice(2)[1], process.argv.slice(2)[2])
 }
+else if (command == 'listusers') {
+    helpers.listUsers()
+}
 else if (command == 'refreshtags') {
     refreshTags();
 }
 else {
-    console.log('install.js createdb|populatedb|backupdb|adduser|setuserpassword|refreshtags');
+    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags');
 }

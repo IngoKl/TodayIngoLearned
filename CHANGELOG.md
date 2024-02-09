@@ -13,3 +13,7 @@
 
 * Added CLI information to the readme file
 * Added TIL markdown export
+
+## Version 1.0.5 (XXXX-XX-XX)
+
+* Added CLI command to show users

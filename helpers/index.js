@@ -84,6 +84,16 @@ exports.addUser = function(username, password) {
     sqldb.close()
 }
 
+// List all users
+exports.listUsers = function(callback) {
+    let sqldb = new sqlite3.Database(config.dbpath)
+
+    sqldb.all(`SELECT * FROM users`, (err, rows) => {
+      for (var i = 0; i < rows.length; i++) {
+        console.log(rows[i].username);
+      }
+    });
+}
 
 // Refreshing all tags
 exports.refreshTags = function() {

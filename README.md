@@ -14,7 +14,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 
 ### Features
 
-* Progressive Web App (PWA) - installable on Android/iOS (very limited caching)
+* Progressive Web App (PWA) – installable on Android/iOS (very limited caching)
 * Multi-user support
 * Markdown support
 * Tagging TILs using hashtags
@@ -38,6 +38,7 @@ The CLI (`install.js`) support the following commands:
 | populatedb                | Initiate an empty DB and add a first user. |
 | backupdb                  | Create a backup of the current DB.         |
 | adduser user pass         | Add a new user to the system.              |
+| listusers                 | List all users.                            |
 | setuserpassword user pass | Change a user's password.                  |
 | refreshtags               | Regenerate and refresh all tags.           |
 
