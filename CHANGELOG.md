@@ -22,3 +22,5 @@
 * Added a very basic user/profile page
 * Changed URLs feature so that they open in a new tab by default
 * Changed JSON endpoint so that tags are private (user-specific)
+
+## Version 1.0.6 (XXXX-XX-XX)
