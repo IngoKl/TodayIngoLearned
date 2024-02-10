@@ -6,8 +6,10 @@ var LocalStrategy = require('passport-local').Strategy;
 var db = require('./db');
 var helpers = require('./helpers');
 
+const packageJson = require('./package.json');
+const version = packageJson.version;
+
 var config = require('./config.json');
-const { helper } = require('showdown');
 
 const sqlite3 = require('sqlite3').verbose();
 var sqldb = new sqlite3.Database(config.dbpath);
@@ -64,6 +66,12 @@ app.use(require('express-session')({
   // set secure to true if possible (i.e., when using HTTPS)
   cookie: {secure: config.securecoockies, maxAge: 7776000000}
 }));
+
+// Middleware for locals
+app.use((req, res, next) => {
+  res.locals.version = version;
+  next();
+});
 
 // Initialize Passport and restore authentication state from the session.
 app.use(passport.initialize());

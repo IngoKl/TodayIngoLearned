@@ -3,6 +3,12 @@ body {
     padding-top: 5rem;
 }
 
+footer {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    font-size: 1.2em;
+}
+
 .dark_grey {
     background-color: #353A3F !important;
 }
@@ -69,4 +75,8 @@ main>.container {
 .darkmode--activated .card {
     color: #f5f5f5;
     background-color: #2b353f;
+}
+
+.version-number {
+    font-size: 0.8em;
 }

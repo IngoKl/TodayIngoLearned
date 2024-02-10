@@ -24,3 +24,6 @@
 * Changed JSON endpoint so that tags are private (user-specific)
 
 ## Version 1.0.6 (XXXX-XX-XX)
+
+* Added a version hint
+* Fixed footer padding
