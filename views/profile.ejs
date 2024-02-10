@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title>TodayIngoLearned</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">✌️ Hi, <strong><%= user.username %></strong></h5>
+                <p>
+                    <ul>
+                        <li><strong>Number of TILs</strong>: <%= user_stats.tils %></li>
+                        <li><strong>Number of Unique Tags</strong>: <%= user_stats.unique_tags %></li>
+                    </ul>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+<%- include ('partials/footer_text.ejs') %>
+
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>

@@ -107,5 +107,58 @@ exports.refreshTags = function() {
             }
         });
     });
+}
 
+// Show a TIL based on its id
+exports.showTil = function(id) {
+    let sqldb = new sqlite3.Database(config.dbpath)
+
+    sqldb.get(`SELECT * FROM tils WHERE id = ?`, [id], (err, row) => {
+      if (row) {
+        console.log(row.title + "\n" + row.description);
+      } else {
+        console.log("TIL not found");
+      }
+    });
+}
+
+// Get all tags used by a specific user based on their id
+exports.getUserTags = function(user_id, callback) {
+    let sqldb = new sqlite3.Database(config.dbpath)
+
+    sqldb.all(`SELECT tags.tag FROM tags JOIN tags_join ON tags.id = tags_join.tag_id JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?`, [user_id], (err, rows) => {
+      var tags = [];
+      rows.forEach(function (tag) {
+        if (config.lowercasetags) {
+          tags.push(tag.tag.toLowerCase());
+        } else {
+          tags.push(tag.tag)
+        }
+      });
+      return callback(tags);
+    });
+}
+
+// Get number of TILs and number of unique tags for a specific user based on their id
+exports.getUserStats = function(user_id) {
+  return new Promise((resolve, reject) => {
+      let sqldb = new sqlite3.Database(config.dbpath);
+      sqldb.get(`SELECT COUNT(*) as count FROM tils WHERE user_id = ?`, [user_id], (err, firstQueryResult) => {
+          if (err) {
+              sqldb.close();
+              reject(err);
+          } else {
+              var count = firstQueryResult.count;
+              sqldb.get(`SELECT COUNT(DISTINCT tag_id) as count FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?`, [user_id], (err, secondQueryResult) => {
+                  sqldb.close();
+                  if (err) {
+                      reject(err);
+                  } else {
+                      var unique_tags = secondQueryResult.count;
+                      resolve({'tils': count, 'unique_tags': unique_tags});
+                  }
+              });
+          }
+      });
+  });
 }

@@ -14,6 +14,11 @@
 * Added CLI information to the readme file
 * Added TIL markdown export
 
-## Version 1.0.5 (XXXX-XX-XX)
+## Version 1.0.5 (2024-02-10)
 
 * Added CLI command to show users
+* Added CLI command to show a TIL based on its id
+* Added a button to delete commens from the main view
+* Added a very basic user/profile page
+* Changed URLs feature so that they open in a new tab by default
+* Changed JSON endpoint so that tags are private (user-specific)

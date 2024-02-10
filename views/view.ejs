@@ -44,7 +44,7 @@
                 <div class="card-body">
                     <h5 class="card-title">URLs</h5>
                     <% for (let i in til_urls) { %>
-                        <a href="<%= til_urls[i] %>"><%= til_urls[i] %></a><br>
+                        <a href="<%= til_urls[i] %>" target="_blank" rel="noopener noreferrer"><%= til_urls[i] %></a><br>
                     <% } %>
                 </div>
             </div>
@@ -61,6 +61,7 @@
                     <p class="md description"><%=comments[i].comment %></p>
                     <hr>
                     <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
+                    <a href="/edit/comment/<%= comments[i].id %>/delete"><button class="btn btn-danger">Delete</button></a>
                 </div>
             </div>
             <br>
