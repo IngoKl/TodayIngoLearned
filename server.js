@@ -7,6 +7,7 @@ var db = require('./db');
 var helpers = require('./helpers');
 
 var config = require('./config.json');
+const { helper } = require('showdown');
 
 const sqlite3 = require('sqlite3').verbose();
 var sqldb = new sqlite3.Database(config.dbpath);
@@ -179,6 +180,18 @@ app.post('/',
     }
   });
 
+app.get('/profile',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    helpers.getUserStats(req.user.id)
+    .then(user_stats => {
+        res.render('profile', { user: req.user, user_stats: user_stats });
+    })
+    .catch(error => {
+        console.error('Error getting user stats:', error);
+        res.render('profile', { user: req.user, user_stats: null }); // Handle the error appropriately
+    });
+  });
 
 app.get('/bookmarks',
   require('connect-ensure-login').ensureLoggedIn(),
@@ -576,30 +589,11 @@ app.get('/tag/:tag',
   });
 
 
-/* A JSON endpoint exposing all tags so that they can be 
-used in search. At this point, tags are considered public (in a multiuser scenario).*/
+// A JSON endpoint exposing tags so that they can be used in search
 app.get('/json/tags',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
-    var sql = "SELECT * FROM tags";
-
-    sqldb.all(sql, (err, rows) => {
-      if (err) {
-        res.status(400).json({ "error": err.message });
-        return;
-      }
-
-      var tags = []
-      rows.forEach(function (tag) {
-
-        if (config.lowercasetags) {
-          tags.push(tag.tag.toLowerCase());
-        } else {
-          tags.push(tag.tag)
-        }
-
-      });
-
+      var tags = helpers.getUserTags(req.user.id, function(tags) {
       tags = [...new Set(tags)]
 
       res.json({
@@ -608,7 +602,7 @@ app.get('/json/tags',
     });
   });
 
-
+  
 // JSON endpoint for linking between TILs
 app.get('/json/findid/:title',
   require('connect-ensure-login').ensureLoggedIn(),
@@ -639,6 +633,5 @@ app.use(function (req, res, next) {
     return;
   }
 });
-
 
 app.listen(config.port, '127.0.0.1');
