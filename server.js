@@ -8,6 +8,7 @@ var studyRoutes = require('./routes/study');
 var commentRoutes = require('./routes/comment');
 var tilRoutes = require('./routes/til');
 var userRoutes = require('./routes/user');
+var tagRoutes = require('./routes/tag');
 
 const packageJson = require('./package.json');
 const version = packageJson.version;
@@ -100,6 +101,27 @@ app.use('/user', userRoutes);
 app.use('/comment', commentRoutes);
 app.use('/json', apiRoutes);
 app.use('/study', studyRoutes);
+app.use('/tag', tagRoutes);
+
+
+app.get('/login',
+  function (req, res) {
+    res.render('login');
+  });
+
+
+app.post('/login',
+  passport.authenticate('local', { failureRedirect: '/login' }),
+  function (req, res) {
+    res.redirect('/');
+  });
+
+
+app.get('/logout',
+  function (req, res) {
+    req.logout();
+    res.redirect('/');
+  });
 
 
 app.get('/',
@@ -178,64 +200,6 @@ app.post('/',
       });
 
     }
-  });
-
-
-app.get('/bookmarks',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function (req, res) {
-    var tils = null;
-
-    sqldb.all(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags FROM tils 
-              JOIN tags_join ON tags_join.til_id = tils.id 
-              JOIN tags ON tags.id = tags_join.tag_id
-              JOIN bookmarks ON bookmarks.til_id = tils.id
-              WHERE bookmarks.user_id = ? GROUP BY tils.id`, [req.user.id], (err, rows) => {
-
-      tils = tilsObject(rows);
-      res.render('bookmarks', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
-    });
-  });
-
-
-app.get('/tag/:tag',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function (req, res) {
-
-    // Since #s can't be used in URLs, we need to reintroduce them here
-    request_tag = '#' + req.params.tag;
-
-    sqldb.all(`SELECT * FROM (
-                SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags 
-                FROM tils 
-                JOIN tags_join ON tags_join.til_id = tils.id 
-                JOIN tags ON tags.id = tags_join.tag_id 
-                WHERE tils.user_id = ?
-                GROUP BY tils.id
-              ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`, [req.user.id, request_tag, `%${request_tag},%`, `%,${request_tag}`], (err, rows) => {
-
-      tils = tilsObject(rows);
-
-      sqldb.get(`SELECT GROUP_CONCAT(tags) AS tags FROM (
-        SELECT GROUP_CONCAT(tags.tag) AS tags 
-        FROM tils 
-        JOIN tags_join ON tags_join.til_id = tils.id 
-        JOIN tags ON tags.id = tags_join.tag_id 
-        WHERE tils.user_id = ?
-        GROUP BY tils.id
-        ) WHERE tags LIKE ?`, [req.user.id, `%${request_tag}%`], (err, row) => {
-
-        // Going to a set and back to remove duplicates
-        if (row.tags) {
-          var related_tags = Array.from(new Set(row.tags.split(',')));
-
-          res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: tils[1], related_tags: related_tags, user: req.user });
-        } else {
-          res.redirect('/');
-        }
-
-      });
-    });
   });
 
 
