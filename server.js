@@ -4,18 +4,18 @@ var LocalStrategy = require('passport-local').Strategy;
 var helpers = require('./helpers');
 
 var apiRoutes = require('./routes/api');
-var studyRoutes = require('./routes/study');
 var commentRoutes = require('./routes/comment');
+var studyRoutes = require('./routes/study');
+var tagRoutes = require('./routes/tag');
 var tilRoutes = require('./routes/til');
 var userRoutes = require('./routes/user');
-var tagRoutes = require('./routes/tag');
 
 const packageJson = require('./package.json');
 const version = packageJson.version;
 
 var config = require('./config.json');
-
 var sqldb = require('./db');
+
 
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {
@@ -96,12 +96,12 @@ var tilsObject = require('./helpers/tilsObject');
 
 
 // Define routes
-app.use('/til', tilRoutes);
-app.use('/user', userRoutes);
 app.use('/comment', commentRoutes);
 app.use('/json', apiRoutes);
 app.use('/study', studyRoutes);
 app.use('/tag', tagRoutes);
+app.use('/til', tilRoutes);
+app.use('/user', userRoutes);
 
 
 app.get('/login',

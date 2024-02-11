@@ -99,6 +99,7 @@ exports.refreshTags = function() {
     });
 }
 
+
 // Show a TIL based on its id
 exports.showTil = function(id) {
     sqldb.get(`SELECT * FROM tils WHERE id = ?`, [id], (err, row) => {
@@ -130,25 +131,25 @@ exports.getUserTags = function(user_id, callback) {
 // Get number of TILs and number of unique tags for a specific user based on their id
 exports.getUserStats = function(user_id) {
   return new Promise((resolve, reject) => {
-      sqldb.get(`SELECT COUNT(*) as count FROM tils WHERE user_id = ?`, [user_id], (err, firstQueryResult) => {
-          if (err) {
-              sqldb.close();
-              reject(err);
-          } else {
-              var count = firstQueryResult.count;
-              sqldb.get(`SELECT COUNT(DISTINCT tag_id) as count FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?`, [user_id], (err, secondQueryResult) => {
-                  sqldb.close();
-                  if (err) {
-                      reject(err);
-                  } else {
-                      var unique_tags = secondQueryResult.count;
-                      resolve({'tils': count, 'unique_tags': unique_tags});
-                  }
-              });
-          }
-      });
+    const sql = `
+      SELECT
+        (SELECT COUNT(*) FROM tils WHERE user_id = ?) AS tils_count,
+        (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count
+    `;
+
+    sqldb.get(sql, [user_id, user_id], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({
+          tils: result.tils_count,
+          unique_tags: result.unique_tags_count
+        });
+      }
+    });
   });
 }
+
 
 // Get the start/end timestamp of a given day
 exports.getDateRange = function(timestamp) {
