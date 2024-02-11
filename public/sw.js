@@ -10,7 +10,7 @@ self.addEventListener('install', function(event) {
             
             // Requests we're caching; be very careful to not cache protected content at this point
             cache.addAll([
-                '/login',
+                '/user/login',
                 'favicon.ico',
                 '/static/manifest.json',
                 '/static/images/icons/app-icon-96.png',

@@ -26,4 +26,9 @@
 ## Version 1.0.6 (XXXX-XX-XX)
 
 * Added a version hint
+* Added a comment view (`/comment/view/$id`)
+* Added a logout button
+* Moved `get_day_range` to helpers as `getDateRange`
+* Removed unused /todo url
+* Optimized routing and overall project structure
 * Fixed footer padding

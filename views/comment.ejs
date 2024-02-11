@@ -9,24 +9,19 @@
 <body>
 <%- include ('partials/navigation.ejs') %>
 
+
 <main class="flex-shrink-0">
     <div class="container">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">✌️ Hi, <strong><%= user.username %></strong></h5>
-                <p>
-                    <ul>
-                        <li><strong>Number of TILs</strong>: <%= user_stats.tils %></li>
-                        <li><strong>Number of Unique Tags</strong>: <%= user_stats.unique_tags %></li>
-                    </ul>
-                </p>
-
-                <a href="/user/logout" class="btn btn-secondary">Logout</a>
+                <p class="md description"><%=comment.comment %></p>
+                <hr>
+                <a href="/comment/edit/<%= comment.id %>"><button class="btn btn-secondary">Edit</button></a>
+                <a href="/comment/edit/<%= comments.id %>/delete"><button class="btn btn-danger">Delete</button></a>
             </div>
         </div>
     </div>
 </main>
-
 
 <%- include ('partials/footer_text.ejs') %>
 

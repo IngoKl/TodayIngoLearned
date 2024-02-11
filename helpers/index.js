@@ -1,5 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 var crypto = require('crypto');
+var moment = require('moment');
+var sqldb = require('./../db');
 var parseHashtags = require('parse-hashtags');
 
 var config = require('../config.json');
@@ -16,8 +18,6 @@ exports.hashPassword = function(password) {
 
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
 exports.getAddTag = function(tag, callback) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     if (config.lowercasetags) {
       tag = tag.toLowerCase();
     }
@@ -41,8 +41,6 @@ exports.getAddTag = function(tag, callback) {
 
 // Add/Update the tags for a TIL
 exports.updateTags = function(til_id, tags) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     // Delete all associations
     sqldb.run("DELETE FROM tags_join WHERE til_id = ?", til_id);
   
@@ -66,8 +64,6 @@ exports.updateTags = function(til_id, tags) {
 
 // Changing a user's password
 exports.changeUserPassword = function(username, new_password) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     var hashed_password = this.hashPassword(new_password);    
     sqldb.run(`UPDATE users SET username = ?, password = ? WHERE username = ?`, [username, hashed_password, username]);
     sqldb.close()
@@ -76,8 +72,6 @@ exports.changeUserPassword = function(username, new_password) {
 
 // Creating a new user
 exports.addUser = function(username, password) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     var hashed_password = this.hashPassword(password);    
     sqldb.run(`INSERT INTO users(username, password, displayname) VALUES (?,?,?)`, [username, hashed_password, username]);
     console.log(`New User Created: ${username}:${password}`);
@@ -86,8 +80,6 @@ exports.addUser = function(username, password) {
 
 // List all users
 exports.listUsers = function(callback) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     sqldb.all(`SELECT * FROM users`, (err, rows) => {
       for (var i = 0; i < rows.length; i++) {
         console.log(rows[i].username);
@@ -97,8 +89,6 @@ exports.listUsers = function(callback) {
 
 // Refreshing all tags
 exports.refreshTags = function() {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     sqldb.all(`SELECT * FROM tils`, (err, rows) => {
         rows.forEach(function(row){
             tags = parseHashtags(row.description);
@@ -111,8 +101,6 @@ exports.refreshTags = function() {
 
 // Show a TIL based on its id
 exports.showTil = function(id) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     sqldb.get(`SELECT * FROM tils WHERE id = ?`, [id], (err, row) => {
       if (row) {
         console.log(row.title + "\n" + row.description);
@@ -122,10 +110,9 @@ exports.showTil = function(id) {
     });
 }
 
+
 // Get all tags used by a specific user based on their id
 exports.getUserTags = function(user_id, callback) {
-    let sqldb = new sqlite3.Database(config.dbpath)
-
     sqldb.all(`SELECT tags.tag FROM tags JOIN tags_join ON tags.id = tags_join.tag_id JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?`, [user_id], (err, rows) => {
       var tags = [];
       rows.forEach(function (tag) {
@@ -139,10 +126,10 @@ exports.getUserTags = function(user_id, callback) {
     });
 }
 
+
 // Get number of TILs and number of unique tags for a specific user based on their id
 exports.getUserStats = function(user_id) {
   return new Promise((resolve, reject) => {
-      let sqldb = new sqlite3.Database(config.dbpath);
       sqldb.get(`SELECT COUNT(*) as count FROM tils WHERE user_id = ?`, [user_id], (err, firstQueryResult) => {
           if (err) {
               sqldb.close();
@@ -161,4 +148,12 @@ exports.getUserStats = function(user_id) {
           }
       });
   });
+}
+
+// Get the start/end timestamp of a given day
+exports.getDateRange = function(timestamp) {
+  start_date = moment(timestamp).startOf('day').valueOf();
+  end_date = moment(timestamp).endOf('day').valueOf();
+
+  return [start_date, end_date];
 }
