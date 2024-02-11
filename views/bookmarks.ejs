@@ -27,10 +27,10 @@
                     <hr>
                     <p class="card-text md description"><%=til.description %></p>
                     <hr>
-                    <a href="/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
-                    <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
-                    <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
-                    <a href="/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
+                    <a href="/til/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
+                    <a href="/comment/add/<%= til.til_id %>" class="btn btn-primary">Add Comment</a>
+                    <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+                    <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
                 </div>
             </div>
             <br>

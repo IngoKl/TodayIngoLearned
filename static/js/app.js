@@ -17,9 +17,9 @@ function AddILink(iLink, mde) {
     .then((data) => {
       console.log(data);
       if (data.id) {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/view/' + data['id'] + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + iLink + '</a>');
       } else {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/add?title=' + iLink + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + iLink + '">' + iLink + '</a>');
       }
       
     });
