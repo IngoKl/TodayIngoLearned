@@ -1,4 +1,4 @@
-var db = require('./db');
+var create = require('./db/create');
 var helpers = require('./helpers');
 const fs = require('fs');
 
@@ -23,7 +23,7 @@ function backupDb(mode='copy') {
 // Create a new database
 function createDb() {
     backupDb('rename');
-    db.createdb.newDb();
+    create.newDb();
 }
 
 // Refresh the tags in a database
@@ -38,7 +38,7 @@ if (command == 'createdb') {
     createDb();
 }
 else if (command == 'populatedb') {
-    db.createdb.populateDb();
+    create.populateDb();
 }
 else if (command == 'backupdb') {
     backupDb('copy');

@@ -28,6 +28,7 @@
 * Added a version hint
 * Added a comment view (`/comment/view/$id`)
 * Added a logout button
+* Changed createdb so that db specified in the config.json is created
 * Moved `get_day_range` to helpers as `getDateRange`
 * Removed unused /todo url
 * Optimized routing and overall project structure
