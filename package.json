@@ -1,10 +1,12 @@
 {
   "name": "todayingolearned",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A simple PWA that serves as a personal knowledge/learning database.",
   "keywords": [
     "learning",
-    "knowledge"
+    "knowledge",
+    "knowledge management",
+    "pkm"
   ],
   "author": "Ingo Kleiber",
   "license": "MIT",

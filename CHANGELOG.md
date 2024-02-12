@@ -23,7 +23,7 @@
 * Changed URLs feature so that they open in a new tab by default
 * Changed JSON endpoint so that tags are private (user-specific)
 
-## Version 1.0.6 (XXXX-XX-XX)
+## Version 1.0.6 (2024-02-12)
 
 * Added a comment view (`/comment/view/$id`)
 * Added a list of all tags
@@ -38,3 +38,5 @@
 * Optimized the UI in some minor ways
 * Removed dependency `parse-hashtags`
 * Removed unused /todo url
+
+## Version 1.0.7 (XXXX-XX-XX)
