@@ -6,7 +6,7 @@
     "display": "standalone",
     "background_color": "#000",
     "theme_color": "#000",
-    "description": "Today Ingo Learned",
+    "description": "TodayIngoLearned",
     "dir": "ltr",
     "lang": "en-US",
     "orientation": "portrait-primary",
@@ -45,6 +45,22 @@
           "src": "/static/images/icons/app-icon-512.png",
           "type": "image/png",
           "sizes": "512x512"
+        }
+      ],
+      "screenshots" : [
+        {
+          "src": "/static/images/screenshots/screenshot-1-wide.webp",
+          "sizes": "1280x720",
+          "type": "image/webp",
+          "form_factor": "wide",
+          "label": "Homescreen of TodayIngoLearned"
+        },
+        {
+          "src": "/static/images/screenshots/screenshot-2-narrow.webp",
+          "sizes": "1290x2796",
+          "type": "image/webp",
+          "form_factor": "narrow",
+          "label": "Homescreen of TodayIngoLearned"
         }
       ]
 }

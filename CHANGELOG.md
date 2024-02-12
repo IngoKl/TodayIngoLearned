@@ -22,3 +22,19 @@
 * Added a very basic user/profile page
 * Changed URLs feature so that they open in a new tab by default
 * Changed JSON endpoint so that tags are private (user-specific)
+
+## Version 1.0.6 (XXXX-XX-XX)
+
+* Added a comment view (`/comment/view/$id`)
+* Added a list of all tags
+* Added a logout button
+* Added a version hint
+* Added screenshots to `manifest.json`
+* Changed createdb so that db specified in the config.json is created
+* Fixed footer padding
+* Harmonized the regular expressions used for hashtags
+* Moved `get_day_range` to helpers as `getDateRange`
+* Optimized routing and overall project structure
+* Optimized the UI in some minor ways
+* Removed dependency `parse-hashtags`
+* Removed unused /todo url

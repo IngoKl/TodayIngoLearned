@@ -39,8 +39,8 @@
                 <p class="card-text md description"><%=til.description %></p>
                 <hr>
 
-                <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-secondary">Add Comment</a>
-                <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+                <a href="/comment/add/<%= til.til_id %>" class="btn btn-secondary">Add Comment</a>
+                <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
             </div>
         </div><br>
 
@@ -50,7 +50,7 @@
                 <div class="card-body">
                     <p class="md description"><%=comments[i].comment %></p>
                     <hr>
-                    <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
+                    <a href="/comment/edit/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
                 </div>
             </div>
             <br>

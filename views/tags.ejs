@@ -9,14 +9,18 @@
 <body>
 <%- include ('partials/navigation.ejs') %>
 
-
 <main class="flex-shrink-0">
     <div class="container">
-        <div class="alert alert-warning" role="alert">
-            <strong>404</strong> couldn't find this page :(.
-        </div>
 
-        <a href="/til/random" class="btn btn-primary">Random TIL</a>
+        <h2>Tags</h2>
+    
+        <div class="tag-grid">
+        <% for (let i in tags) { %>
+            <div>
+                <a href="/tag/<%=tags[i].substring(1) %>" class="tag"><%=tags[i] %></a>
+            </div>
+        <% } %>
+        </div>
 
     </div>
 </main>

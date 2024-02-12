@@ -25,14 +25,14 @@
                 <p id="tildescription" class="card-text md description"><%=til.description %></p>
                 <hr>
 
-                <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-secondary">Add Comment</a>
-                <a href="/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+                <a href="/comment/add/<%= til.til_id %>" class="btn btn-secondary">Add Comment</a>
+                <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
                 <%if (bookmarked) { %>
-                    <a href="/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
+                    <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
                 <% } else {  %>
-                    <a href="/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚐</a>
+                    <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚐</a>
                 <% } %>
-                <a href="/view/<%= til.til_id %>/markdown" class="btn btn-secondary">🗎</a>
+                <a href="/til/view/<%= til.til_id %>/markdown" class="btn btn-secondary">🗎</a>
             </div>
         </div>
 
@@ -60,14 +60,14 @@
                 <div class="card-body">
                     <p class="md description"><%=comments[i].comment %></p>
                     <hr>
-                    <a href="/edit/comment/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
-                    <a href="/edit/comment/<%= comments[i].id %>/delete"><button class="btn btn-danger">Delete</button></a>
+                    <a href="/comment/edit/<%= comments[i].id %>"><button class="btn btn-secondary">Edit</button></a>
+                    <a href="/comment/delete/<%= comments[i].id %>"><button class="btn btn-danger">Delete</button></a>
                 </div>
             </div>
             <br>
         <% } %>
 
-        <a href="/edit/<%= til.til_id %>/addcomment" class="btn btn-primary">Add Comment</a>
+        <a href="/comment/add/<%= til.til_id %>" class="btn btn-primary">Add Comment</a>
         <% } %>
 
     </div>
