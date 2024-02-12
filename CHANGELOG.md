@@ -40,3 +40,6 @@
 * Removed unused /todo url
 
 ## Version 1.0.7 (XXXX-XX-XX)
+
+* Added support for umlauts in tags
+* Matched GitHub and `package.json` keywords
