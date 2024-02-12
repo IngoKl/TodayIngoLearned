@@ -26,10 +26,14 @@
 ## Version 1.0.6 (XXXX-XX-XX)
 
 * Added a version hint
+* Added a list of all tags
 * Added a comment view (`/comment/view/$id`)
 * Added a logout button
+* Removed dependency `parse-hashtags`
+* Harmonized the regular expressions used for hashtags
 * Changed createdb so that db specified in the config.json is created
 * Moved `get_day_range` to helpers as `getDateRange`
 * Removed unused /todo url
 * Optimized routing and overall project structure
+* Optimized the UI in some minor ways
 * Fixed footer padding

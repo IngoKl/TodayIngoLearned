@@ -34,7 +34,8 @@ for (let mde of mdElements) {
     mde.innerHTML = converter.makeHtml(mde.textContent);
 
     // Tags
-    var tagRegEx = /\B(\#([a-zA-Z]+\b)(?!;))/ig;
+    // var tagRegEx = /\B(\#([a-zA-Z]+\b)(?!;))/ig;
+    var tagRegEx = /\B([#]+([A-Za-z0-9-_]+))/ig;
     mde.innerHTML = mde.innerHTML.replace(tagRegEx, '<a class="tag" href="/tag/$2">$1</a>');
 
     // Internal Links
@@ -143,7 +144,6 @@ if (searchtype != null) {
 }
 
 // Dark Mode
-
 const dm_options = {
   right: 'unset',
   left: '32px',

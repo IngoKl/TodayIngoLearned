@@ -1,8 +1,8 @@
 var express = require('express');
-var parseHashtags = require('parse-hashtags');
 var moment = require('moment');
 var sqldb = require('./../../db');
 var helpers = require('./../../helpers');
+var parseHashtags = require('./../../helpers/parseHashtags');
 var router = express.Router();
 
 var tilsObject = require('./../../helpers/tilsObject');

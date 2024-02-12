@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 var crypto = require('crypto');
 var moment = require('moment');
 var sqldb = require('./../db');
-var parseHashtags = require('parse-hashtags');
+var parseHashtags = require('./parseHashtags');
 
 var config = require('../config.json');
 

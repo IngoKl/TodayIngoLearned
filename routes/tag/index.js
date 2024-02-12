@@ -1,8 +1,20 @@
 var express = require('express');
+var helpers = require('./../../helpers');
 var sqldb = require('./../../db');
 var router = express.Router();
 
 var tilsObject = require('./../../helpers/tilsObject');
+
+// Rendering tags and showing all tags a user has used
+router.get('/tags',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res, next) {
+      var tags = helpers.getUserTags(req.user.id, function(tags) {
+      tags = [...new Set(tags)].sort();
+
+      res.render('tags', { tags: tags });
+    });
+  });
 
 router.get('/:tag',
   require('connect-ensure-login').ensureLoggedIn(),

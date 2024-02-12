@@ -72,6 +72,14 @@ main>.container {
     background-color: #646f7a !important;
 }
 
+.tag-grid {
+    font-size: 1.2em;
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 0.5fr));
+    padding: 10px;
+}
+
 .darkmode--activated .card {
     color: #f5f5f5;
     background-color: #2b353f;

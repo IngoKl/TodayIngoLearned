@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title>TodayIngoLearned</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+
+        <h2>Tags</h2>
+    
+        <div class="tag-grid">
+        <% for (let i in tags) { %>
+            <div>
+                <a href="/tag/<%=tags[i].substring(1) %>" class="tag"><%=tags[i] %></a>
+            </div>
+        <% } %>
+        </div>
+
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>
