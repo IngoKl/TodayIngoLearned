@@ -174,7 +174,7 @@ router.get('/edit/:til_id/bookmark',
       } else {
         // Bookmark doesn't exist, create
         sqldb.run("INSERT INTO bookmarks(user_id, til_id) VALUES (?,?)", [req.user.id, req.params.til_id]);
-        res.redirect('/view/' + req.params.til_id);
+        res.redirect('/til/view/' + req.params.til_id);
       }
 
     });

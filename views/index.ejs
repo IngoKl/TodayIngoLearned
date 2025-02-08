@@ -29,7 +29,7 @@
                 </div>
                 <div class="col-auto">
                     <button type="submit" class="btn btn-primary">Search</button>
-                    <a href="/til/add"><button style="margin: 5px;" type="button" class="btn btn-secondary">+</button></a>
+                    <a href="/til/add"><button style="margin: 5px;" type="button" class="btn btn-secondary">Add</button></a>
                 </div>
             </div>
         </form>
@@ -44,7 +44,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title"><%= til.title %></h5>
-                    <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toDateString() %></h6>
+                    <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toLocaleString('de-DE') %></h6>
                     <% for (let tag in til.tags) { %>
                         <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
                     <% } %>
@@ -66,7 +66,7 @@
     </div>
 
     <a class="d-flex justify-content-center" style="text-decoration:none" href="/til/add">
-        <button style="margin: 20px;" type="button" class="btn btn-secondary circle pop">+</button>
+        <button style="margin: 20px;" type="button" class="btn btn-secondary pop">Add</button>
     </a>
 </main>
 

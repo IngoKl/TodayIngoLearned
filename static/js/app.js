@@ -147,6 +147,7 @@ const dm_options = {
   right: 'unset',
   left: '32px',
   label: '🌓',
+  mixColor: '#fff',
 }
 
 function addDarkmodeWidget() {

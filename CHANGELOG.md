@@ -39,7 +39,13 @@
 * Removed dependency `parse-hashtags`
 * Removed unused /todo url
 
-## Version 1.0.7 (XXXX-XX-XX)
+## Version 1.0.7 (2025-02-08)
 
 * Added support for umlauts in tags
+* Added a Python helper script to resize application icon
+* Updated the application icon
+* Updated dependencies (for increased security)
+* Updated the in some minor ways (e.g., Spacing on the login page)
+* Removed the Darkmode.js CDN depedency
+* Fixed a routing bug related to bookmarking
 * Matched GitHub and `package.json` keywords
