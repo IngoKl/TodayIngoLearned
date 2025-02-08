@@ -49,3 +49,7 @@
 * Removed the Darkmode.js CDN depedency
 * Fixed a routing bug related to bookmarking
 * Matched GitHub and `package.json` keywords
+
+## Version 1.0.8 (XXXX-XX-XX)
+
+* Optimized the UI in some minor ways
