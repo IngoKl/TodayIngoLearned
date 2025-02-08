@@ -80,3 +80,7 @@ The `install.js` script also will allow you to create new users (`node install.j
 ### Docker
 
 Alternatively, you can create your own [Docker](https://www.docker.com) container to run TodayIngoLearned. I've provided a very rudimentary Dockerfile (not based on pm2) in the repository to get you started.
+
+## Development
+
+Use `nodemon server.js` to get a development server up and running.

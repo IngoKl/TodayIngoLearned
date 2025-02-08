@@ -13,6 +13,7 @@ self.addEventListener('install', function(event) {
                 '/login',
                 'favicon.ico',
                 '/static/manifest.json',
+                '/static/images/icon/app-icon.png',
                 '/static/images/icons/app-icon-96.png',
                 '/static/images/icons/app-icon-144.png',
                 '/static/js/app.js',

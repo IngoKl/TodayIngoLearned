@@ -60,6 +60,7 @@ app.use('/static/js', express.static(__dirname + '/node_modules/popper.js/dist')
 app.use('/static/js', express.static(__dirname + '/node_modules/showdown/dist'));
 app.use('/static/js', express.static(__dirname + '/node_modules/js-autocomplete'));
 app.use('/static/css', express.static(__dirname + '/node_modules/js-autocomplete'));
+app.use('/static/js', express.static(__dirname + '/node_modules/darkmode-js/lib'));
 
 
 // Make assets available
@@ -118,9 +119,11 @@ app.post('/login',
 
 
 app.get('/logout',
-  function (req, res) {
-    req.logout();
-    res.redirect('/');
+  function (req, res, next) {
+    req.logout(function(err) {
+      if (err) { return next(err); }
+      res.redirect('/');
+    });
   });
 
 
