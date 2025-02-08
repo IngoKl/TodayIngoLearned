@@ -1,6 +1,6 @@
 # TodayIngoLearned
 
-![TodayIngoLearned](https://user-images.githubusercontent.com/16179317/83354962-87ddcc00-a35c-11ea-9909-1e890a432ec8.png)
+![TodayIngoLearned](https://github.com/IngoKl/TodayIngoLearned/blob/master/static/images/icons/app-icon-144.png?raw=true)
 
 *TodayIngoLearned* is a small personal project that I started to experiment with PWAs and full-stack Node.js a while back. It's a personal knowledge/learning management system used for every day (informal) learning. Since I now actually use the tool as part of my personal knowledge/learning management, I wanted to share it!
 
