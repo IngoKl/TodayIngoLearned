@@ -158,3 +158,39 @@ exports.getDateRange = function(timestamp) {
 
   return [start_date, end_date];
 }
+
+// Generate random TILs for testing
+exports.generateRandomTils = function(count) {
+  const loremIpsum = [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+      "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
+      "Excepteur sint occaecat cupidatat non proident, sunt in culpa."
+  ];
+  
+  const randomTags = ['#test', '#random', '#generated', '#sample', '#demo'];
+  
+  for (let i = 0; i < count; i++) {
+      const randomDate = Date.now() - Math.floor(Math.random() * 63072000000);
+      const title = `Random TIL ${Math.floor(Math.random() * 1000)}`;
+      const description = loremIpsum[Math.floor(Math.random() * loremIpsum.length)] + ' ' + 
+                         randomTags[Math.floor(Math.random() * randomTags.length)];
+      
+      sqldb.run("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)", 
+          [1, title, description, randomDate, 0], 
+          function (err) {
+              if (err) {
+                  console.log("Error creating random TIL:", err);
+                  return;
+              }
+              
+              // Extract tags from description and add them
+              const tags = parseHashtags(description);
+              module.exports.updateTags(this.lastID, tags);
+          }
+      );
+  }
+  
+  console.log(`Generated ${count} random TILs`);
+}

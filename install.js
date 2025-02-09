@@ -55,6 +55,13 @@ else if (command == 'listusers') {
 else if (command == 'refreshtags') {
     refreshTags();
 }
+else if (command == 'showtil') {
+    helpers.showTil(process.argv.slice(2)[1]) || 1;
+}
+else if (command == 'generatetils') {
+    const count = parseInt(process.argv.slice(2)[1]) || 10;
+    helpers.generateRandomTils(count);
+}
 else {
-    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags');
+    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils');
 }

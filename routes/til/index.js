@@ -198,4 +198,38 @@ router.get('/bookmarks',
   });
 
 
+router.get('/timeline',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    sqldb.all(`
+      SELECT tils.id, tils.title, tils.date,
+             strftime('%Y-%m', datetime(date/1000, 'unixepoch')) as month
+      FROM tils 
+      WHERE tils.user_id = ? 
+      ORDER BY tils.date DESC`, 
+      [req.user.id], 
+      (err, rows) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Database error');
+        }
+
+        // Group TILs by month
+        const tilsByMonth = {};
+        rows.forEach(row => {
+          if (!tilsByMonth[row.month]) {
+            tilsByMonth[row.month] = [];
+          }
+          tilsByMonth[row.month].push(row);
+        });
+
+        res.render('timeline', { 
+          tilsByMonth: tilsByMonth,
+          user: req.user,
+          moment: moment
+        });
+    });
+  });
+
+
 module.exports = router;

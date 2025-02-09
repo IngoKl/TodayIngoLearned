@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title>Timeline</title>
+</head>
+
+<body>
+<%- include ('partials/navigation') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+        <h1 class="mt-4 mb-4">TIL Timeline</h1>
+
+        <div class="accordion accordion-flush" id="accordionTimeline">
+            <% 
+            // Group by year first
+            const tilsByYear = {};
+            Object.keys(tilsByMonth).forEach(month => {
+                const year = moment(month).format('YYYY');
+                if (!tilsByYear[year]) {
+                    tilsByYear[year] = {};
+                }
+                tilsByYear[year][month] = tilsByMonth[month];
+            });
+            %>
+
+            <% Object.keys(tilsByYear).sort().reverse().forEach(year => { %>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#flush-year-<%= year %>" 
+                                aria-expanded="false" 
+                                aria-controls="flush-year-<%= year %>">
+                            <strong><%= year %></strong>&nbsp;(<%= Object.values(tilsByYear[year]).flat().length %> TILs)
+                        </button>
+                    </h2>
+                    <div id="flush-year-<%= year %>" class="accordion-collapse collapse" data-bs-parent="#accordionTimeline">
+                        <div class="accordion-body p-0">
+                            <div class="accordion accordion-flush">
+                                <% Object.keys(tilsByYear[year]).sort().reverse().forEach(month => { %>
+                                    <div class="accordion-item">
+                                        <h3 class="accordion-header">
+                                            <button class="accordion-button collapsed ps-4" type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#flush-month-<%= month %>" 
+                                                    aria-expanded="false" 
+                                                    aria-controls="flush-month-<%= month %>">
+                                                <%= moment(month).format('MMMM') %> (<%= tilsByYear[year][month].length %> TILs)
+                                            </button>
+                                        </h3>
+                                        <div id="flush-month-<%= month %>" class="accordion-collapse collapse">
+                                            <div class="accordion-body ps-5">
+                                                <% tilsByYear[year][month].forEach(til => { %>
+                                                    <div>
+                                                        <a href="/til/view/<%= til.id %>" class="text-decoration-none">
+                                                            <%= til.title %>
+                                                        </a>
+                                                    </div>
+                                                <% }); %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+</main>
+
+<%- include ('partials/footer') %>
+</body>
+</html> 

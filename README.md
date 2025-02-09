@@ -42,6 +42,7 @@ The CLI (`install.js`) support the following commands:
 | setuserpassword user pass | Change a user's password.                  |
 | refreshtags               | Regenerate and refresh all tags.           |
 | showtil                   | Show TIL based on its id.                  |
+| generatetils              | Generate random TILs.                      |
 
 ### Internal Linking
 
