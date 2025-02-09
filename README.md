@@ -43,6 +43,7 @@ The CLI (`install.js`) support the following commands:
 | refreshtags               | Regenerate and refresh all tags.           |
 | showtil                   | Show TIL based on its id.                  |
 | generatetils              | Generate random TILs.                      |
+| fixnulldates              | Fix TILs with NULL dates by using the date of the previous TIL. |
 
 ### Internal Linking
 

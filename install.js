@@ -62,6 +62,9 @@ else if (command == 'generatetils') {
     const count = parseInt(process.argv.slice(2)[1]) || 10;
     helpers.generateRandomTils(count);
 }
+else if (command == 'fixnulldates') {
+    helpers.fixNullDates();
+}
 else {
-    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils');
+    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils|fixnulldates');
 }

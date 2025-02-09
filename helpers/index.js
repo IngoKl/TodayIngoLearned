@@ -194,3 +194,51 @@ exports.generateRandomTils = function(count) {
   
   console.log(`Generated ${count} random TILs`);
 }
+
+// Fix TILs with NULL dates by using the date of the previous TIL
+exports.fixNullDates = function() {
+  return new Promise((resolve, reject) => {
+    // Get all TILs ordered by ID to maintain chronological order
+    sqldb.all(`SELECT id, title, date FROM tils ORDER BY id ASC`, [], (err, rows) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      let updates = [];
+      let lastValidDate = null;
+
+      // Process each row sequentially
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // If current row has NULL date, use the last valid date to update it
+        if (row.date === null && lastValidDate !== null) {
+          const dateToUse = lastValidDate; // Capture current lastValidDate for this update
+          updates.push(new Promise((resolveUpdate) => {
+            sqldb.run(`UPDATE tils SET date = ? WHERE id = ?`, [dateToUse, row.id], function(err) {
+              if (err) {
+                console.error(`Error updating TIL ${row.id}:`, err);
+                resolveUpdate();
+              } else {
+                console.log(`Updated TIL #${row.id}: "${row.title}" with date ${moment(dateToUse).format('YYYY-MM-DD HH:mm:ss')}`);
+                resolveUpdate();
+              }
+            });
+          }));
+          // After updating a NULL date, it becomes the lastValidDate for the next TIL
+          lastValidDate = dateToUse;
+        } else if (row.date !== null) {
+          // If it's a valid date, use it for the next TIL
+          lastValidDate = row.date;
+        }
+      }
+
+      // Wait for all updates to complete before showing summary
+      Promise.all(updates).then(() => {
+        console.log(`\nSummary: Fixed ${updates.length} TILs with NULL dates`);
+        resolve(updates.length);
+      });
+    });
+  });
+}

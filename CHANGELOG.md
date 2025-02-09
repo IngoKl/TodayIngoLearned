@@ -52,8 +52,9 @@
 
 ## Version 1.0.8 (XXXX-XX-XX)
 
-* Added a function to generate random TILs for testing
 * Added timeline feature
+* Added a function to generate random TILs for testing
+* Added a functon to fix TILs with NULL-dates
 * Optimized the UI in some minor ways
 * Fixed app icons
 * Fixed missing showtil functionality in `install.js`
