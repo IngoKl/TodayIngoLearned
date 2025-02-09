@@ -19,6 +19,10 @@ router.get('/view/:til_id',
               JOIN tags ON tags.id = tags_join.tag_id 
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`, [req.user.id, req.params.til_id], (err, row) => {
 
+      if (err || !row) {
+        return res.status(404).send('TIL not found');
+      }
+
       tils = tilsObject([row]);
 
       til = tils[0][tils[1][0]];

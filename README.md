@@ -41,8 +41,8 @@ The CLI (`install.js`) support the following commands:
 | listusers                 | List all users.                            |
 | setuserpassword user pass | Change a user's password.                  |
 | refreshtags               | Regenerate and refresh all tags.           |
-| showtil                   | Show TIL based on its id.                  |
-| generatetils              | Generate random TILs.                      |
+| showtil id                | Show TIL based on its id.                  |
+| generatetils count        | Generate random TILs.                      |
 | fixnulldates              | Fix TILs with NULL dates by using the date of the previous TIL. |
 
 ### Internal Linking
