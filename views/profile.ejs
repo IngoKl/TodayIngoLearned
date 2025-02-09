@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<%- include ('partials/html.ejs') %>
 
 <head>
     <%- include ('partials/head.ejs') %>
@@ -19,6 +19,10 @@
                         <li><strong>Number of TILs</strong>: <%= user_stats.tils %></li>
                         <li><strong>Number of Unique Tags</strong>: <%= user_stats.unique_tags %></li>
                     </ul>
+                </p>
+
+                <p>
+                    <button id="themeToggle" class="btn btn-primary">Toggle Dark Mode</button>
                 </p>
 
                 <a href="/logout" class="btn btn-secondary">Logout</a>

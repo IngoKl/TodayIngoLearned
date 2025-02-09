@@ -55,6 +55,7 @@
 * Added timeline feature
 * Added a function to generate random TILs for testing
 * Added a functon to fix TILs with NULL-dates
+* Changed the dark mode implementation to Bootstraps (removed `darkmode-js`)
 * Optimized the UI in some minor ways
 * Fixed app icons
 * Fixed missing showtil functionality in `install.js`
