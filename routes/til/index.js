@@ -128,7 +128,13 @@ router.get('/edit/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
     sqldb.get("SELECT * FROM tils WHERE id = ? and user_id = ?", [req.params.til_id, req.user.id], (err, row) => {
-
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Database error');
+      }
+      if (!row) {
+        return res.status(404).send('TIL not found');
+      }
       res.render('edit', { til: row, date: moment(row.date).format('YYYY-MM-DD'), user: req.user });
     });
   });
