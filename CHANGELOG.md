@@ -59,5 +59,6 @@
 * Changed to database-based sessions
 * Changed the dark mode implementation to Bootstraps (removed `darkmode-js`)
 * Optimized the UI in some minor ways
+* Optimized the handling of hashtags (RegEx)
 * Fixed app icons
 * Fixed missing showtil functionality in `install.js`

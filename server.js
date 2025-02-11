@@ -153,7 +153,7 @@ app.get('/',
     JOIN tags ON tags.id = tags_join.tag_id 
     WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT 10`, [req.user.id], (err, rows) => {
 
-      tils = tilsObject(rows);
+      tils = tilsObject(rows, req.user.id);
       res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
     });
   });
@@ -172,8 +172,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`, [req.user.id, `%${search}%`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }
@@ -184,8 +184,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`, [req.user.id, `%${search}%`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search});
       });
 
     }
@@ -198,8 +198,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? and tils.date BETWEEN ? AND ? GROUP BY tils.id`, [req.user.id, range[0], range[1]], (err, rows) => {
         
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }
@@ -214,8 +214,8 @@ app.post('/',
                   GROUP BY tils.id
                 ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`, [req.user.id, `${search}`, `%${search},%`, `%,${search}`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }

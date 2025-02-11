@@ -38,6 +38,12 @@
 
         <p style="font-size: 1.5em;">Hey <strong><%= user.username %></strong>, here are your TILs:</p>
 
+        <% if (typeof searchtype !== 'undefined' && searchtype) { %>
+            <div class="search-results">
+                <p>Searching for <%= searchtype %>: <strong><%= search %></strong>. <%= tils_keys.length %> results found.</p>
+            </div>
+        <% } %>
+
         <% if (tils_keys.length > 0) { %>
             <% for (let i in tils_keys) { %>
             <% let til = tils_objects[tils_keys[i]]; %>

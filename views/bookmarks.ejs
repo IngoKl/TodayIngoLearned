@@ -11,36 +11,36 @@
 
 <main class="flex-shrink-0">
     <div class="container">
+        <h2>Bookmarks</h2>
 
-    <h2>Bookmarks</h2><br>
+        <p>You have <%=tils_keys.length %> bookmarks.</p>
 
-    <% if (tils_keys.length > 0) { %>
-        <% for (let i in tils_keys) { %>
-            <% let til = tils_objects[tils_keys[i]]; %>
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title"><%= til.title %></h5>
-                    <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toLocaleDateString('de-DE') %></h6>
-                    <% for (let tag in til.tags) { %>
-                        <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
-                    <% } %>
-                    <hr>
-                    <p class="card-text md description"><%=til.description %></p>
-                    <hr>
-                    <a href="/til/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
-                    <a href="/comment/add/<%= til.til_id %>" class="btn btn-primary">Add Comment</a>
-                    <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
-                    <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
+        <% if (tils_keys.length > 0) { %>
+            <% for (let i in tils_keys) { %>
+                <% let til = tils_objects[tils_keys[i]]; %>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><%= til.title %></h5>
+                        <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toLocaleDateString('de-DE') %></h6>
+                        <% for (let tag in til.tags) { %>
+                            <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
+                        <% } %>
+                        <hr>
+                        <p class="card-text md description"><%=til.description %></p>
+                        <hr>
+                        <a href="/til/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
+                        <a href="/comment/add/<%= til.til_id %>" class="btn btn-primary">Add Comment</a>
+                        <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
+                        <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
+                    </div>
                 </div>
-            </div>
-            <br>
+                <br>
+            <% } %>
         <% } %>
-    <% } %>
 
-    <% if (tils_keys.length == 0) { %>
-        Unfortunately, <em>no bookmarks</em> have been found.
-    <% } %>
-
+        <% if (tils_keys.length == 0) { %>
+            Unfortunately, <em>no bookmarks</em> have been found.
+        <% } %>
     </div>
 </main>
 

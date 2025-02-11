@@ -16,6 +16,17 @@ exports.hashPassword = function(password) {
 }
 
 
+// Return whether a TIL is bookmarked by a user
+exports.isBookmarked = function(user_id, til_id) {
+        sqldb.get("SELECT COUNT(*) FROM bookmarks WHERE user_id = ? AND til_id = ?", [user_id, til_id], (err, row) => {
+            if (row['COUNT(*)'] == 1) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+  }
+
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
 exports.getAddTag = function(tag, callback) {
     if (config.lowercasetags) {
@@ -134,16 +145,18 @@ exports.getUserStats = function(user_id) {
     const sql = `
       SELECT
         (SELECT COUNT(*) FROM tils WHERE user_id = ?) AS tils_count,
-        (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count
+        (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count,
+        (SELECT COUNT(*) FROM bookmarks WHERE user_id = ?) AS bookmarks_count
     `;
 
-    sqldb.get(sql, [user_id, user_id], (err, result) => {
+    sqldb.get(sql, [user_id, user_id, user_id], (err, result) => {
       if (err) {
         reject(err);
       } else {
         resolve({
           tils: result.tils_count,
-          unique_tags: result.unique_tags_count
+          unique_tags: result.unique_tags_count,
+          bookmarks: result.bookmarks_count
         });
       }
     });
