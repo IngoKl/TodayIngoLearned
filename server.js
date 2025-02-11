@@ -2,6 +2,10 @@ var express = require('express');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var helpers = require('./helpers');
+var session = require('express-session');
+var SQLiteStore = require('better-sqlite3-session-store')(session);
+var SQLite = require('better-sqlite3');
+var path = require('path');
 
 var apiRoutes = require('./routes/api');
 var commentRoutes = require('./routes/comment');
@@ -16,6 +20,15 @@ const version = packageJson.version;
 var config = require('./config.json');
 var sqldb = require('./db');
 
+// Create session store with a separate database file
+const sessionsDb = new SQLite(path.join(path.dirname(config.dbpath), 'sessions.db'));
+const sessionStore = new SQLiteStore({
+    client: sessionsDb,
+    expired: {
+        clear: true,
+        intervalMs: 1000 * 60 * 60 // 1 hour
+    }
+});
 
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {
@@ -72,11 +85,14 @@ app.use('/', express.static('public'));
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ 
+  store: sessionStore,
   secret: config.expresssessionsecret, 
   resave: false, 
   saveUninitialized: false,
-  // set secure to true if possible (i.e., when using HTTPS)
-  cookie: {secure: config.securecoockies, maxAge: 7776000000}
+  cookie: {
+    secure: config.securecoockies, 
+    maxAge: config.maxage
+  }
 }));
 
 
