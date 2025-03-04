@@ -62,3 +62,4 @@
 * Optimized the handling of hashtags (RegEx)
 * Fixed app icons
 * Fixed missing showtil functionality in `install.js`
+* Fixed favicon path
