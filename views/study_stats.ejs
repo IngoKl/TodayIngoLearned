@@ -1,0 +1,100 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title>TodayIngoLearned - Study Stats</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+
+        <h2>Study Stats</h2><br/>
+
+        <div class="row mb-4">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3><%= stats.studied %></h3>
+                        <small class="text-muted">Studied</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3><%= stats.never_studied %></h3>
+                        <small class="text-muted">Never Studied</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3><%= stats.due_now %></h3>
+                        <small class="text-muted">Due Now</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3><%= stats.total_repetitions %></h3>
+                        <small class="text-muted">Total Repetitions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4>All Studied TILs</h4>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Tags</th>
+                        <th>Repetitions</th>
+                        <th>Last Studied</th>
+                        <th>Next Due</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for (const til of tils) { %>
+                    <tr>
+                        <td><a href="/til/view/<%= til.id %>"><%= til.title %></a></td>
+                        <td>
+                            <% if (til.tags) { %>
+                                <% for (const tag of til.tags.split(',')) { %>
+                                    <a href="/tag/<%= tag.replace('#','') %>"><span class="badge bg-secondary"><%= tag %></span></a>
+                                <% } %>
+                            <% } %>
+                        </td>
+                        <td><%= til.repetitions %></td>
+                        <td><%= til.last_repetition ? new Date(til.last_repetition * 1000).toLocaleDateString('de-DE') : '–' %></td>
+                        <td><%= new Date(til.next_repetition * 1000).toLocaleDateString('de-DE') %></td>
+                        <td>
+                            <% if (til.next_repetition < Math.floor(Date.now() / 1000)) { %>
+                                <span class="badge bg-danger">Due</span>
+                            <% } else { %>
+                                <span class="badge bg-success">OK</span>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>

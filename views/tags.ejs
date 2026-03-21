@@ -4,6 +4,20 @@
 <head>
     <%- include ('partials/head.ejs') %>
     <title>TodayIngoLearned</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #graph-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid var(--bs-border-color);
+            border-radius: .375rem;
+            overflow: hidden;
+        }
+        #graph-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 
 <body>
@@ -12,8 +26,13 @@
 <main class="flex-shrink-0">
     <div class="container">
 
+        <h2>Knowledge Graph</h2>
+        <p class="text-muted">Tags connected by shared TILs. Larger nodes have more TILs. Click a tag to browse it.</p>
+        <div id="graph-container"></div>
+
+        <hr>
         <h2>Tags</h2>
-    
+
         <div class="tag-grid">
         <% for (let i in tags) { %>
             <div>
@@ -28,6 +47,158 @@
 <%- include ('partials/footer_text.ejs') %>
 
 <%- include ('partials/footer.ejs') %>
+
+<script>
+(function() {
+    const container = document.getElementById('graph-container');
+    const canvas = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    const linkColor = isDark ? 'rgba(100,100,100,0.6)' : 'rgba(200,200,200,0.6)';
+    const textColor = isDark ? '#ccc' : '#333';
+    const strokeColor = isDark ? '#888' : '#fff';
+
+    fetch('/json/graph')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.nodes.length) {
+                container.innerHTML = '<p class="text-muted text-center mt-5">No tags found yet. Create some TILs first!</p>';
+                return;
+            }
+
+            const maxCount = Math.max(...data.nodes.map(n => n.count));
+            const radius = d => 4 + 20 * Math.sqrt(d.count / maxCount);
+
+            const edges = data.edges;
+
+            // Run simulation with faster decay so it settles quickly
+            const simulation = d3.forceSimulation(data.nodes)
+                .alphaDecay(0.05)
+                .force('link', d3.forceLink(edges).id(d => d.id).distance(80))
+                .force('charge', d3.forceManyBody().strength(-100))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .on('tick', draw);
+
+            // Transform state for zoom/pan
+            let transform = d3.zoomIdentity;
+
+            d3.select(canvas).call(d3.zoom()
+                .scaleExtent([0.3, 5])
+                .on('zoom', (event) => { transform = event.transform; draw(); }));
+
+            // Drag support
+            let dragNode = null;
+            d3.select(canvas)
+                .on('mousedown', onMouseDown)
+                .on('mousemove', onMouseMove)
+                .on('mouseup', onMouseUp)
+                .on('click', onClick);
+
+            function screenToSim(x, y) {
+                return [(x - transform.x) / transform.k, (y - transform.y) / transform.k];
+            }
+
+            function findNode(mx, my) {
+                const [sx, sy] = screenToSim(mx, my);
+                for (let i = data.nodes.length - 1; i >= 0; i--) {
+                    const n = data.nodes[i];
+                    const r = radius(n);
+                    if ((sx - n.x) ** 2 + (sy - n.y) ** 2 < (r + 2) ** 2) return n;
+                }
+                return null;
+            }
+
+            function onMouseDown(event) {
+                const [mx, my] = d3.pointer(event);
+                dragNode = findNode(mx, my);
+                if (dragNode) {
+                    simulation.alphaTarget(0.3).restart();
+                    dragNode.fx = dragNode.x;
+                    dragNode.fy = dragNode.y;
+                }
+            }
+
+            function onMouseMove(event) {
+                if (!dragNode) {
+                    // Show pointer cursor when hovering a node
+                    const [mx, my] = d3.pointer(event);
+                    canvas.style.cursor = findNode(mx, my) ? 'pointer' : 'default';
+                    return;
+                }
+                const [mx, my] = d3.pointer(event);
+                const [sx, sy] = screenToSim(mx, my);
+                dragNode.fx = sx;
+                dragNode.fy = sy;
+            }
+
+            function onMouseUp() {
+                if (dragNode) {
+                    simulation.alphaTarget(0);
+                    dragNode.fx = null;
+                    dragNode.fy = null;
+                    dragNode = null;
+                }
+            }
+
+            function onClick(event) {
+                if (dragNode) return;
+                const [mx, my] = d3.pointer(event);
+                const n = findNode(mx, my);
+                if (n) window.location.href = '/tag/' + n.tag.substring(1);
+            }
+
+            function draw() {
+                ctx.save();
+                ctx.clearRect(0, 0, width, height);
+                ctx.translate(transform.x, transform.y);
+                ctx.scale(transform.k, transform.k);
+
+                // Draw edges
+                ctx.strokeStyle = linkColor;
+                for (const e of edges) {
+                    ctx.lineWidth = Math.min(e.weight * 1.5, 6);
+                    ctx.beginPath();
+                    ctx.moveTo(e.source.x, e.source.y);
+                    ctx.lineTo(e.target.x, e.target.y);
+                    ctx.stroke();
+                }
+
+                // Draw nodes
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = strokeColor;
+                for (const n of data.nodes) {
+                    const r = radius(n);
+                    const alpha = 0.5 + 0.5 * (n.count / maxCount);
+                    ctx.fillStyle = 'rgba(162,87,118,' + alpha + ')';
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                // Draw labels
+                ctx.fillStyle = textColor;
+                ctx.textAlign = 'center';
+                ctx.font = '11px sans-serif';
+                for (const n of data.nodes) {
+                    ctx.fillText(n.tag, n.x, n.y + radius(n) + 14);
+                }
+
+                ctx.restore();
+            }
+        });
+})();
+</script>
 </body>
 
 </html>

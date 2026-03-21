@@ -2,7 +2,7 @@
     "dbpath": "./db/til.db",
     "lowercasetags": true,
     "expresssessionsecret": "WlMAkFp1x1AkJBoJySNq",
-    "securecoockies": false,
+    "securecookies": false,
     "maxage": 7776000000,
     "port": 3000
 }

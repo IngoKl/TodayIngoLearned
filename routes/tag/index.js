@@ -1,59 +1,60 @@
-var express = require('express');
-var helpers = require('./../../helpers');
-var sqldb = require('./../../db');
-var router = express.Router();
+const express = require('express');
+const helpers = require('./../../helpers');
+const sqldb = require('./../../db');
+const router = express.Router();
 
-var tilsObject = require('./../../helpers/tilsObject');
+const tilsObject = require('./../../helpers/tilsObject');
+
+function escapeLike(str) {
+  return str.replace(/[%_]/g, '\\$&');
+}
 
 // Rendering tags and showing all tags a user has used
 router.get('/tags',
   require('connect-ensure-login').ensureLoggedIn(),
-  function (req, res, next) {
-      var tags = helpers.getUserTags(req.user.id, function(tags) {
-      tags = [...new Set(tags)].sort();
-
-      res.render('tags', { tags: tags });
-    });
+  function (req, res) {
+    const tags = [...new Set(helpers.getUserTags(req.user.id))].sort();
+    res.render('tags', { tags: tags });
   });
 
 router.get('/:tag',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-
     // Since #s can't be used in URLs, we need to reintroduce them here
-    request_tag = '#' + req.params.tag;
+    const request_tag = '#' + req.params.tag;
+    const escaped_tag = escapeLike(request_tag);
 
-    sqldb.all(`SELECT * FROM (
-                SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags 
-                FROM tils 
-                JOIN tags_join ON tags_join.til_id = tils.id 
-                JOIN tags ON tags.id = tags_join.tag_id 
+    const rows = sqldb.prepare(`SELECT * FROM (
+                SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
+                FROM tils
+                JOIN tags_join ON tags_join.til_id = tils.id
+                JOIN tags ON tags.id = tags_join.tag_id
                 WHERE tils.user_id = ?
                 GROUP BY tils.id
-              ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`, [req.user.id, request_tag, `%${request_tag},%`, `%,${request_tag}`], (err, rows) => {
+              ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(req.user.id, escaped_tag, `%${escaped_tag},%`, `%,${escaped_tag}`);
 
-      tils = tilsObject(rows);
+    const tils = tilsObject(rows);
 
-      sqldb.get(`SELECT GROUP_CONCAT(tags) AS tags FROM (
-        SELECT GROUP_CONCAT(tags.tag) AS tags 
-        FROM tils 
-        JOIN tags_join ON tags_join.til_id = tils.id 
-        JOIN tags ON tags.id = tags_join.tag_id 
+    const tagRow = sqldb.prepare(`SELECT GROUP_CONCAT(tags) AS tags FROM (
+        SELECT GROUP_CONCAT(tags.tag) AS tags
+        FROM tils
+        JOIN tags_join ON tags_join.til_id = tils.id
+        JOIN tags ON tags.id = tags_join.tag_id
         WHERE tils.user_id = ?
         GROUP BY tils.id
-        ) WHERE tags LIKE ?`, [req.user.id, `%${request_tag}%`], (err, row) => {
+        ) WHERE tags LIKE ? ESCAPE '\\'`).get(req.user.id, `%${escaped_tag}%`);
 
-        // Going to a set and back to remove duplicates
-        if (row.tags) {
-          var related_tags = Array.from(new Set(row.tags.split(',')));
-
-          res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: tils[1], related_tags: related_tags, user: req.user });
-        } else {
-          res.redirect('/');
-        }
-
-      });
-    });
+    // Going to a set and back to remove duplicates
+    if (tagRow.tags) {
+      const related_tags = Array.from(new Set(tagRow.tags.split(',')));
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const perPage = 10;
+      const totalPages = Math.ceil(tils[1].length / perPage);
+      const pagedKeys = tils[1].slice((page - 1) * perPage, page * perPage);
+      res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: pagedKeys, related_tags: related_tags, user: req.user, page: page, totalPages: totalPages });
+    } else {
+      res.redirect('/');
+    }
   });
 
 

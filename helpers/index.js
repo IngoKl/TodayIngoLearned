@@ -1,257 +1,212 @@
-const sqlite3 = require('sqlite3').verbose();
-var crypto = require('crypto');
-var moment = require('moment');
-var sqldb = require('./../db');
-var parseHashtags = require('./parseHashtags');
+const crypto = require('crypto');
+const dayjs = require('dayjs');
+const sqldb = require('./../db');
+const parseHashtags = require('./parseHashtags');
 
-var config = require('../config.json');
+const config = require('../config.json');
 
-/*Hashing passwords using SHA 256.
-Be aware that SHA256, especially unsalted, should definitely not be used in 
-production systems. */
+const SCRYPT_KEYLEN = 64;
+const SCRYPT_SALT_LEN = 16;
+
+/*
+  Password hashing using scrypt (Node.js built-in).
+  Returns a string in the format "scrypt:<salt_hex>:<hash_hex>".
+  Legacy SHA-256 hashes (plain hex) are detected on login and upgraded.
+*/
 exports.hashPassword = function(password) {
-    var hash = crypto.createHash('sha256');
-    hash.update(password);
-    return hash.digest('hex');
+    const salt = crypto.randomBytes(SCRYPT_SALT_LEN);
+    const hash = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
+    return `scrypt:${salt.toString('hex')}:${hash.toString('hex')}`;
+}
+
+// Verify a password against a stored hash (supports both scrypt and legacy SHA-256)
+exports.verifyPassword = function(password, storedHash) {
+    if (storedHash.startsWith('scrypt:')) {
+        const parts = storedHash.split(':');
+        const salt = Buffer.from(parts[1], 'hex');
+        const hash = Buffer.from(parts[2], 'hex');
+        const derived = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
+        return crypto.timingSafeEqual(hash, derived);
+    }
+    // Legacy SHA-256 fallback
+    const sha256 = crypto.createHash('sha256').update(password).digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(sha256, 'hex'), Buffer.from(storedHash, 'hex'));
+}
+
+// Check if a stored hash uses the legacy SHA-256 format
+exports.isLegacyHash = function(storedHash) {
+    return !storedHash.startsWith('scrypt:');
 }
 
 
 // Return whether a TIL is bookmarked by a user
 exports.isBookmarked = function(user_id, til_id) {
-        sqldb.get("SELECT COUNT(*) FROM bookmarks WHERE user_id = ? AND til_id = ?", [user_id, til_id], (err, row) => {
-            if (row['COUNT(*)'] == 1) {
-                return true;
-            } else {
-                return false;
-            }
-        });
-  }
+    const row = sqldb.prepare("SELECT COUNT(*) AS count FROM bookmarks WHERE user_id = ? AND til_id = ?").get(user_id, til_id);
+    return row.count === 1;
+}
 
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
-exports.getAddTag = function(tag, callback) {
+exports.getAddTag = function(tag) {
     if (config.lowercasetags) {
       tag = tag.toLowerCase();
     }
-  
-    sqldb.get("SELECT * FROM tags where tag = ?", [tag], (err, row) => {
-      if (row == null) {
-        sqldb.run("INSERT INTO tags(tag) VALUES (?)", [tag], function (err) {
-          if (err) {
-            return console.log(err.message);
-          }
-  
-          return callback(this.lastID)
-        });
-      } else {
-        return callback(row.id);
-      }
-    });
-  
+
+    const row = sqldb.prepare("SELECT * FROM tags WHERE tag = ?").get(tag);
+    if (!row) {
+        const result = sqldb.prepare("INSERT INTO tags(tag) VALUES (?)").run(tag);
+        return result.lastInsertRowid;
+    }
+    return row.id;
 }
 
 
 // Add/Update the tags for a TIL
 exports.updateTags = function(til_id, tags) {
     // Delete all associations
-    sqldb.run("DELETE FROM tags_join WHERE til_id = ?", til_id);
-  
+    sqldb.prepare("DELETE FROM tags_join WHERE til_id = ?").run(til_id);
+
     // Create new associations
-    tags.forEach(function(tag) {
-  
-      if (config.lowercasetags) {
-        tag = tag.toLowerCase();
-      }
-  
-      module.exports.getAddTag(tag, function (tag_id) {
-        sqldb.run("INSERT INTO tags_join(til_id, tag_id) VALUES (?,?)", [til_id, tag_id], function (err) {
-          if (err) {
-            return console.log(err.message);
-          }
-        });
-      });
-    });
+    const insertStmt = sqldb.prepare("INSERT INTO tags_join(til_id, tag_id) VALUES (?,?)");
+    for (const tag of tags) {
+        const tag_id = module.exports.getAddTag(tag);
+        insertStmt.run(til_id, tag_id);
+    }
 }
 
 
 // Changing a user's password
 exports.changeUserPassword = function(username, new_password) {
-    var hashed_password = this.hashPassword(new_password);    
-    sqldb.run(`UPDATE users SET username = ?, password = ? WHERE username = ?`, [username, hashed_password, username]);
-    sqldb.close()
+    const hashed_password = this.hashPassword(new_password);
+    sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
 }
 
 
 // Creating a new user
 exports.addUser = function(username, password) {
-    var hashed_password = this.hashPassword(password);    
-    sqldb.run(`INSERT INTO users(username, password, displayname) VALUES (?,?,?)`, [username, hashed_password, username]);
-    console.log(`New User Created: ${username}:${password}`);
-    sqldb.close()
+    const hashed_password = this.hashPassword(password);
+    sqldb.prepare('INSERT INTO users(username, password, displayname) VALUES (?,?,?)').run(username, hashed_password, username);
+    console.log(`New User Created: ${username}`);
 }
 
 // List all users
-exports.listUsers = function(callback) {
-    sqldb.all(`SELECT * FROM users`, (err, rows) => {
-      for (var i = 0; i < rows.length; i++) {
-        console.log(rows[i].username);
-      }
-    });
+exports.listUsers = function() {
+    const rows = sqldb.prepare('SELECT * FROM users').all();
+    for (const row of rows) {
+        console.log(row.username);
+    }
 }
 
 // Refreshing all tags
 exports.refreshTags = function() {
-    sqldb.all(`SELECT * FROM tils`, (err, rows) => {
-        rows.forEach(function(row){
-            tags = parseHashtags(row.description);
-            if (tags) {
-                module.exports.updateTags(row.id, tags);
-            }
-        });
-    });
+    const rows = sqldb.prepare('SELECT * FROM tils').all();
+    for (const row of rows) {
+        const tags = parseHashtags(row.description);
+        if (tags) {
+            module.exports.updateTags(row.id, tags);
+        }
+    }
 }
 
 
 // Show a TIL based on its id
 exports.showTil = function(id) {
-    sqldb.get(`SELECT * FROM tils WHERE id = ?`, [id], (err, row) => {
-      if (row) {
+    const row = sqldb.prepare('SELECT * FROM tils WHERE id = ?').get(id);
+    if (row) {
         console.log(row.title + "\n" + row.description);
-      } else {
+    } else {
         console.log("TIL not found");
-      }
-    });
+    }
 }
 
 
 // Get all tags used by a specific user based on their id
-exports.getUserTags = function(user_id, callback) {
-    sqldb.all(`SELECT tags.tag FROM tags JOIN tags_join ON tags.id = tags_join.tag_id JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?`, [user_id], (err, rows) => {
-      var tags = [];
-      rows.forEach(function (tag) {
-        if (config.lowercasetags) {
-          tags.push(tag.tag.toLowerCase());
-        } else {
-          tags.push(tag.tag)
-        }
-      });
-      return callback(tags);
-    });
+exports.getUserTags = function(user_id) {
+    const rows = sqldb.prepare('SELECT tags.tag FROM tags JOIN tags_join ON tags.id = tags_join.tag_id JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?').all(user_id);
+    const tags = rows.map(row => config.lowercasetags ? row.tag.toLowerCase() : row.tag);
+    return tags;
 }
 
 
 // Get number of TILs and number of unique tags for a specific user based on their id
 exports.getUserStats = function(user_id) {
-  return new Promise((resolve, reject) => {
     const sql = `
       SELECT
         (SELECT COUNT(*) FROM tils WHERE user_id = ?) AS tils_count,
         (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count,
         (SELECT COUNT(*) FROM bookmarks WHERE user_id = ?) AS bookmarks_count
     `;
-
-    sqldb.get(sql, [user_id, user_id, user_id], (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({
-          tils: result.tils_count,
-          unique_tags: result.unique_tags_count,
-          bookmarks: result.bookmarks_count
-        });
-      }
-    });
-  });
+    const result = sqldb.prepare(sql).get(user_id, user_id, user_id);
+    return {
+        tils: result.tils_count,
+        unique_tags: result.unique_tags_count,
+        bookmarks: result.bookmarks_count
+    };
 }
 
 
 // Get the start/end timestamp of a given day
 exports.getDateRange = function(timestamp) {
-  start_date = moment(timestamp).startOf('day').valueOf();
-  end_date = moment(timestamp).endOf('day').valueOf();
-
-  return [start_date, end_date];
+    const start_date = dayjs(timestamp).startOf('day').valueOf();
+    const end_date = dayjs(timestamp).endOf('day').valueOf();
+    return [start_date, end_date];
 }
 
 // Generate random TILs for testing
 exports.generateRandomTils = function(count) {
-  const loremIpsum = [
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-      "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
-      "Excepteur sint occaecat cupidatat non proident, sunt in culpa."
-  ];
-  
-  const randomTags = ['#test', '#random', '#generated', '#sample', '#demo'];
-  
-  for (let i = 0; i < count; i++) {
-      const randomDate = Date.now() - Math.floor(Math.random() * 63072000000);
-      const title = `Random TIL ${Math.floor(Math.random() * 1000)}`;
-      const description = loremIpsum[Math.floor(Math.random() * loremIpsum.length)] + ' ' + 
-                         randomTags[Math.floor(Math.random() * randomTags.length)];
-      
-      sqldb.run("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)", 
-          [1, title, description, randomDate, 0], 
-          function (err) {
-              if (err) {
-                  console.log("Error creating random TIL:", err);
-                  return;
-              }
-              
-              // Extract tags from description and add them
-              const tags = parseHashtags(description);
-              module.exports.updateTags(this.lastID, tags);
-          }
-      );
-  }
-  
-  console.log(`Generated ${count} random TILs`);
+    const loremIpsum = [
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+        "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
+        "Excepteur sint occaecat cupidatat non proident, sunt in culpa."
+    ];
+
+    const randomTags = ['#test', '#random', '#generated', '#sample', '#demo'];
+    const insertStmt = sqldb.prepare("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)");
+
+    for (let i = 0; i < count; i++) {
+        const randomDate = Date.now() - Math.floor(Math.random() * 63072000000);
+        const title = `Random TIL ${Math.floor(Math.random() * 1000)}`;
+        const description = loremIpsum[Math.floor(Math.random() * loremIpsum.length)] + ' ' +
+                           randomTags[Math.floor(Math.random() * randomTags.length)];
+
+        const result = insertStmt.run(1, title, description, randomDate, 0);
+        const tags = parseHashtags(description);
+        module.exports.updateTags(result.lastInsertRowid, tags);
+    }
+
+    console.log(`Generated ${count} random TILs`);
+}
+
+// Generate a new API key for a user and store it in the database
+exports.generateApiKey = function(user_id) {
+    const api_key = 'til_' + crypto.randomBytes(24).toString('hex');
+    sqldb.prepare('UPDATE users SET api_key = ? WHERE id = ?').run(api_key, user_id);
+    return api_key;
+}
+
+// Get user by API key
+exports.getUserByApiKey = function(api_key) {
+    return sqldb.prepare('SELECT id, username FROM users WHERE api_key = ?').get(api_key);
 }
 
 // Fix TILs with NULL dates by using the date of the previous TIL
 exports.fixNullDates = function() {
-  return new Promise((resolve, reject) => {
-    // Get all TILs ordered by ID to maintain chronological order
-    sqldb.all(`SELECT id, title, date FROM tils ORDER BY id ASC`, [], (err, rows) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    const rows = sqldb.prepare('SELECT id, title, date FROM tils ORDER BY id ASC').all();
+    const updateStmt = sqldb.prepare('UPDATE tils SET date = ? WHERE id = ?');
+    let lastValidDate = null;
+    let fixedCount = 0;
 
-      let updates = [];
-      let lastValidDate = null;
-
-      // Process each row sequentially
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        
-        // If current row has NULL date, use the last valid date to update it
+    for (const row of rows) {
         if (row.date === null && lastValidDate !== null) {
-          const dateToUse = lastValidDate; // Capture current lastValidDate for this update
-          updates.push(new Promise((resolveUpdate) => {
-            sqldb.run(`UPDATE tils SET date = ? WHERE id = ?`, [dateToUse, row.id], function(err) {
-              if (err) {
-                console.error(`Error updating TIL ${row.id}:`, err);
-                resolveUpdate();
-              } else {
-                console.log(`Updated TIL #${row.id}: "${row.title}" with date ${moment(dateToUse).format('YYYY-MM-DD HH:mm:ss')}`);
-                resolveUpdate();
-              }
-            });
-          }));
-          // After updating a NULL date, it becomes the lastValidDate for the next TIL
-          lastValidDate = dateToUse;
+            updateStmt.run(lastValidDate, row.id);
+            console.log(`Updated TIL #${row.id}: "${row.title}" with date ${dayjs(lastValidDate).format('YYYY-MM-DD HH:mm:ss')}`);
+            fixedCount++;
         } else if (row.date !== null) {
-          // If it's a valid date, use it for the next TIL
-          lastValidDate = row.date;
+            lastValidDate = row.date;
         }
-      }
+    }
 
-      // Wait for all updates to complete before showing summary
-      Promise.all(updates).then(() => {
-        console.log(`\nSummary: Fixed ${updates.length} TILs with NULL dates`);
-        resolve(updates.length);
-      });
-    });
-  });
+    console.log(`\nSummary: Fixed ${fixedCount} TILs with NULL dates`);
+    return fixedCount;
 }

@@ -1,21 +1,21 @@
-var create = require('./db/create');
-var helpers = require('./helpers');
+const create = require('./db/create');
+const helpers = require('./helpers');
 const fs = require('fs');
 
-var config = require('./config.json');
+const config = require('./config.json');
 
 // Create a backup of the current database and rename it based on the current datetime
 function backupDb(mode='copy') {
     // Backup old database
     if (fs.existsSync(config.dbpath)) {
-        if (mode == 'copy') {
-            fs.copyFile(config.dbpath, `./db/til-${Date.now()}.db`, (err) => { 
-                if (err) { 
-                  console.log("Error Found:", err); 
+        if (mode === 'copy') {
+            fs.copyFile(config.dbpath, `./db/til-${Date.now()}.db`, (err) => {
+                if (err) {
+                  console.log("Error Found:", err);
                 }
             });
-        } else if (mode == 'rename') {
-            fs.renameSync(config.dbpath, `./db/til-${Date.now()}.db`);   
+        } else if (mode === 'rename') {
+            fs.renameSync(config.dbpath, `./db/til-${Date.now()}.db`);
         }
     }
 }
@@ -33,36 +33,36 @@ function refreshTags() {
 }
 
 // CLI
-command = process.argv.slice(2)[0]
-if (command == 'createdb') {
+const command = process.argv.slice(2)[0];
+if (command === 'createdb') {
     createDb();
 }
-else if (command == 'populatedb') {
+else if (command === 'populatedb') {
     create.populateDb();
 }
-else if (command == 'backupdb') {
+else if (command === 'backupdb') {
     backupDb('copy');
 }
-else if (command == 'adduser') {
-    helpers.addUser(process.argv.slice(2)[1], process.argv.slice(2)[2])
+else if (command === 'adduser') {
+    helpers.addUser(process.argv.slice(2)[1], process.argv.slice(2)[2]);
 }
-else if (command == 'setuserpassword') {
-    helpers.changeUserPassword(process.argv.slice(2)[1], process.argv.slice(2)[2])
+else if (command === 'setuserpassword') {
+    helpers.changeUserPassword(process.argv.slice(2)[1], process.argv.slice(2)[2]);
 }
-else if (command == 'listusers') {
-    helpers.listUsers()
+else if (command === 'listusers') {
+    helpers.listUsers();
 }
-else if (command == 'refreshtags') {
+else if (command === 'refreshtags') {
     refreshTags();
 }
-else if (command == 'showtil') {
-    helpers.showTil(process.argv.slice(2)[1]) || 1;
+else if (command === 'showtil') {
+    helpers.showTil(process.argv.slice(2)[1] || 1);
 }
-else if (command == 'generatetils') {
+else if (command === 'generatetils') {
     const count = parseInt(process.argv.slice(2)[1]) || 10;
     helpers.generateRandomTils(count);
 }
-else if (command == 'fixnulldates') {
+else if (command === 'fixnulldates') {
     helpers.fixNullDates();
 }
 else {

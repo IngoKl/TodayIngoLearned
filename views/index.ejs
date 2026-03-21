@@ -54,6 +54,9 @@
                     <% for (let tag in til.tags) { %>
                         <a href="/tag/<%=til.tags[tag].substring(1) %>"><span class="badge bg-secondary"><%=til.tags[tag] %></span></a>
                     <% } %>
+                    <% if (til.public) { %>
+                        <span class="badge bg-success">Public</span>
+                    <% } %>
                     <hr>
                     <p class="card-text md description"><%=til.description %></p>
                     <hr>
@@ -68,6 +71,8 @@
         <% if (tils_keys.length == 0) { %>
             Unfortunately, <em>no TILs</em> have been found.
         <% } %>
+
+        <%- include ('partials/pagination') %>
 
         <a class="d-flex justify-content-center" style="text-decoration:none" href="/til/add">
             <button type="button" class="btn btn-secondary pop">Add</button>

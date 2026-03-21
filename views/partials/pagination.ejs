@@ -1,0 +1,41 @@
+<% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+<%
+    const maxVisible = 5;
+    let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+%>
+<nav aria-label="Page navigation" class="mt-3">
+    <ul class="pagination justify-content-center">
+        <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+            <a class="page-link" href="?page=<%= page - 1 %>">Previous</a>
+        </li>
+        <% if (startPage > 1) { %>
+            <li class="page-item">
+                <a class="page-link" href="?page=1">1</a>
+            </li>
+            <% if (startPage > 2) { %>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            <% } %>
+        <% } %>
+        <% for (let p = startPage; p <= endPage; p++) { %>
+            <li class="page-item <%= p === page ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= p %>"><%= p %></a>
+            </li>
+        <% } %>
+        <% if (endPage < totalPages) { %>
+            <% if (endPage < totalPages - 1) { %>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            <% } %>
+            <li class="page-item">
+                <a class="page-link" href="?page=<%= totalPages %>"><%= totalPages %></a>
+            </li>
+        <% } %>
+        <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+            <a class="page-link" href="?page=<%= page + 1 %>">Next</a>
+        </li>
+    </ul>
+</nav>
+<% } %>

@@ -9,42 +9,56 @@ if ('serviceWorker' in navigator) {
 }
 
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 function AddILink(iLink, mde) {
-    fetch('/json/findid/' + iLink)
+    fetch('/json/findid/' + encodeURIComponent(iLink))
     .then((response) => {
       return response.json();
     })
     .then((data) => {
       console.log(data);
+      const safe = escapeHtml(iLink);
       if (data.id) {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + safe + '</a>');
       } else {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + iLink + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + encodeURIComponent(iLink) + '">' + safe + '</a>');
       }
-      
+
     });
 }
 
 
 // Markdown Support, Tag Highlighting, Internal Links
-var converter = new showdown.Converter(),
+const converter = new showdown.Converter(),
 mdElements = document.getElementsByClassName('md');
 for (let mde of mdElements) {
     // Markdown
     mde.innerHTML = converter.makeHtml(mde.textContent);
 
     // Tags
-    var tagRegEx = /\B([#]+([A-Za-z0-9-_äöüÄÖÜß\u00F0-\u02AF]+))/ig;
+    const tagRegEx = /\B([#]+([A-Za-z0-9-_äöüÄÖÜß\u00F0-\u02AF]+))/ig;
     mde.innerHTML = mde.innerHTML.replace(tagRegEx, '<a class="tag" href="/tag/$2">$1</a>');
 
     // Internal Links
-    var iLinkRegEx = /\[\[(.*?)\]\]/ig;
-    var iLinks = mde.innerHTML.matchAll(iLinkRegEx);
+    const iLinkRegEx = /\[\[(.*?)\]\]/ig;
+    const iLinks = mde.innerHTML.matchAll(iLinkRegEx);
 
     Array.from(iLinks).forEach(function(iLink) {
       AddILink(iLink[1], mde)
     });
 };
+
+// Syntax highlighting for code blocks
+if (typeof hljs !== 'undefined') {
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+}
 
 
 // Markdown Editor
@@ -78,31 +92,32 @@ function mdTag() {
 }
 
 function addMd(md_to_add, prefix_only, add_only) {
-    var md = document.getElementById("description");
-    
-    var sStart = md.selectionStart;
-    var sEnd = md.selectionEnd;
-    var text = md.value;
-    var selectedText = text.substring(sStart, sEnd);
+    const md = document.getElementById("description");
 
+    const sStart = md.selectionStart;
+    const sEnd = md.selectionEnd;
+    const text = md.value;
+    const selectedText = text.substring(sStart, sEnd);
+
+    let replacedText;
     if (add_only == true) {
-      var replacedText = text.substring(0, sStart) + md_to_add + text.substring(sEnd, text.length);
+      replacedText = text.substring(0, sStart) + md_to_add + text.substring(sEnd, text.length);
     } else {
       if (prefix_only == true) {
-        var replacedText = text.substring(0, sStart) + md_to_add + selectedText + text.substring(sEnd, text.length);
+        replacedText = text.substring(0, sStart) + md_to_add + selectedText + text.substring(sEnd, text.length);
       } else {
-        var replacedText = text.substring(0, sStart) + md_to_add + selectedText + md_to_add + text.substring(sEnd, text.length);
+        replacedText = text.substring(0, sStart) + md_to_add + selectedText + md_to_add + text.substring(sEnd, text.length);
       }
     }
-    
+
     md.value = replacedText;
 
 }
 
 
 // Search
-var searchtype = document.getElementsByName('searchtype')[0];
-var search = document.getElementsByName('search')[0];
+const searchtype = document.getElementsByName('searchtype')[0];
+const search = document.getElementsByName('search')[0];
 if (searchtype != null) {
   searchtype.addEventListener('change', function() {
       if (searchtype.value == 'date') {
@@ -112,7 +127,7 @@ if (searchtype != null) {
 
         search.type = 'text';
 
-        var tags = []
+        let tags = []
         fetch('/json/tags')
         .then((response) => {
           return response.json();
@@ -120,16 +135,16 @@ if (searchtype != null) {
         .then((data) => {
           tags = data;
         });
-        
-        var tag_complete = new autoComplete({
+
+        const tag_complete = new autoComplete({
           selector: 'input[name="search"]',
           minChars: 1,
           source: function(term, suggest){
             term = term.toLowerCase();
-        
-            var choices = tags["tags"];
-            var matches = [];
-            for (i=0; i<choices.length; i++)
+
+            const choices = tags["tags"];
+            const matches = [];
+            for (let i=0; i<choices.length; i++)
                 if (~choices[i].toLowerCase().indexOf(term)) matches.push(choices[i]);
             suggest(matches);
         }
