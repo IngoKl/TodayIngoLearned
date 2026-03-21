@@ -1,15 +1,16 @@
+const CACHE_VERSION = 'v1.0.8';
+const CACHE_NAME = 'precache-' + CACHE_VERSION;
+
 self.addEventListener('install', function(event) {
     console.log('[SW] Install', event);
 
-    // Very basic caching that needs to be expanded in the future
-    // Ensure that the cache is opened
     event.waitUntil(
-        caches.open('precache')
+        caches.open(CACHE_NAME)
         .then(function(cache) {
             console.log('[SW] Precaching');
-            
-            // Requests we're caching; be very careful to not cache protected content at this point
-            cache.addAll([
+
+            // Requests we're caching; be very careful to not cache protected content
+            return cache.addAll([
                 '/login',
                 'favicon.ico',
                 '/static/manifest.json',
@@ -21,30 +22,55 @@ self.addEventListener('install', function(event) {
                 '/static/css/login.css',
                 '/static/css/auto-complete.css',
                 '/static/css/bootstrap.min.css',
-                '/static/js/bootstrap.min.js',
+                '/static/js/bootstrap.bundle.min.js',
                 '/static/js/showdown.min.js',
                 '/static/js/jquery.min.js',
-                '/static/js/popper.min.js',
                 '/static/js/auto-complete.min.js',
             ]);
         })
-    )
+    );
 });
 
 self.addEventListener('activate', function (event) {
-    return self.clients.claim();
+    // Clean up old caches
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames
+                    .filter(function(name) { return name !== CACHE_NAME; })
+                    .map(function(name) {
+                        console.log('[SW] Deleting old cache:', name);
+                        return caches.delete(name);
+                    })
+            );
+        }).then(function() {
+            return self.clients.claim();
+        })
+    );
 });
 
 self.addEventListener('fetch', function(event) {
+    const url = new URL(event.request.url);
+
+    // Network-first for HTML pages (navigation requests)
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+                .catch(function() {
+                    return caches.match(event.request);
+                })
+        );
+        return;
+    }
+
+    // Cache-first for static assets
     event.respondWith(
         caches.match(event.request)
             .then(function(response) {
-                // Not null
                 if (response) {
                     return response;
-                } else {
-                    return fetch(event.request);
                 }
+                return fetch(event.request);
             })
     );
 });

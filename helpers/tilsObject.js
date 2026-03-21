@@ -1,9 +1,7 @@
-var helpers = require('./index');
-
 // Create an object to be used in a template from SQL rows
 function tilsObject(tils, user_id) {
-    tils_combined = Object();
-  
+    const tils_combined = Object();
+
     tils.forEach(element => {
       tils_combined[element.title] = Object();
       tils_combined[element.title]["user_id"] = user_id;
@@ -15,12 +13,12 @@ function tilsObject(tils, user_id) {
       tils_combined[element.title]["description"] = element.description;
       tils_combined[element.title]["tags"] = element.tags.split(',');
     });
-  
-    tils_keys = [];
-    for (key in tils_combined) {
+
+    const tils_keys = [];
+    for (const key in tils_combined) {
       tils_keys.push(tils_combined[key]["title"]);
     }
-  
+
     return [tils_combined, tils_keys];
   }
 

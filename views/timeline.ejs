@@ -18,7 +18,7 @@
             // Group by year first
             const tilsByYear = {};
             Object.keys(tilsByMonth).forEach(month => {
-                const year = moment(month).format('YYYY');
+                const year = dayjs(month).format('YYYY');
                 if (!tilsByYear[year]) {
                     tilsByYear[year] = {};
                 }
@@ -48,7 +48,7 @@
                                                     data-bs-target="#flush-month-<%= month %>" 
                                                     aria-expanded="false" 
                                                     aria-controls="flush-month-<%= month %>">
-                                                <%= moment(month).format('MMMM') %> (<%= tilsByYear[year][month].length %> TILs)
+                                                <%= dayjs(month).format('MMMM') %> (<%= tilsByYear[year][month].length %> TILs)
                                             </button>
                                         </h3>
                                         <div id="flush-month-<%= month %>" class="accordion-collapse collapse">
