@@ -26,6 +26,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Rudimentary dark mode
 * Export TILs as markdown
 * Basic REST API
+* Sharing TILs publicly
 
 ## Usage
 

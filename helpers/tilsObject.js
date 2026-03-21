@@ -13,6 +13,7 @@ function tilsObject(tils, user_id) {
       tils_combined[key]["last_repetition"] = new Date(element.last_repetition);
       tils_combined[key]["description"] = element.description;
       tils_combined[key]["tags"] = element.tags ? element.tags.split(',') : [];
+      tils_combined[key]["public"] = element.public || 0;
     });
 
     const tils_keys = [];

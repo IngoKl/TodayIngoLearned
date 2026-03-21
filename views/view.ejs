@@ -33,6 +33,10 @@
                     <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚐</a>
                 <% } %>
                 <a href="/til/view/<%= til.til_id %>/markdown" class="btn btn-secondary">🗎</a>
+                <% if (til.public) { %>
+                    <span class="ms-2 badge bg-success">Public</span>
+                    <small class="ms-1 text-muted"><a href="/public/<%= til.til_id %>">/public/<%= til.til_id %></a></small>
+                <% } %>
             </div>
         </div>
 

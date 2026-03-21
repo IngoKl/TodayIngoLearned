@@ -11,7 +11,7 @@ const tilsObject = require('./../../helpers/tilsObject');
 router.get('/view/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
               FROM tils JOIN tags_join ON tags_join.til_id = tils.id
               JOIN tags ON tags.id = tags_join.tag_id
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(req.user.id, req.params.til_id);
@@ -22,6 +22,7 @@ router.get('/view/:til_id',
 
     const tils = tilsObject([row]);
     const til = tils[0][tils[1][0]];
+    til.public = row.public;
 
     // Find all urls in the description
     const til_urls = til.description.match(/\bhttps?:\/\/(\S(?<!\)))+/gi);
@@ -38,7 +39,7 @@ router.get('/view/:til_id',
 router.get('/view/:til_id/markdown',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
               FROM tils JOIN tags_join ON tags_join.til_id = tils.id
               JOIN tags ON tags.id = tags_join.tag_id
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(req.user.id, req.params.til_id);
@@ -121,7 +122,9 @@ router.post('/edit/:til_id',
       tags = ['#misc'];
     }
 
-    sqldb.prepare("UPDATE tils SET title = ?, date = ?, description = ? WHERE id = ? AND user_id = ?").run(title, date, description, req.params.til_id, req.user.id);
+    const isPublic = req.body.public ? 1 : 0;
+
+    sqldb.prepare("UPDATE tils SET title = ?, date = ?, description = ?, public = ? WHERE id = ? AND user_id = ?").run(title, date, description, isPublic, req.params.til_id, req.user.id);
     helpers.updateTags(req.params.til_id, tags);
 
     res.redirect(`/til/view/${req.params.til_id}`);
@@ -156,7 +159,7 @@ router.get('/edit/:til_id/bookmark',
 router.get('/bookmarks',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags FROM tils
+    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags FROM tils
               JOIN tags_join ON tags_join.til_id = tils.id
               JOIN tags ON tags.id = tags_join.tag_id
               JOIN bookmarks ON bookmarks.til_id = tils.id

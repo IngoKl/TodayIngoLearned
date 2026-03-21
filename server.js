@@ -29,6 +29,12 @@ if (!userColumns.includes('api_key')) {
   sqldb.exec('ALTER TABLE users ADD COLUMN api_key TEXT');
 }
 
+// Migrate: add public column to tils table if it doesn't exist
+const tilColumns = sqldb.pragma('table_info(tils)').map(c => c.name);
+if (!tilColumns.includes('public')) {
+  sqldb.exec('ALTER TABLE tils ADD COLUMN public INTEGER DEFAULT 0');
+}
+
 // Create session store with a separate database file
 const sessionsDb = new SQLite(path.join(path.dirname(config.dbpath), 'sessions.db'));
 const sessionStore = new SQLiteStore({
@@ -179,7 +185,7 @@ app.get('/',
     FROM tils JOIN tags_join ON tags_join.til_id = tils.id
     WHERE tils.user_id = ?`).get(req.user.id).count;
 
-    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
     FROM tils JOIN tags_join ON tags_join.til_id = tils.id
     JOIN tags ON tags.id = tags_join.tag_id
     WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
@@ -198,27 +204,27 @@ app.post('/',
     let rows;
 
     if (searchtype === 'title') {
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
       FROM tils JOIN tags_join ON tags_join.til_id = tils.id
       JOIN tags ON tags.id = tags_join.tag_id
       WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
     }
     else if (searchtype === 'text') {
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
       FROM tils JOIN tags_join ON tags_join.til_id = tils.id
       JOIN tags ON tags.id = tags_join.tag_id
       WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
     }
     else if (searchtype === 'date') {
       const range = helpers.getDateRange(new Date(search).getTime());
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
       FROM tils JOIN tags_join ON tags_join.til_id = tils.id
       JOIN tags ON tags.id = tags_join.tag_id
       WHERE tils.user_id = ? AND tils.date BETWEEN ? AND ? GROUP BY tils.id`).all(req.user.id, range[0], range[1]);
     }
     else if (searchtype === 'tag') {
       rows = sqldb.prepare(`SELECT * FROM (
-                  SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+                  SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
                   FROM tils
                   JOIN tags_join ON tags_join.til_id = tils.id
                   JOIN tags ON tags.id = tags_join.tag_id
@@ -237,6 +243,26 @@ app.post('/',
     const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
     const tils = tilsObject(paginatedRows, req.user.id);
     res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
+  });
+
+
+// Public TIL view (no authentication required)
+app.get('/public/:til_id',
+  function (req, res) {
+    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.public, GROUP_CONCAT(tags.tag) AS tags
+              FROM tils JOIN tags_join ON tags_join.til_id = tils.id
+              JOIN tags ON tags.id = tags_join.tag_id
+              WHERE tils.id = ? AND tils.public = 1 GROUP BY tils.id`).get(req.params.til_id);
+
+    if (!row) {
+      return res.status(404).render('404', { url: req.url });
+    }
+
+    const tils = tilsObject([row]);
+    const til = tils[0][tils[1][0]];
+    const til_urls = til.description.match(/\bhttps?:\/\/(\S(?<!\)))+/gi);
+
+    res.render('public_view', { til: til, til_urls: til_urls });
   });
 
 

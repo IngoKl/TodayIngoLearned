@@ -1,0 +1,55 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= til.title %> – TodayIngoLearned</title>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-md navbar-dark dark_grey fixed-top">
+    <div class="container" style="margin-left: 10px;">
+        <a class="navbar-brand" href="#"><img src="/static/images/icons/app-icon-96.png" width="32" alt="TIL"/> TodayIngoLearned</a>
+    </div>
+</nav>
+
+<main class="flex-shrink-0">
+    <div class="container">
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><%= til.title %></h5>
+                <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toLocaleDateString('de-DE') %></h6>
+                <% for (let tag in til.tags) { %>
+                    <span class="badge bg-secondary"><%=til.tags[tag] %></span>
+                <% } %>
+
+                <hr>
+                <p id="tildescription" class="card-text md description"><%=til.description %></p>
+            </div>
+        </div>
+
+        <br>
+
+        <%if (til_urls) { %>
+            <%if (til_urls.length > 0) { %>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">URLs</h5>
+                    <% for (let i in til_urls) { %>
+                        <a href="<%= til_urls[i] %>" target="_blank" rel="noopener noreferrer"><%= til_urls[i] %></a><br>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+        <% } %>
+
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>
