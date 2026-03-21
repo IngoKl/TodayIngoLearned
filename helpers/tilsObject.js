@@ -3,20 +3,21 @@ function tilsObject(tils, user_id) {
     const tils_combined = Object();
 
     tils.forEach(element => {
-      tils_combined[element.title] = Object();
-      tils_combined[element.title]["user_id"] = user_id;
-      tils_combined[element.title]["til_id"] = element.id;
-      tils_combined[element.title]["title"] = element.title;
-      tils_combined[element.title]["date"] = new Date(element.date);
-      tils_combined[element.title]["repetitions"] = element.repetitions;
-      tils_combined[element.title]["last_repetition"] = new Date(element.last_repetition);
-      tils_combined[element.title]["description"] = element.description;
-      tils_combined[element.title]["tags"] = element.tags.split(',');
+      const key = String(element.id);
+      tils_combined[key] = Object();
+      tils_combined[key]["user_id"] = user_id;
+      tils_combined[key]["til_id"] = element.id;
+      tils_combined[key]["title"] = element.title;
+      tils_combined[key]["date"] = new Date(element.date);
+      tils_combined[key]["repetitions"] = element.repetitions;
+      tils_combined[key]["last_repetition"] = new Date(element.last_repetition);
+      tils_combined[key]["description"] = element.description;
+      tils_combined[key]["tags"] = element.tags ? element.tags.split(',') : [];
     });
 
     const tils_keys = [];
     for (const key in tils_combined) {
-      tils_keys.push(tils_combined[key]["title"]);
+      tils_keys.push(key);
     }
 
     return [tils_combined, tils_keys];

@@ -9,17 +9,24 @@ if ('serviceWorker' in navigator) {
 }
 
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 function AddILink(iLink, mde) {
-    fetch('/json/findid/' + iLink)
+    fetch('/json/findid/' + encodeURIComponent(iLink))
     .then((response) => {
       return response.json();
     })
     .then((data) => {
       console.log(data);
+      const safe = escapeHtml(iLink);
       if (data.id) {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + safe + '</a>');
       } else {
-        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + iLink + '">' + iLink + '</a>');
+        mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + encodeURIComponent(iLink) + '">' + safe + '</a>');
       }
 
     });

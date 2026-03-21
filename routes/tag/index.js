@@ -5,6 +5,10 @@ const router = express.Router();
 
 const tilsObject = require('./../../helpers/tilsObject');
 
+function escapeLike(str) {
+  return str.replace(/[%_]/g, '\\$&');
+}
+
 // Rendering tags and showing all tags a user has used
 router.get('/tags',
   require('connect-ensure-login').ensureLoggedIn(),
@@ -18,6 +22,7 @@ router.get('/:tag',
   function (req, res) {
     // Since #s can't be used in URLs, we need to reintroduce them here
     const request_tag = '#' + req.params.tag;
+    const escaped_tag = escapeLike(request_tag);
 
     const rows = sqldb.prepare(`SELECT * FROM (
                 SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
@@ -26,7 +31,7 @@ router.get('/:tag',
                 JOIN tags ON tags.id = tags_join.tag_id
                 WHERE tils.user_id = ?
                 GROUP BY tils.id
-              ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`).all(req.user.id, request_tag, `%${request_tag},%`, `%,${request_tag}`);
+              ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(req.user.id, escaped_tag, `%${escaped_tag},%`, `%,${escaped_tag}`);
 
     const tils = tilsObject(rows);
 
@@ -37,7 +42,7 @@ router.get('/:tag',
         JOIN tags ON tags.id = tags_join.tag_id
         WHERE tils.user_id = ?
         GROUP BY tils.id
-        ) WHERE tags LIKE ?`).get(req.user.id, `%${request_tag}%`);
+        ) WHERE tags LIKE ? ESCAPE '\\'`).get(req.user.id, `%${escaped_tag}%`);
 
     // Going to a set and back to remove duplicates
     if (tagRow.tags) {

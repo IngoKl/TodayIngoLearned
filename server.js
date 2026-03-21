@@ -227,14 +227,16 @@ app.post('/',
                 ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`).all(req.user.id, `${search}`, `%${search},%`, `%,${search}`);
     }
 
-    if (rows) {
-      const page = Math.max(1, parseInt(req.body.page) || 1);
-      const perPage = 10;
-      const totalPages = Math.ceil(rows.length / perPage);
-      const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
-      const tils = tilsObject(paginatedRows, req.user.id);
-      res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
+    if (!rows) {
+      return res.redirect('/');
     }
+
+    const page = Math.max(1, parseInt(req.body.page) || 1);
+    const perPage = 10;
+    const totalPages = Math.ceil(rows.length / perPage);
+    const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
+    const tils = tilsObject(paginatedRows, req.user.id);
+    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
   });
 
 

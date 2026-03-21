@@ -43,6 +43,10 @@ router.get('/view/:til_id/markdown',
               JOIN tags ON tags.id = tags_join.tag_id
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(req.user.id, req.params.til_id);
 
+    if (!row) {
+      return res.status(404).send('TIL not found');
+    }
+
     const tils = tilsObject([row]);
     const til = tils[0][tils[1][0]];
 

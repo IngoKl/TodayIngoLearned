@@ -30,7 +30,7 @@ exports.verifyPassword = function(password, storedHash) {
     }
     // Legacy SHA-256 fallback
     const sha256 = crypto.createHash('sha256').update(password).digest('hex');
-    return sha256 === storedHash;
+    return crypto.timingSafeEqual(Buffer.from(sha256, 'hex'), Buffer.from(storedHash, 'hex'));
 }
 
 // Check if a stored hash uses the legacy SHA-256 format
@@ -78,7 +78,6 @@ exports.updateTags = function(til_id, tags) {
 exports.changeUserPassword = function(username, new_password) {
     const hashed_password = this.hashPassword(new_password);
     sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
-    sqldb.close();
 }
 
 
@@ -87,7 +86,6 @@ exports.addUser = function(username, password) {
     const hashed_password = this.hashPassword(password);
     sqldb.prepare('INSERT INTO users(username, password, displayname) VALUES (?,?,?)').run(username, hashed_password, username);
     console.log(`New User Created: ${username}`);
-    sqldb.close();
 }
 
 // List all users
