@@ -1,9 +1,11 @@
 // Create an object to be used in a template from SQL rows
 function tilsObject(tils, user_id) {
     const tils_combined = Object();
+    const tils_keys = [];
 
     tils.forEach(element => {
       const key = String(element.id);
+      tils_keys.push(key);
       tils_combined[key] = Object();
       tils_combined[key]["user_id"] = user_id;
       tils_combined[key]["til_id"] = element.id;
@@ -15,11 +17,6 @@ function tilsObject(tils, user_id) {
       tils_combined[key]["tags"] = element.tags ? element.tags.split(',') : [];
       tils_combined[key]["public"] = element.public || 0;
     });
-
-    const tils_keys = [];
-    for (const key in tils_combined) {
-      tils_keys.push(key);
-    }
 
     return [tils_combined, tils_keys];
   }
