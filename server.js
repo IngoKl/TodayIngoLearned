@@ -13,6 +13,7 @@ const commentRoutes = require('./routes/comment');
 const studyRoutes = require('./routes/study');
 const tagRoutes = require('./routes/tag');
 const tilRoutes = require('./routes/til');
+const todoRoutes = require('./routes/todo');
 const userRoutes = require('./routes/user');
 
 const packageJson = require('./package.json');
@@ -138,6 +139,7 @@ app.use('/json', apiRoutes);
 app.use('/study', studyRoutes);
 app.use('/tag', tagRoutes);
 app.use('/til', tilRoutes);
+app.use('/todo', todoRoutes);
 app.use('/user', userRoutes);
 app.use('/api/v1', restApiRoutes);
 

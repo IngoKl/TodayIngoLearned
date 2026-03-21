@@ -4,6 +4,31 @@ const sqldb = require('./../../db');
 const router = express.Router();
 const tilsObject = require('./../../helpers/tilsObject');
 
+router.get('/stats',
+    require('connect-ensure-login').ensureLoggedIn(),
+    function (req, res) {
+
+    const total_tils = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ?").get(req.user.id).count;
+    const studied = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND repetitions > 0").get(req.user.id).count;
+    const never_studied = total_tils - studied;
+    const due_now = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND next_repetition < ?").get(req.user.id, dayjs().unix()).count;
+    const total_repetitions = sqldb.prepare("SELECT COALESCE(SUM(repetitions), 0) AS total FROM tils WHERE user_id = ?").get(req.user.id).total;
+
+    const tils = sqldb.prepare(`SELECT tils.id, tils.title, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
+                FROM tils
+                LEFT JOIN tags_join ON tags_join.til_id = tils.id
+                LEFT JOIN tags ON tags.id = tags_join.tag_id
+                WHERE tils.user_id = ? AND tils.repetitions > 0
+                GROUP BY tils.id
+                ORDER BY tils.next_repetition ASC`).all(req.user.id);
+
+    res.render('study_stats', {
+        user: req.user,
+        stats: { total_tils, studied, never_studied, due_now, total_repetitions },
+        tils: tils
+    });
+});
+
 router.get('/',
     require('connect-ensure-login').ensureLoggedIn(),
     function (req, res) {
