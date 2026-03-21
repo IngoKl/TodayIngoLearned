@@ -20,6 +20,13 @@ const version = packageJson.version;
 
 const config = require('./config.json');
 const sqldb = require('./db');
+const restApiRoutes = require('./routes/rest-api');
+
+// Migrate: add api_key column to users table if it doesn't exist
+const userColumns = sqldb.pragma('table_info(users)').map(c => c.name);
+if (!userColumns.includes('api_key')) {
+  sqldb.exec('ALTER TABLE users ADD COLUMN api_key TEXT');
+}
 
 // Create session store with a separate database file
 const sessionsDb = new SQLite(path.join(path.dirname(config.dbpath), 'sessions.db'));
@@ -96,6 +103,7 @@ app.use('/', express.static('public'));
 // Middleware
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(require('body-parser').json());
 app.use(require('express-session')({
   store: sessionStore,
   secret: config.expresssessionsecret,
@@ -131,6 +139,7 @@ app.use('/study', studyRoutes);
 app.use('/tag', tagRoutes);
 app.use('/til', tilRoutes);
 app.use('/user', userRoutes);
+app.use('/api/v1', restApiRoutes);
 
 
 app.get('/login',

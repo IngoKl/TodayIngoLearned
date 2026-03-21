@@ -25,6 +25,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Basic spaced repetition system for studying TILs
 * Rudimentary dark mode
 * Export TILs as markdown
+* Basic REST API
 
 ## Usage
 

@@ -180,6 +180,18 @@ exports.generateRandomTils = function(count) {
     console.log(`Generated ${count} random TILs`);
 }
 
+// Generate a new API key for a user and store it in the database
+exports.generateApiKey = function(user_id) {
+    const api_key = 'til_' + crypto.randomBytes(24).toString('hex');
+    sqldb.prepare('UPDATE users SET api_key = ? WHERE id = ?').run(api_key, user_id);
+    return api_key;
+}
+
+// Get user by API key
+exports.getUserByApiKey = function(api_key) {
+    return sqldb.prepare('SELECT id, username FROM users WHERE api_key = ?').get(api_key);
+}
+
 // Fix TILs with NULL dates by using the date of the previous TIL
 exports.fixNullDates = function() {
     const rows = sqldb.prepare('SELECT id, title, date FROM tils ORDER BY id ASC').all();

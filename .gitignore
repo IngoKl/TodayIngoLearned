@@ -3,6 +3,10 @@ db/til.db
 db/til*.db
 db/sessions.db
 db/sessions*.db
+db/til.db.*
+db/sessions.db.*
+db/til.db-*
+db/sessions.db-*
 
 # Logs
 logs

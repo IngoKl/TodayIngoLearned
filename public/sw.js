@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.8';
+const CACHE_VERSION = 'v1.0.9';
 const CACHE_NAME = 'precache-' + CACHE_VERSION;
 
 self.addEventListener('install', function(event) {

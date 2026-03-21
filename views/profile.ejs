@@ -22,6 +22,35 @@
                     </ul>
                 </p>
 
+                <hr>
+                <h6>API Key</h6>
+                <% if (api_key) { %>
+                    <p><code><%= api_key %></code></p>
+                    <p class="text-muted">Use this key in the <code>X-API-Key</code> header to authenticate API requests.</p>
+                <% } else { %>
+                    <p class="text-muted">No API key generated yet.</p>
+                <% } %>
+                <form method="post" action="/user/api-key" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><%= api_key ? 'Regenerate' : 'Generate' %> API Key</button>
+                </form>
+
+                <% if (api_key) { %>
+                <details class="mt-3">
+                    <summary class="text-muted" style="cursor:pointer">Usage examples</summary>
+                    <div class="mt-2">
+                        <p class="mb-1"><strong>Get a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" http://localhost:3000/api/v1/til/1</code></pre>
+
+                        <p class="mb-1"><strong>Create a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -X POST http://localhost:3000/api/v1/til ^
+  -H "X-API-Key: <%= api_key %>" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\": \"My TIL\", \"description\": \"Learned something #misc\", \"date\": \"2026-03-21\"}"</code></pre>
+                    </div>
+                </details>
+                <% } %>
+                <hr>
+
                 <p>
                     <button id="themeToggle" class="btn btn-primary">Toggle Dark Mode</button>
                 </p>
