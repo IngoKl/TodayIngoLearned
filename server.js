@@ -188,7 +188,7 @@ app.get('/',
     const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
     FROM tils JOIN tags_join ON tags_join.til_id = tils.id
     JOIN tags ON tags.id = tags_join.tag_id
-    WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
+    WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.date DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
 
     const tils = tilsObject(rows, req.user.id);
     const totalPages = Math.ceil(totalCount / perPage);
