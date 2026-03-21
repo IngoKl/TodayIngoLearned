@@ -19,4 +19,30 @@ router.get('/findid/:title',
     res.json({ id: row ? row.id : false });
   });
 
+// JSON endpoint for knowledge graph data
+router.get('/graph',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const nodes = sqldb.prepare(`
+      SELECT tags.id, tags.tag, COUNT(DISTINCT tags_join.til_id) AS count
+      FROM tags
+      JOIN tags_join ON tags.id = tags_join.tag_id
+      JOIN tils ON tils.id = tags_join.til_id
+      WHERE tils.user_id = ?
+      GROUP BY tags.id
+    `).all(req.user.id);
+
+    const edges = sqldb.prepare(`
+      SELECT t1.tag_id AS source, t2.tag_id AS target,
+             COUNT(DISTINCT t1.til_id) AS weight
+      FROM tags_join t1
+      JOIN tags_join t2 ON t1.til_id = t2.til_id AND t1.tag_id < t2.tag_id
+      JOIN tils ON tils.id = t1.til_id
+      WHERE tils.user_id = ?
+      GROUP BY t1.tag_id, t2.tag_id
+    `).all(req.user.id);
+
+    res.json({ nodes: nodes, edges: edges });
+  });
+
 module.exports = router;

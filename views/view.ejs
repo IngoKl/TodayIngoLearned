@@ -55,6 +55,23 @@
             <% } %>
         <% } %>
         
+        <% if (related_tils && related_tils.length > 0) { %>
+        <br>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Related TILs</h5>
+                <% for (let i = 0; i < related_tils.length; i++) { %>
+                    <div class="d-flex justify-content-between align-items-center<%= i < related_tils.length - 1 ? ' mb-2' : '' %>">
+                        <a href="/til/view/<%= related_tils[i].id %>"><%= related_tils[i].title %></a>
+                        <small class="text-muted ms-2 text-nowrap">
+                            <%= related_tils[i].shared_count %> shared tag<%= related_tils[i].shared_count > 1 ? 's' : '' %>
+                        </small>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <% } %>
+
         <%if (comments.length > 0) { %>
         <hr>
         <h3>Comments</h3>

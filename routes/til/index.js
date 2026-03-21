@@ -32,7 +32,22 @@ router.get('/view/:til_id',
 
     const comments = sqldb.prepare("SELECT * FROM til_comments WHERE til_id = ? AND user_id = ?").all(req.params.til_id, req.user.id);
 
-    res.render('view', { til: til, comments: comments, user: req.user, bookmarked: bookmarked, til_urls: til_urls });
+    const related_tils = sqldb.prepare(`
+      SELECT tils.id, tils.title, tils.date, GROUP_CONCAT(DISTINCT tags.tag) AS shared_tags,
+             COUNT(DISTINCT shared_tj.tag_id) AS shared_count
+      FROM tags_join AS shared_tj
+      JOIN tags_join AS current_tj ON shared_tj.tag_id = current_tj.tag_id
+      JOIN tils ON tils.id = shared_tj.til_id
+      JOIN tags ON tags.id = shared_tj.tag_id
+      WHERE current_tj.til_id = ?
+        AND shared_tj.til_id != ?
+        AND tils.user_id = ?
+      GROUP BY tils.id
+      ORDER BY shared_count DESC, tils.date DESC
+      LIMIT 5
+    `).all(req.params.til_id, req.params.til_id, req.user.id);
+
+    res.render('view', { til: til, comments: comments, user: req.user, bookmarked: bookmarked, til_urls: til_urls, related_tils: related_tils });
   });
 
 

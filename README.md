@@ -27,6 +27,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Export TILs as markdown
 * Basic REST API
 * Sharing TILs publicly
+* Visualizing tags as a knowledge graph
 
 ## Usage
 
