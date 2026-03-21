@@ -49,3 +49,17 @@
 * Removed the Darkmode.js CDN depedency
 * Fixed a routing bug related to bookmarking
 * Matched GitHub and `package.json` keywords
+
+## Version 1.0.8 (XXXX-XX-XX)
+
+* Added timeline feature
+* Added a function to generate random TILs for testing
+* Added a functon to fix TILs with NULL-dates
+* Added visual in the footer
+* Changed to database-based sessions
+* Changed the dark mode implementation to Bootstraps (removed `darkmode-js`)
+* Optimized the UI in some minor ways
+* Optimized the handling of hashtags (RegEx)
+* Fixed app icons
+* Fixed missing showtil functionality in `install.js`
+* Fixed favicon path

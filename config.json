@@ -3,5 +3,6 @@
     "lowercasetags": true,
     "expresssessionsecret": "WlMAkFp1x1AkJBoJySNq",
     "securecoockies": false,
+    "maxage": 7776000000,
     "port": 3000
 }

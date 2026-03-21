@@ -2,6 +2,10 @@ var express = require('express');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var helpers = require('./helpers');
+var session = require('express-session');
+var SQLiteStore = require('better-sqlite3-session-store')(session);
+var SQLite = require('better-sqlite3');
+var path = require('path');
 
 var apiRoutes = require('./routes/api');
 var commentRoutes = require('./routes/comment');
@@ -16,6 +20,15 @@ const version = packageJson.version;
 var config = require('./config.json');
 var sqldb = require('./db');
 
+// Create session store with a separate database file
+const sessionsDb = new SQLite(path.join(path.dirname(config.dbpath), 'sessions.db'));
+const sessionStore = new SQLiteStore({
+    client: sessionsDb,
+    expired: {
+        clear: true,
+        intervalMs: 1000 * 60 * 60 // 1 hour
+    }
+});
 
 // Passport for authentication
 passport.use(new LocalStrategy(function (username, password, cb) {
@@ -72,11 +85,14 @@ app.use('/', express.static('public'));
 app.use(require('morgan')('combined'));
 app.use(require('body-parser').urlencoded({ extended: true }));
 app.use(require('express-session')({ 
+  store: sessionStore,
   secret: config.expresssessionsecret, 
   resave: false, 
   saveUninitialized: false,
-  // set secure to true if possible (i.e., when using HTTPS)
-  cookie: {secure: config.securecoockies, maxAge: 7776000000}
+  cookie: {
+    secure: config.securecoockies, 
+    maxAge: config.maxage
+  }
 }));
 
 
@@ -137,7 +153,7 @@ app.get('/',
     JOIN tags ON tags.id = tags_join.tag_id 
     WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT 10`, [req.user.id], (err, rows) => {
 
-      tils = tilsObject(rows);
+      tils = tilsObject(rows, req.user.id);
       res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
     });
   });
@@ -156,8 +172,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`, [req.user.id, `%${search}%`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }
@@ -168,8 +184,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`, [req.user.id, `%${search}%`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search});
       });
 
     }
@@ -182,8 +198,8 @@ app.post('/',
       JOIN tags ON tags.id = tags_join.tag_id 
       WHERE tils.user_id = ? and tils.date BETWEEN ? AND ? GROUP BY tils.id`, [req.user.id, range[0], range[1]], (err, rows) => {
         
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }
@@ -198,8 +214,8 @@ app.post('/',
                   GROUP BY tils.id
                 ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`, [req.user.id, `${search}`, `%${search},%`, `%,${search}`], (err, rows) => {
 
-        tils = tilsObject(rows);
-        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+        tils = tilsObject(rows, req.user.id);
+        res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
       });
 
     }

@@ -1,9 +1,12 @@
+var helpers = require('./index');
+
 // Create an object to be used in a template from SQL rows
-function tilsObject(tils) {
+function tilsObject(tils, user_id) {
     tils_combined = Object();
   
     tils.forEach(element => {
       tils_combined[element.title] = Object();
+      tils_combined[element.title]["user_id"] = user_id;
       tils_combined[element.title]["til_id"] = element.id;
       tils_combined[element.title]["title"] = element.title;
       tils_combined[element.title]["date"] = new Date(element.date);

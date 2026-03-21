@@ -19,6 +19,10 @@ router.get('/view/:til_id',
               JOIN tags ON tags.id = tags_join.tag_id 
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`, [req.user.id, req.params.til_id], (err, row) => {
 
+      if (err || !row) {
+        return res.status(404).send('TIL not found');
+      }
+
       tils = tilsObject([row]);
 
       til = tils[0][tils[1][0]];
@@ -124,7 +128,13 @@ router.get('/edit/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
     sqldb.get("SELECT * FROM tils WHERE id = ? and user_id = ?", [req.params.til_id, req.user.id], (err, row) => {
-
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Database error');
+      }
+      if (!row) {
+        return res.status(404).send('TIL not found');
+      }
       res.render('edit', { til: row, date: moment(row.date).format('YYYY-MM-DD'), user: req.user });
     });
   });
@@ -194,6 +204,40 @@ router.get('/bookmarks',
 
       tils = tilsObject(rows);
       res.render('bookmarks', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+    });
+  });
+
+
+router.get('/timeline',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    sqldb.all(`
+      SELECT tils.id, tils.title, tils.date,
+             strftime('%Y-%m', datetime(date/1000, 'unixepoch')) as month
+      FROM tils 
+      WHERE tils.user_id = ? 
+      ORDER BY tils.date DESC`, 
+      [req.user.id], 
+      (err, rows) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Database error');
+        }
+
+        // Group TILs by month
+        const tilsByMonth = {};
+        rows.forEach(row => {
+          if (!tilsByMonth[row.month]) {
+            tilsByMonth[row.month] = [];
+          }
+          tilsByMonth[row.month].push(row);
+        });
+
+        res.render('timeline', { 
+          tilsByMonth: tilsByMonth,
+          user: req.user,
+          moment: moment
+        });
     });
   });
 

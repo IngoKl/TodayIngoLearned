@@ -16,6 +16,17 @@ exports.hashPassword = function(password) {
 }
 
 
+// Return whether a TIL is bookmarked by a user
+exports.isBookmarked = function(user_id, til_id) {
+        sqldb.get("SELECT COUNT(*) FROM bookmarks WHERE user_id = ? AND til_id = ?", [user_id, til_id], (err, row) => {
+            if (row['COUNT(*)'] == 1) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+  }
+
 // Return the id of the given tag. If the tag doesn't exist, it gets created.
 exports.getAddTag = function(tag, callback) {
     if (config.lowercasetags) {
@@ -134,16 +145,18 @@ exports.getUserStats = function(user_id) {
     const sql = `
       SELECT
         (SELECT COUNT(*) FROM tils WHERE user_id = ?) AS tils_count,
-        (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count
+        (SELECT COUNT(DISTINCT tag_id) FROM tags_join JOIN tils ON tils.id = tags_join.til_id WHERE tils.user_id = ?) AS unique_tags_count,
+        (SELECT COUNT(*) FROM bookmarks WHERE user_id = ?) AS bookmarks_count
     `;
 
-    sqldb.get(sql, [user_id, user_id], (err, result) => {
+    sqldb.get(sql, [user_id, user_id, user_id], (err, result) => {
       if (err) {
         reject(err);
       } else {
         resolve({
           tils: result.tils_count,
-          unique_tags: result.unique_tags_count
+          unique_tags: result.unique_tags_count,
+          bookmarks: result.bookmarks_count
         });
       }
     });
@@ -157,4 +170,88 @@ exports.getDateRange = function(timestamp) {
   end_date = moment(timestamp).endOf('day').valueOf();
 
   return [start_date, end_date];
+}
+
+// Generate random TILs for testing
+exports.generateRandomTils = function(count) {
+  const loremIpsum = [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+      "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
+      "Excepteur sint occaecat cupidatat non proident, sunt in culpa."
+  ];
+  
+  const randomTags = ['#test', '#random', '#generated', '#sample', '#demo'];
+  
+  for (let i = 0; i < count; i++) {
+      const randomDate = Date.now() - Math.floor(Math.random() * 63072000000);
+      const title = `Random TIL ${Math.floor(Math.random() * 1000)}`;
+      const description = loremIpsum[Math.floor(Math.random() * loremIpsum.length)] + ' ' + 
+                         randomTags[Math.floor(Math.random() * randomTags.length)];
+      
+      sqldb.run("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)", 
+          [1, title, description, randomDate, 0], 
+          function (err) {
+              if (err) {
+                  console.log("Error creating random TIL:", err);
+                  return;
+              }
+              
+              // Extract tags from description and add them
+              const tags = parseHashtags(description);
+              module.exports.updateTags(this.lastID, tags);
+          }
+      );
+  }
+  
+  console.log(`Generated ${count} random TILs`);
+}
+
+// Fix TILs with NULL dates by using the date of the previous TIL
+exports.fixNullDates = function() {
+  return new Promise((resolve, reject) => {
+    // Get all TILs ordered by ID to maintain chronological order
+    sqldb.all(`SELECT id, title, date FROM tils ORDER BY id ASC`, [], (err, rows) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      let updates = [];
+      let lastValidDate = null;
+
+      // Process each row sequentially
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // If current row has NULL date, use the last valid date to update it
+        if (row.date === null && lastValidDate !== null) {
+          const dateToUse = lastValidDate; // Capture current lastValidDate for this update
+          updates.push(new Promise((resolveUpdate) => {
+            sqldb.run(`UPDATE tils SET date = ? WHERE id = ?`, [dateToUse, row.id], function(err) {
+              if (err) {
+                console.error(`Error updating TIL ${row.id}:`, err);
+                resolveUpdate();
+              } else {
+                console.log(`Updated TIL #${row.id}: "${row.title}" with date ${moment(dateToUse).format('YYYY-MM-DD HH:mm:ss')}`);
+                resolveUpdate();
+              }
+            });
+          }));
+          // After updating a NULL date, it becomes the lastValidDate for the next TIL
+          lastValidDate = dateToUse;
+        } else if (row.date !== null) {
+          // If it's a valid date, use it for the next TIL
+          lastValidDate = row.date;
+        }
+      }
+
+      // Wait for all updates to complete before showing summary
+      Promise.all(updates).then(() => {
+        console.log(`\nSummary: Fixed ${updates.length} TILs with NULL dates`);
+        resolve(updates.length);
+      });
+    });
+  });
 }
