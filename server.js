@@ -94,6 +94,8 @@ app.use('/static/js', express.static(__dirname + '/node_modules/jquery/dist'));
 app.use('/static/js', express.static(__dirname + '/node_modules/showdown/dist'));
 app.use('/static/js', express.static(__dirname + '/node_modules/js-autocomplete'));
 app.use('/static/css', express.static(__dirname + '/node_modules/js-autocomplete'));
+app.use('/static/js/hljs', express.static(__dirname + '/node_modules/@highlightjs/cdn-assets'));
+app.use('/static/css/hljs', express.static(__dirname + '/node_modules/@highlightjs/cdn-assets/styles'));
 
 
 // Make assets available
@@ -111,7 +113,7 @@ app.use(require('express-session')({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: config.securecoockies,
+    secure: config.securecookies,
     maxAge: config.maxage
   }
 }));
@@ -169,13 +171,22 @@ app.get('/logout',
 app.get('/',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const perPage = 10;
+    const offset = (page - 1) * perPage;
+
+    const totalCount = sqldb.prepare(`SELECT COUNT(DISTINCT tils.id) AS count
+    FROM tils JOIN tags_join ON tags_join.til_id = tils.id
+    WHERE tils.user_id = ?`).get(req.user.id).count;
+
     const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
     FROM tils JOIN tags_join ON tags_join.til_id = tils.id
     JOIN tags ON tags.id = tags_join.tag_id
-    WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT 10`).all(req.user.id);
+    WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.id DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
 
     const tils = tilsObject(rows, req.user.id);
-    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user });
+    const totalPages = Math.ceil(totalCount / perPage);
+    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, page: page, totalPages: totalPages });
   });
 
 
@@ -217,8 +228,12 @@ app.post('/',
     }
 
     if (rows) {
-      const tils = tilsObject(rows, req.user.id);
-      res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search });
+      const page = Math.max(1, parseInt(req.body.page) || 1);
+      const perPage = 10;
+      const totalPages = Math.ceil(rows.length / perPage);
+      const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
+      const tils = tilsObject(paginatedRows, req.user.id);
+      res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
     }
   });
 

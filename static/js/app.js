@@ -46,6 +46,13 @@ for (let mde of mdElements) {
     });
 };
 
+// Syntax highlighting for code blocks
+if (typeof hljs !== 'undefined') {
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+}
+
 
 // Markdown Editor
 editTil = document.getElementById("md-bold");

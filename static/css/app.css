@@ -116,3 +116,23 @@ main>.container {
     font-size: 1.2em;
 }
 
+.page-link {
+    color: #a25776;
+}
+
+.page-link:hover {
+    color: #7a3f59;
+    background-color: #f0dce4;
+    border-color: #a25776;
+}
+
+.page-item.active .page-link {
+    background-color: #a25776;
+    border-color: #a25776;
+    color: #fff;
+}
+
+.page-item.disabled .page-link {
+    color: #999;
+}
+

@@ -42,7 +42,11 @@ router.get('/:tag',
     // Going to a set and back to remove duplicates
     if (tagRow.tags) {
       const related_tags = Array.from(new Set(tagRow.tags.split(',')));
-      res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: tils[1], related_tags: related_tags, user: req.user });
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const perPage = 10;
+      const totalPages = Math.ceil(tils[1].length / perPage);
+      const pagedKeys = tils[1].slice((page - 1) * perPage, page * perPage);
+      res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: pagedKeys, related_tags: related_tags, user: req.user, page: page, totalPages: totalPages });
     } else {
       res.redirect('/');
     }
