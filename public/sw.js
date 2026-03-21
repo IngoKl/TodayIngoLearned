@@ -12,11 +12,11 @@ self.addEventListener('install', function(event) {
             // Requests we're caching; be very careful to not cache protected content
             return cache.addAll([
                 '/login',
-                'favicon.ico',
+                '/favicon.ico',
                 '/static/manifest.json',
-                '/static/images/icon/app-icon.png',
                 '/static/images/icons/app-icon-96.png',
                 '/static/images/icons/app-icon-144.png',
+                '/static/images/icons/app-icon-192.png',
                 '/static/js/app.js',
                 '/static/css/app.css',
                 '/static/css/login.css',
@@ -26,6 +26,8 @@ self.addEventListener('install', function(event) {
                 '/static/js/showdown.min.js',
                 '/static/js/jquery.min.js',
                 '/static/js/auto-complete.min.js',
+                '/static/js/hljs/highlight.min.js',
+                '/static/css/hljs/github-dark-dimmed.min.css',
             ]);
         })
     );
@@ -57,7 +59,13 @@ self.addEventListener('fetch', function(event) {
         event.respondWith(
             fetch(event.request)
                 .catch(function() {
-                    return caches.match(event.request);
+                    return caches.match(event.request)
+                        .then(function(cached) {
+                            return cached || new Response(
+                                '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline - TIL</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#3b4045;color:#f5f5f5;text-align:center}a{color:#a25776}</style></head><body><div><h1>You are offline</h1><p>Please check your connection and try again.</p><p><a href="/">Retry</a></p></div></body></html>',
+                                { headers: { 'Content-Type': 'text/html' } }
+                            );
+                        });
                 })
         );
         return;

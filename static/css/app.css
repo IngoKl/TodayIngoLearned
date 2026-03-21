@@ -136,3 +136,9 @@ main>.container {
     color: #999;
 }
 
+.md-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
