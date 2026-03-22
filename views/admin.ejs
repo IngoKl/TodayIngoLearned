@@ -16,6 +16,28 @@
                 <h5 class="card-title">Admin</h5>
                 <p class="text-muted"><%= users.length %> registered user<%= users.length !== 1 ? 's' : '' %></p>
 
+                <h6 class="mt-4">Create New User</h6>
+                <% if (typeof query !== 'undefined' && query.error) { %>
+                    <div class="alert alert-danger"><%= query.error %></div>
+                <% } %>
+                <% if (typeof query !== 'undefined' && query.success) { %>
+                    <div class="alert alert-success"><%= query.success %></div>
+                <% } %>
+                <form action="/admin/createuser" method="POST" class="row g-2 mb-4">
+                    <div class="col-auto">
+                        <input type="text" class="form-control" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="col-auto">
+                        <input type="password" class="form-control" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" class="form-control" name="displayname" placeholder="Display Name (optional)">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </div>
+                </form>
+
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>

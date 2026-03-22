@@ -1,6 +1,7 @@
 const express = require('express');
 const ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 const sqldb = require('./../../db');
+const helpers = require('./../../helpers');
 const router = express.Router();
 
 
@@ -28,7 +29,29 @@ router.get('/',
       ORDER BY u.id ASC
     `).all();
 
-    res.render('admin', { user: req.user, users: users });
+    res.render('admin', { user: req.user, users: users, query: req.query });
+  });
+
+
+router.post('/createuser',
+  ensureLoggedIn(),
+  ensureAdmin,
+  function (req, res) {
+    const { username, password, displayname } = req.body;
+
+    if (!username || !password) {
+      return res.redirect('/admin?error=Username and password are required');
+    }
+
+    const existing = sqldb.prepare('SELECT id FROM users WHERE username = ?').get(username);
+    if (existing) {
+      return res.redirect('/admin?error=Username already exists');
+    }
+
+    const hashed_password = helpers.hashPassword(password);
+    sqldb.prepare('INSERT INTO users(username, password, displayname) VALUES (?,?,?)').run(username, hashed_password, displayname || username);
+
+    res.redirect('/admin?success=User created successfully');
   });
 
 

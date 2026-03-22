@@ -77,7 +77,12 @@ exports.updateTags = function(til_id, tags) {
 // Changing a user's password
 exports.changeUserPassword = function(username, new_password) {
     const hashed_password = this.hashPassword(new_password);
-    sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
+    const result = sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
+    if (result.changes === 0) {
+        console.log(`User not found: ${username}`);
+    } else {
+        console.log(`Password updated for user: ${username}`);
+    }
 }
 
 
@@ -109,12 +114,15 @@ exports.setAdmin = function(username, isAdmin) {
 // Refreshing all tags
 exports.refreshTags = function() {
     const rows = sqldb.prepare('SELECT * FROM tils').all();
+    let updatedCount = 0;
     for (const row of rows) {
         const tags = parseHashtags(row.description);
         if (tags) {
             module.exports.updateTags(row.id, tags);
+            updatedCount++;
         }
     }
+    console.log(`Tags refreshed: ${updatedCount} TILs processed out of ${rows.length} total.`);
 }
 
 

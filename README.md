@@ -2,7 +2,7 @@
 
 ![TodayIngoLearned](https://github.com/IngoKl/TodayIngoLearned/blob/master/static/images/icons/app-icon-144.png?raw=true)
 
-*TodayIngoLearned* is a small personal project that I started to experiment with PWAs and full-stack Node.js a while back. It's a personal knowledge/learning management system used for every day (informal) learning. Since I now actually use the tool as part of my personal knowledge/learning management, I wanted to share it!
+_TodayIngoLearned_ is a small personal project that I started to experiment with PWAs and full-stack Node.js a while back. It's a personal knowledge/learning management system used for every day (informal) learning. Since I now actually use the tool as part of my personal knowledge/learning management, I wanted to share it!
 
 **Be aware:** As I started this as a personal learning project to learn about Node.js and some other technologies, the code is really not very good and leaves a lot to be desired. I hope that at some point I'll find the time to really go back to this!
 
@@ -10,26 +10,26 @@ You can find a detailed blog post about this project and its scope on [my person
 
 ## Use Case and Features
 
-TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.com/r/todayilearned/)) is essentially a database in which you can store whatever your learned on a particular day. Each learning is one *TIL* - an entry in the database containing information about what you've learned.
+TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.com/r/todayilearned/)) is essentially a database in which you can store whatever your learned on a particular day. Each learning is one _TIL_ - an entry in the database containing information about what you've learned.
 
 ### Features
 
-* Progressive Web App (PWA) – installable on Android/iOS (very limited caching)
-* Multi-user support with admin roles
-* Markdown support
-* Tagging TILs using hashtags
-* Commenting existing TILs
-* Bookmarking
-* Searching for titles, hashtags, and dates
-* Viewing random TILs
-* Basic spaced repetition system for studying TILs
-* Rudimentary dark mode
-* Export TILs as markdown
-* Basic REST API
-* Sharing TILs publicly
-* Visualizing tags as a knowledge graph
-* Admin interface for viewing all users and their stats
-* Configurable instance name (via `config.json`)
+- Progressive Web App (PWA) – installable on Android/iOS (very limited caching)
+- Multi-user support with admin roles
+- Markdown support
+- Tagging TILs using hashtags
+- Commenting existing TILs
+- Bookmarking
+- Searching for titles, hashtags, and dates
+- Viewing random TILs
+- Basic spaced repetition system for studying TILs
+- Rudimentary dark mode
+- Export TILs as markdown
+- Basic REST API
+- Sharing TILs publicly
+- Visualizing tags as a knowledge graph
+- Admin interface for viewing all users and their stats
+- Configurable instance name (via `config.json`)
 
 ## Usage
 
@@ -37,20 +37,20 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 
 The CLI (`install.js`) support the following commands:
 
-| Command                   | Description                                |
-|---------------------------|--------------------------------------------|
-| createdb                  | Create an empty SQLite database.           |
-| populatedb                | Initiate an empty DB and add a first user. |
-| backupdb                  | Create a backup of the current DB.         |
-| adduser user pass         | Add a new user to the system.              |
-| listusers                 | List all users.                            |
-| setuserpassword user pass | Change a user's password.                  |
-| refreshtags               | Regenerate and refresh all tags.           |
-| showtil id                | Show TIL based on its id.                  |
-| generatetils count        | Generate random TILs.                      |
+| Command                   | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| createdb                  | Create an empty SQLite database.                                |
+| populatedb                | Initiate an empty DB and add a first user.                      |
+| backupdb                  | Create a backup of the current DB.                              |
+| adduser user pass         | Add a new user to the system.                                   |
+| listusers                 | List all users.                                                 |
+| setuserpassword user pass | Change a user's password.                                       |
+| refreshtags               | Regenerate and refresh all tags.                                |
+| showtil id                | Show TIL based on its id.                                       |
+| generatetils count        | Generate random TILs.                                           |
 | fixnulldates              | Fix TILs with NULL dates by using the date of the previous TIL. |
-| setadmin user             | Grant admin privileges to a user.          |
-| removeadmin user          | Revoke admin privileges from a user.       |
+| setadmin user             | Grant admin privileges to a user.                               |
+| removeadmin user          | Revoke admin privileges from a user.                            |
 
 ### Internal Linking
 

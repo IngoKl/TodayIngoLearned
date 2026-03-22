@@ -8,15 +8,21 @@ const config = require('./config.json');
 function backupDb(mode='copy') {
     // Backup old database
     if (fs.existsSync(config.dbpath)) {
+        const backupPath = `./db/til-${Date.now()}.db`;
         if (mode === 'copy') {
-            fs.copyFile(config.dbpath, `./db/til-${Date.now()}.db`, (err) => {
+            fs.copyFile(config.dbpath, backupPath, (err) => {
                 if (err) {
                   console.log("Error Found:", err);
+                } else {
+                  console.log(`Database backed up to ${backupPath}`);
                 }
             });
         } else if (mode === 'rename') {
-            fs.renameSync(config.dbpath, `./db/til-${Date.now()}.db`);
+            fs.renameSync(config.dbpath, backupPath);
+            console.log(`Database renamed to ${backupPath}`);
         }
+    } else {
+        console.log('No database found to back up.');
     }
 }
 
