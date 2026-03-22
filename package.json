@@ -36,6 +36,7 @@
     "jquery": "^3.7.1",
     "js-autocomplete": "^1.0.4",
     "morgan": "^1.10.0",
+    "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "showdown": "^2.1.0"

@@ -142,3 +142,50 @@ main>.container {
     gap: 0.25rem;
 }
 
+/* Image gallery in editor */
+#image-gallery img {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#image-gallery img:hover {
+    opacity: 0.8;
+}
+
+/* Drawing canvas modal */
+#drawing-modal .modal-body {
+    padding: 0;
+}
+
+#drawing-canvas {
+    cursor: crosshair;
+    touch-action: none;
+    border: 1px solid #dee2e6;
+}
+
+#drawing-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+}
+
+/* Image display in markdown content */
+.description img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+    margin: 0.5rem 0;
+}
+
+/* Images gallery on view page */
+.til-images-gallery img {
+    transition: transform 0.2s;
+}
+
+.til-images-gallery img:hover {
+    transform: scale(1.05);
+}
+

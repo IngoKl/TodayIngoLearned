@@ -1,9 +1,19 @@
 const express = require('express');
 const dayjs = require('dayjs');
+const multer = require('multer');
 const sqldb = require('./../../db');
 const helpers = require('./../../helpers');
 const parseHashtags = require('./../../helpers/parseHashtags');
 const router = express.Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    cb(null, allowed.includes(file.mimetype));
+  }
+});
 
 const tilsObject = require('./../../helpers/tilsObject');
 
@@ -35,6 +45,8 @@ router.get('/view/:til_id',
 
     const comments = sqldb.prepare("SELECT * FROM til_comments WHERE til_id = ? AND user_id = ?").all(req.params.til_id, req.user.id);
 
+    const til_images = sqldb.prepare('SELECT id, filename, mime_type FROM til_images WHERE til_id = ?').all(req.params.til_id);
+
     const related_tils = sqldb.prepare(`
       SELECT tils.id, tils.title, tils.date, GROUP_CONCAT(DISTINCT tags.tag) AS shared_tags,
              COUNT(DISTINCT shared_tj.tag_id) AS shared_count
@@ -50,7 +62,7 @@ router.get('/view/:til_id',
       LIMIT 5
     `).all(req.params.til_id, req.params.til_id, req.user.id);
 
-    res.render('view', { til: til, comments: comments, user: req.user, bookmarked: bookmarked, til_urls: til_urls, related_tils: related_tils });
+    res.render('view', { til: til, comments: comments, user: req.user, bookmarked: bookmarked, til_urls: til_urls, related_tils: related_tils, til_images: til_images });
   });
 
 
@@ -112,6 +124,16 @@ router.post('/add',
     const result = sqldb.prepare("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)").run(req.user.id, title, description, date, 0);
     helpers.updateTags(result.lastInsertRowid, tags);
 
+    // Associate any images referenced in the description
+    const imageRefs = description.match(/!\[.*?\]\(\/image\/(\d+)\)/g);
+    if (imageRefs) {
+      const imageIds = imageRefs.map(ref => ref.match(/\/image\/(\d+)/)[1]);
+      const associateStmt = sqldb.prepare('UPDATE til_images SET til_id = ? WHERE id = ? AND til_id IS NULL');
+      for (const imgId of imageIds) {
+        associateStmt.run(result.lastInsertRowid, imgId);
+      }
+    }
+
     res.redirect(`/til/view/${result.lastInsertRowid}`);
   });
 
@@ -145,6 +167,16 @@ router.post('/edit/:til_id',
     sqldb.prepare("UPDATE tils SET title = ?, date = ?, description = ?, public = ? WHERE id = ? AND user_id = ?").run(title, date, description, isPublic, req.params.til_id, req.user.id);
     helpers.updateTags(req.params.til_id, tags);
 
+    // Associate any new images referenced in the description
+    const imageRefs = description.match(/!\[.*?\]\(\/image\/(\d+)\)/g);
+    if (imageRefs) {
+      const imageIds = imageRefs.map(ref => ref.match(/\/image\/(\d+)/)[1]);
+      const associateStmt = sqldb.prepare('UPDATE til_images SET til_id = ? WHERE id = ? AND til_id IS NULL');
+      for (const imgId of imageIds) {
+        associateStmt.run(req.params.til_id, imgId);
+      }
+    }
+
     res.redirect(`/til/view/${req.params.til_id}`);
   });
 
@@ -152,6 +184,7 @@ router.post('/edit/:til_id',
 router.get('/edit/:til_id/delete',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
+    sqldb.prepare("DELETE FROM til_images WHERE til_id = ?").run(req.params.til_id);
     sqldb.prepare("DELETE FROM tils WHERE id = ? AND user_id = ?").run(req.params.til_id, req.user.id);
     res.redirect('/');
   });
@@ -213,6 +246,58 @@ router.get('/timeline',
       dayjs: dayjs
     });
   });
+
+
+// Upload image (AJAX endpoint)
+router.post('/upload-image',
+  require('connect-ensure-login').ensureLoggedIn(),
+  upload.single('image'),
+  function (req, res) {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No valid image file provided' });
+    }
+
+    const tilId = req.body.til_id || null;
+    const result = sqldb.prepare(
+      'INSERT INTO til_images(til_id, image_data, mime_type, filename, created_at) VALUES (?,?,?,?,?)'
+    ).run(tilId, req.file.buffer, req.file.mimetype, req.file.originalname, Date.now());
+
+    const imageId = Number(result.lastInsertRowid);
+    res.json({
+      id: imageId,
+      markdown: `![${req.file.originalname}](/image/${imageId})`,
+      filename: req.file.originalname
+    });
+  }
+);
+
+
+// Delete individual image
+router.get('/delete-image/:image_id',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const image = sqldb.prepare(`
+      SELECT til_images.id, til_images.til_id
+      FROM til_images
+      LEFT JOIN tils ON tils.id = til_images.til_id
+      WHERE til_images.id = ? AND (tils.user_id = ? OR til_images.til_id IS NULL)
+    `).get(req.params.image_id, req.user.id);
+
+    if (!image) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    sqldb.prepare('DELETE FROM til_images WHERE id = ?').run(req.params.image_id);
+
+    if (req.accepts('json')) {
+      return res.json({ success: true });
+    }
+    if (image.til_id) {
+      return res.redirect('/til/edit/' + image.til_id);
+    }
+    res.redirect('/');
+  }
+);
 
 
 module.exports = router;

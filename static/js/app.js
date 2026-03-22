@@ -164,6 +164,104 @@ function addMd(md_to_add, prefix_only, add_only) {
 }
 
 
+// Image Upload Support
+const imageUploadBtn = document.getElementById('md-image');
+const imageFileInput = document.getElementById('image-upload');
+const drawBtn = document.getElementById('md-draw');
+const imageGallery = document.getElementById('image-gallery');
+
+if (imageUploadBtn) {
+  imageUploadBtn.addEventListener('click', () => imageFileInput.click());
+
+  imageFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await uploadImage(file);
+    imageFileInput.value = '';
+  });
+
+  if (drawBtn) {
+    drawBtn.addEventListener('click', () => openDrawingCanvas());
+  }
+
+  // Drag-and-drop on textarea
+  const descTextarea = document.getElementById('description');
+  descTextarea.addEventListener('dragover', (e) => { e.preventDefault(); });
+  descTextarea.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      await uploadImage(file);
+    }
+  });
+
+  // Paste from clipboard
+  descTextarea.addEventListener('paste', async (e) => {
+    const items = e.clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        await uploadImage(file);
+        break;
+      }
+    }
+  });
+}
+
+async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const gallery = document.getElementById('image-gallery');
+  const tilId = gallery ? gallery.dataset.tilId : null;
+  if (tilId) formData.append('til_id', tilId);
+
+  const res = await fetch('/til/upload-image', { method: 'POST', body: formData });
+  const data = await res.json();
+
+  if (data.markdown) {
+    const md = document.getElementById('description');
+    const pos = md.selectionStart;
+    const before = md.value.substring(0, pos);
+    const after = md.value.substring(pos);
+    md.value = before + '\n' + data.markdown + '\n' + after;
+
+    addImageToGallery(data.id, data.filename);
+  }
+}
+
+function addImageToGallery(id, filename) {
+  const gallery = document.getElementById('image-gallery');
+  if (!gallery) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'position-relative';
+  wrapper.innerHTML = `
+    <img src="/image/${id}" alt="${filename}" style="max-width:100px;max-height:75px;object-fit:cover;" class="rounded border">
+    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+            style="padding:0 4px;font-size:10px;line-height:1.2;"
+            onclick="deleteImage(${id}, this)">x</button>
+  `;
+  gallery.appendChild(wrapper);
+}
+
+async function deleteImage(imageId, btn) {
+  if (!confirm('Delete this image?')) return;
+  await fetch('/til/delete-image/' + imageId, { headers: { 'Accept': 'application/json' } });
+  btn.closest('.position-relative').remove();
+}
+
+// Load existing images when editing
+if (imageGallery && imageGallery.dataset.tilId) {
+  fetch('/json/images/' + imageGallery.dataset.tilId)
+    .then(r => r.json())
+    .then(data => {
+      (data.images || []).forEach(img => addImageToGallery(img.id, img.filename));
+    });
+}
+
+
 // Search
 const searchtype = document.getElementsByName('searchtype')[0];
 const search = document.getElementsByName('search')[0];

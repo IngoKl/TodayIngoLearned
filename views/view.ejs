@@ -42,6 +42,24 @@
 
         <br>
 
+        <% if (til_images && til_images.length > 0) { %>
+        <br>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Images</h5>
+                <div class="d-flex flex-wrap gap-2 til-images-gallery">
+                    <% for (let img of til_images) { %>
+                        <a href="/image/<%= img.id %>" target="_blank">
+                            <img src="/image/<%= img.id %>" alt="<%= img.filename %>"
+                                 style="max-width: 200px; max-height: 150px; object-fit: cover;"
+                                 class="rounded border">
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
         <%if (til_urls) { %>
             <%if (til_urls.length > 0) { %>
             <div class="card">

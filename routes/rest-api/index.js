@@ -1,8 +1,18 @@
 const express = require('express');
+const multer = require('multer');
 const sqldb = require('./../../db');
 const helpers = require('./../../helpers');
 const parseHashtags = require('./../../helpers/parseHashtags');
 const router = express.Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    cb(null, allowed.includes(file.mimetype));
+  }
+});
 
 // API key authentication middleware
 function authenticateApiKey(req, res, next) {
@@ -128,6 +138,70 @@ router.post('/til', function (req, res) {
         date: tilDate,
         tags: tags
     });
+});
+
+
+// POST /api/v1/til/:id/image - Upload image to a TIL
+router.post('/til/:id/image', upload.single('image'), function (req, res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No valid image file provided' });
+  }
+
+  const til = sqldb.prepare('SELECT id FROM tils WHERE id = ? AND user_id = ?').get(req.params.id, req.apiUser.id);
+  if (!til) {
+    return res.status(404).json({ error: 'TIL not found' });
+  }
+
+  const result = sqldb.prepare(
+    'INSERT INTO til_images(til_id, image_data, mime_type, filename, created_at) VALUES (?,?,?,?,?)'
+  ).run(req.params.id, req.file.buffer, req.file.mimetype, req.file.originalname, Date.now());
+
+  const imageId = Number(result.lastInsertRowid);
+  res.status(201).json({
+    id: imageId,
+    til_id: Number(req.params.id),
+    filename: req.file.originalname,
+    mime_type: req.file.mimetype,
+    url: `/image/${imageId}`,
+    markdown: `![${req.file.originalname}](/image/${imageId})`
+  });
+});
+
+
+// GET /api/v1/til/:id/images - List images for a TIL
+router.get('/til/:id/images', function (req, res) {
+  const til = sqldb.prepare('SELECT id FROM tils WHERE id = ? AND user_id = ?').get(req.params.id, req.apiUser.id);
+  if (!til) {
+    return res.status(404).json({ error: 'TIL not found' });
+  }
+
+  const images = sqldb.prepare('SELECT id, filename, mime_type, created_at FROM til_images WHERE til_id = ?').all(req.params.id);
+  res.json({
+    til_id: Number(req.params.id),
+    images: images.map(img => ({
+      id: img.id,
+      filename: img.filename,
+      mime_type: img.mime_type,
+      url: `/image/${img.id}`,
+      created_at: img.created_at
+    }))
+  });
+});
+
+
+// DELETE /api/v1/til/:til_id/image/:image_id - Delete an image
+router.delete('/til/:til_id/image/:image_id', function (req, res) {
+  const til = sqldb.prepare('SELECT id FROM tils WHERE id = ? AND user_id = ?').get(req.params.til_id, req.apiUser.id);
+  if (!til) {
+    return res.status(404).json({ error: 'TIL not found' });
+  }
+
+  const result = sqldb.prepare('DELETE FROM til_images WHERE id = ? AND til_id = ?').run(req.params.image_id, req.params.til_id);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+
+  res.json({ success: true });
 });
 
 

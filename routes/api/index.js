@@ -53,4 +53,14 @@ router.get('/graph',
     res.json({ nodes: nodes, edges: edges });
   });
 
+// JSON endpoint for fetching TIL images
+router.get('/images/:til_id',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const images = sqldb.prepare(
+      'SELECT id, filename, mime_type FROM til_images WHERE til_id = ?'
+    ).all(req.params.til_id);
+    res.json({ images });
+  });
+
 module.exports = router;

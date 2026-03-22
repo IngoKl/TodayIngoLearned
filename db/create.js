@@ -14,6 +14,7 @@ exports.newDb = function () {
     sqldb.exec('CREATE TABLE tags_join (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `tag_id` INTEGER)');
     sqldb.exec('CREATE TABLE til_comments (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `comment` TEXT,`user_id` INTEGER)');
     sqldb.exec('CREATE TABLE bookmarks (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`user_id` INTEGER,`til_id` INTEGER)');
+    sqldb.exec('CREATE TABLE til_images (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `image_data` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT, `created_at` INTEGER DEFAULT 0)');
 
     sqldb.close();
     console.log('New database created ' + config.dbpath);

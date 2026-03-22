@@ -24,22 +24,11 @@ const config = require('./config.json');
 const sqldb = require('./db');
 const restApiRoutes = require('./routes/rest-api');
 
-// Migrate: add api_key column to users table if it doesn't exist
-const userColumns = sqldb.pragma('table_info(users)').map(c => c.name);
-if (!userColumns.includes('api_key')) {
-  sqldb.exec('ALTER TABLE users ADD COLUMN api_key TEXT');
-}
+// Run database migrations
+require('./db/migrate')();
 
-// Migrate: add public column to tils table if it doesn't exist
-const tilColumns = sqldb.pragma('table_info(tils)').map(c => c.name);
-if (!tilColumns.includes('public')) {
-  sqldb.exec('ALTER TABLE tils ADD COLUMN public INTEGER DEFAULT 0');
-}
-
-// Migrate: add is_admin column to users table if it doesn't exist
-if (!userColumns.includes('is_admin')) {
-  sqldb.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0');
-}
+// Clean up orphan images older than 24 hours on startup
+helpers.cleanupOrphanImages();
 
 // Create session store with a separate database file
 const sessionsDb = new SQLite(path.join(path.dirname(config.dbpath), 'sessions.db'));
@@ -273,8 +262,44 @@ app.get('/public/:til_id',
       til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
     }
 
-    res.render('public_view', { til: til, til_urls: til_urls });
+    const til_images = sqldb.prepare('SELECT id, filename, mime_type FROM til_images WHERE til_id = ?').all(req.params.til_id);
+
+    res.render('public_view', { til: til, til_urls: til_urls, til_images: til_images });
   });
+
+
+// Serve images from the database (with ownership check)
+app.get('/image/:id', function (req, res) {
+  const row = sqldb.prepare(`
+    SELECT til_images.image_data, til_images.mime_type, til_images.filename,
+           til_images.til_id, tils.user_id, tils.public AS is_public
+    FROM til_images
+    LEFT JOIN tils ON tils.id = til_images.til_id
+    WHERE til_images.id = ?
+  `).get(req.params.id);
+
+  if (!row) {
+    return res.status(404).send('Image not found');
+  }
+
+  // Access control: owner or public TIL
+  const isOwner = req.isAuthenticated && req.isAuthenticated() && req.user && row.user_id === req.user.id;
+  const isPublic = row.is_public === 1;
+  const isOrphan = row.til_id === null;
+
+  if (!isOwner && !isPublic && !isOrphan) {
+    return res.status(403).send('Forbidden');
+  }
+
+  // Orphan images require authentication (uploaded during add flow)
+  if (isOrphan && !(req.isAuthenticated && req.isAuthenticated())) {
+    return res.status(403).send('Forbidden');
+  }
+
+  res.set('Content-Type', row.mime_type);
+  res.set('Cache-Control', 'private, max-age=31536000, immutable');
+  res.send(row.image_data);
+});
 
 
 app.use(function (req, res, next) {

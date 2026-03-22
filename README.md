@@ -17,6 +17,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 - Progressive Web App (PWA) – installable on Android/iOS (very limited caching)
 - Multi-user support with admin roles
 - Markdown support
+- Image and drawing support
 - Tagging TILs using hashtags
 - Commenting existing TILs
 - Bookmarking
