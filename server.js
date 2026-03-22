@@ -15,6 +15,7 @@ const tagRoutes = require('./routes/tag');
 const tilRoutes = require('./routes/til');
 const todoRoutes = require('./routes/todo');
 const userRoutes = require('./routes/user');
+const adminRoutes = require('./routes/admin');
 
 const packageJson = require('./package.json');
 const version = packageJson.version;
@@ -33,6 +34,11 @@ if (!userColumns.includes('api_key')) {
 const tilColumns = sqldb.pragma('table_info(tils)').map(c => c.name);
 if (!tilColumns.includes('public')) {
   sqldb.exec('ALTER TABLE tils ADD COLUMN public INTEGER DEFAULT 0');
+}
+
+// Migrate: add is_admin column to users table if it doesn't exist
+if (!userColumns.includes('is_admin')) {
+  sqldb.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0');
 }
 
 // Create session store with a separate database file
@@ -68,7 +74,7 @@ passport.serializeUser(function (user, cb) {
 
 
 passport.deserializeUser(function (id, done) {
-  const row = sqldb.prepare("SELECT id, username FROM users WHERE id = ?").get(id);
+  const row = sqldb.prepare("SELECT id, username, is_admin FROM users WHERE id = ?").get(id);
   if (!row) return done(null, false);
   return done(null, row);
 });
@@ -128,6 +134,7 @@ app.use(require('express-session')({
 // Middleware for locals
 app.use((req, res, next) => {
   res.locals.version = version;
+  res.locals.appName = config.name || 'TodayIngoLearned';
   next();
 });
 
@@ -149,6 +156,7 @@ app.use('/tag', tagRoutes);
 app.use('/til', tilRoutes);
 app.use('/todo', todoRoutes);
 app.use('/user', userRoutes);
+app.use('/admin', adminRoutes);
 app.use('/api/v1', restApiRoutes);
 
 

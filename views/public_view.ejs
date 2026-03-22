@@ -3,13 +3,13 @@
 
 <head>
     <%- include ('partials/head.ejs') %>
-    <title><%= til.title %> – TodayIngoLearned</title>
+    <title><%= til.title %> – <%= appName %></title>
 </head>
 
 <body>
 <nav class="navbar navbar-expand-md navbar-dark dark_grey fixed-top">
     <div class="container" style="margin-left: 10px;">
-        <a class="navbar-brand" href="#"><img src="/static/images/icons/app-icon-96.png" width="32" alt="TIL"/> TodayIngoLearned</a>
+        <a class="navbar-brand" href="#"><img src="/static/images/icons/app-icon-96.png" width="32" alt="TIL"/> <%= appName %></a>
     </div>
 </nav>
 

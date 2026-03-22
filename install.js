@@ -65,6 +65,12 @@ else if (command === 'generatetils') {
 else if (command === 'fixnulldates') {
     helpers.fixNullDates();
 }
+else if (command === 'setadmin') {
+    helpers.setAdmin(process.argv.slice(2)[1], true);
+}
+else if (command === 'removeadmin') {
+    helpers.setAdmin(process.argv.slice(2)[1], false);
+}
 else {
-    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils|fixnulldates');
+    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils|fixnulldates|setadmin|removeadmin');
 }

@@ -15,7 +15,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 ### Features
 
 * Progressive Web App (PWA) – installable on Android/iOS (very limited caching)
-* Multi-user support
+* Multi-user support with admin roles
 * Markdown support
 * Tagging TILs using hashtags
 * Commenting existing TILs
@@ -28,6 +28,8 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 * Basic REST API
 * Sharing TILs publicly
 * Visualizing tags as a knowledge graph
+* Admin interface for viewing all users and their stats
+* Configurable instance name (via `config.json`)
 
 ## Usage
 
@@ -47,6 +49,8 @@ The CLI (`install.js`) support the following commands:
 | showtil id                | Show TIL based on its id.                  |
 | generatetils count        | Generate random TILs.                      |
 | fixnulldates              | Fix TILs with NULL dates by using the date of the previous TIL. |
+| setadmin user             | Grant admin privileges to a user.          |
+| removeadmin user          | Revoke admin privileges from a user.       |
 
 ### Internal Linking
 
@@ -71,7 +75,7 @@ node install.js populatedb
 node server.js
 ```
 
-Also consider the settings in `config.json`. If the option `lowercasetags` is `true`, all tags will be converted to lowercase. Also make sure to change the `expresssessionsecret`.
+Also consider the settings in `config.json`. If the option `lowercasetags` is `true`, all tags will be converted to lowercase. Also make sure to change the `expresssessionsecret`. You can change the `name` field to customize the instance name (e.g., `"TodayClaudeLearned"`) — this is used in page titles, the navbar, and the footer.
 
 If you plan on running this 'in production' 😅, I would recommend using [pm2](https://pm2.keymetrics.io) to run the server.
 
@@ -80,7 +84,7 @@ npm install pm2 -g
 pm2 start server.js
 ```
 
-The `install.js` script also will allow you to create new users (`node install.js newuser username password`) and to change a user's password (`node install.js setuserpassword username new_password`). Use `node install.js refreshtags` to refresh/rebuild all tags.
+The `install.js` script also will allow you to create new users (`node install.js adduser username password`) and to change a user's password (`node install.js setuserpassword username new_password`). Use `node install.js refreshtags` to refresh/rebuild all tags. To grant admin access: `node install.js setadmin username`.
 
 ### Docker
 

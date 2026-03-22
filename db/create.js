@@ -10,7 +10,7 @@ exports.newDb = function () {
 
     sqldb.exec('CREATE TABLE tils (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER, `title` TEXT, `description` TEXT, `date` INTEGER, `repetitions` INTEGER DEFAULT 0, `last_repetition` INTEGER DEFAULT 0, `next_repetition` INTEGER DEFAULT 0, `public` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE tags (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `tag` TEXT UNIQUE)');
-    sqldb.exec('CREATE TABLE users (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` TEXT UNIQUE, `password` TEXT, `displayname` TEXT)');
+    sqldb.exec('CREATE TABLE users (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` TEXT UNIQUE, `password` TEXT, `displayname` TEXT, `is_admin` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE tags_join (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `tag_id` INTEGER)');
     sqldb.exec('CREATE TABLE til_comments (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `comment` TEXT,`user_id` INTEGER)');
     sqldb.exec('CREATE TABLE bookmarks (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`user_id` INTEGER,`til_id` INTEGER)');

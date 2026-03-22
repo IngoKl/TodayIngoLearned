@@ -96,6 +96,16 @@ exports.listUsers = function() {
     }
 }
 
+// Set or remove admin status for a user
+exports.setAdmin = function(username, isAdmin) {
+    const result = sqldb.prepare('UPDATE users SET is_admin = ? WHERE username = ?').run(isAdmin ? 1 : 0, username);
+    if (result.changes === 0) {
+        console.log(`User not found: ${username}`);
+    } else {
+        console.log(`${username} is ${isAdmin ? 'now' : 'no longer'} an admin`);
+    }
+}
+
 // Refreshing all tags
 exports.refreshTags = function() {
     const rows = sqldb.prepare('SELECT * FROM tils').all();

@@ -3,7 +3,7 @@
 
 <head>
 	<%- include ('partials/head.ejs') %>
-	<title>TodayIngoLearned</title>
+	<title><%= appName %></title>
 	<link href="/static/css/login.css" rel="stylesheet">
 </head>
 
@@ -11,7 +11,7 @@
 
 	<main class="form-signin">
 		<form method="post" action="/login">
-			<img class="mb-4" src="/static/images/icons/app-icon.png" alt="TodayIngoLearned" width="144" height="144">
+			<img class="mb-4" src="/static/images/icons/app-icon.png" alt="<%= appName %>" width="144" height="144">
 			<h1 class="h3 mb-3 font-weight-normal">Welcome to TIL!</h1>
 			<br>
 

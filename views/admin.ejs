@@ -1,0 +1,58 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= appName %> - Admin</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Admin</h5>
+                <p class="text-muted"><%= users.length %> registered user<%= users.length !== 1 ? 's' : '' %></p>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Display Name</th>
+                                <th>TILs</th>
+                                <th>Tags</th>
+                                <th>Bookmarks</th>
+                                <th>Comments</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for (const u of users) { %>
+                            <tr>
+                                <td><%= u.id %></td>
+                                <td><%= u.username %></td>
+                                <td><%= u.displayname %></td>
+                                <td><%= u.tils_count %></td>
+                                <td><%= u.tags_count %></td>
+                                <td><%= u.bookmarks_count %></td>
+                                <td><%= u.comments_count %></td>
+                                <td><%= u.is_admin ? 'Yes' : '' %></td>
+                            </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>
