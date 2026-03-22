@@ -268,7 +268,10 @@ app.get('/public/:til_id',
 
     const tils = tilsObject([row]);
     const til = tils[0][tils[1][0]];
-    const til_urls = til.description.match(/\bhttps?:\/\/(\S(?<!\)))+/gi);
+    let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
+    if (til_urls) {
+      til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
+    }
 
     res.render('public_view', { til: til, til_urls: til_urls });
   });

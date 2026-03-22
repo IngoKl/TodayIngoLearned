@@ -15,27 +15,73 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function AddILink(iLink, mde) {
-    fetch('/json/findid/' + encodeURIComponent(iLink))
+    return fetch('/json/findid/' + encodeURIComponent(iLink))
     .then((response) => {
       return response.json();
     })
     .then((data) => {
-      console.log(data);
       const safe = escapeHtml(iLink);
       if (data.id) {
         mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/view/' + data['id'] + '">' + safe + '</a>');
       } else {
         mde.innerHTML = mde.innerHTML.replace('[[' + iLink + ']]', '<a href="/til/add?title=' + encodeURIComponent(iLink) + '">' + safe + '</a>');
       }
-
     });
 }
 
+function autoLinkTitles(element, titles) {
+    // Exclude current TIL's title to avoid self-linking
+    const card = element.closest('.card-body');
+    const cardTitle = card ? card.querySelector('.card-title') : null;
+    const currentTitle = cardTitle ? cardTitle.textContent.trim().toLowerCase() : '';
 
-// Markdown Support, Tag Highlighting, Internal Links
+    // Sort longest first so longer titles match before shorter substrings
+    const sortedTitles = titles
+        .filter(t => t.title.length >= 3 && t.title.toLowerCase() !== currentTitle)
+        .sort((a, b) => b.title.length - a.title.length);
+
+    if (!sortedTitles.length) return;
+
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    for (const node of textNodes) {
+        if (node.parentElement.closest('a')) continue;
+
+        for (const {id, title} of sortedTitles) {
+            const regex = new RegExp('\\b' + escapeRegExp(title) + '\\b', 'i');
+            const match = node.textContent.match(regex);
+            if (match) {
+                // Split text node around the match and insert a link
+                node.splitText(match.index + match[0].length);
+                const matchNode = node.splitText(match.index);
+                const link = document.createElement('a');
+                link.href = '/til/view/' + id;
+                link.textContent = matchNode.textContent;
+                matchNode.parentNode.replaceChild(link, matchNode);
+                break; // one match per text node to avoid index issues
+            }
+        }
+    }
+}
+
+
+// Markdown Support, Tag Highlighting, Internal Links, Auto-linking
 const converter = new showdown.Converter(),
 mdElements = document.getElementsByClassName('md');
+
+// Fetch titles once for auto-linking
+const titlesPromise = fetch('/json/titles')
+    .then(r => r.json())
+    .then(data => data.titles || [])
+    .catch(() => []);
+
 for (let mde of mdElements) {
     // Markdown
     mde.innerHTML = converter.makeHtml(mde.textContent);
@@ -44,13 +90,16 @@ for (let mde of mdElements) {
     const tagRegEx = /\B([#]+([A-Za-z0-9-_äöüÄÖÜß\u00F0-\u02AF]+))/ig;
     mde.innerHTML = mde.innerHTML.replace(tagRegEx, '<a class="tag" href="/tag/$2">$1</a>');
 
-    // Internal Links
+    // Internal Links, then auto-link titles after they resolve
     const iLinkRegEx = /\[\[(.*?)\]\]/ig;
-    const iLinks = mde.innerHTML.matchAll(iLinkRegEx);
+    const iLinks = Array.from(mde.innerHTML.matchAll(iLinkRegEx));
+    const linkPromises = iLinks.map(iLink => AddILink(iLink[1], mde));
 
-    Array.from(iLinks).forEach(function(iLink) {
-      AddILink(iLink[1], mde)
-    });
+    const currentMde = mde;
+    Promise.all(linkPromises)
+        .then(() => titlesPromise)
+        .then(titles => autoLinkTitles(currentMde, titles))
+        .catch(() => {});
 };
 
 // Syntax highlighting for code blocks

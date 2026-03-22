@@ -15,8 +15,16 @@ router.get('/tags',
 router.get('/findid/:title',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const row = sqldb.prepare('SELECT id FROM tils WHERE title = ? AND user_id = ? LIMIT 1').get(req.params.title, req.user.id);
+    const row = sqldb.prepare('SELECT id FROM tils WHERE title = ? COLLATE NOCASE AND user_id = ? LIMIT 1').get(req.params.title, req.user.id);
     res.json({ id: row ? row.id : false });
+  });
+
+// JSON endpoint exposing all TIL titles for auto-linking
+router.get('/titles',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const rows = sqldb.prepare('SELECT id, title FROM tils WHERE user_id = ?').all(req.user.id);
+    res.json({ titles: rows });
   });
 
 // JSON endpoint for knowledge graph data

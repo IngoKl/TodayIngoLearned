@@ -24,8 +24,11 @@ router.get('/view/:til_id',
     const til = tils[0][tils[1][0]];
     til.public = row.public;
 
-    // Find all urls in the description
-    const til_urls = til.description.match(/\bhttps?:\/\/(\S(?<!\)))+/gi);
+    // Find all urls in the description (including www. without protocol)
+    let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
+    if (til_urls) {
+      til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
+    }
 
     const bookmark = sqldb.prepare("SELECT * FROM bookmarks WHERE til_id = ? AND user_id = ?").get(req.params.til_id, req.user.id);
     const bookmarked = !!bookmark;
