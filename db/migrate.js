@@ -27,7 +27,35 @@ module.exports = function () {
       image_data BLOB NOT NULL,
       mime_type TEXT NOT NULL,
       filename TEXT,
-      created_at INTEGER DEFAULT 0
+      created_at INTEGER DEFAULT 0,
+      source TEXT DEFAULT 'til'
+    )`);
+  }
+
+  // Add source column to til_images
+  const tilImageColumns = sqldb.pragma('table_info(til_images)').map(c => c.name);
+  if (!tilImageColumns.includes('source')) {
+    sqldb.exec("ALTER TABLE til_images ADD COLUMN source TEXT DEFAULT 'til'");
+  }
+
+  // Create sticky_notes table
+  const stickyNotesTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='sticky_notes'").get();
+  if (!stickyNotesTable) {
+    sqldb.exec(`CREATE TABLE sticky_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT DEFAULT '',
+      body TEXT DEFAULT '',
+      type TEXT NOT NULL DEFAULT 'text',
+      image_id INTEGER DEFAULT NULL,
+      color TEXT DEFAULT '#fff9c4',
+      pos_x INTEGER DEFAULT 50,
+      pos_y INTEGER DEFAULT 50,
+      width INTEGER DEFAULT 200,
+      height INTEGER DEFAULT 200,
+      z_index INTEGER DEFAULT 0,
+      created_at INTEGER DEFAULT 0,
+      updated_at INTEGER DEFAULT 0
     )`);
   }
 };

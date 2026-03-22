@@ -1,6 +1,6 @@
 // drawing.js - Lightweight HTML5 canvas drawing tool (Bootstrap modal)
 
-function openDrawingCanvas() {
+function openDrawingCanvas(options = {}) {
   // Remove existing modal if any
   const existing = document.getElementById('drawing-modal');
   if (existing) existing.remove();
@@ -137,7 +137,11 @@ function openDrawingCanvas() {
   document.getElementById('draw-save').addEventListener('click', () => {
     canvas.toBlob(async (blob) => {
       const file = new File([blob], 'drawing.png', { type: 'image/png' });
-      await uploadImage(file);
+      if (typeof options.onSave === 'function') {
+        await options.onSave(file, blob);
+      } else {
+        await uploadImage(file);
+      }
       bsModal.hide();
     }, 'image/png');
   });

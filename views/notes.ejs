@@ -1,0 +1,123 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= appName %> - Notes</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container" style="max-width: 1600px;">
+        <div class="notes-toolbar">
+            <h2 class="me-auto mb-0">Notes</h2>
+            <button id="add-text-note" class="btn btn-sm btn-primary">+ Text Note</button>
+            <button id="add-drawing-note" class="btn btn-sm btn-secondary">+ Drawing</button>
+        </div>
+
+        <div id="notes-board" class="notes-board">
+            <% for (const note of notes) { %>
+            <div class="sticky-note"
+                 data-note-id="<%= note.id %>"
+                 data-note-type="<%= note.type %>"
+                 data-note-title="<%- note.title %>"
+                 data-note-body="<%- note.type === 'text' ? note.body : '' %>"
+                 data-note-color="<%= note.color %>"
+                 style="left:<%= note.pos_x %>px; top:<%= note.pos_y %>px; width:<%= note.width %>px; height:<%= note.height %>px; background-color:<%= note.color %>; z-index:<%= note.z_index %>;">
+                <div class="sticky-note-header">
+                    <span class="sticky-note-title"><%= note.title %></span>
+                    <div class="sticky-note-actions">
+                        <button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i></button>
+                    </div>
+                </div>
+                <div class="sticky-note-body">
+                    <% if (note.type === 'drawing' && note.image_id) { %>
+                        <img src="/image/<%= note.image_id %>" alt="Drawing" class="sticky-note-drawing">
+                    <% } else { %>
+                        <p class="sticky-note-text"><%= note.body %></p>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- Edit Note Modal -->
+<div class="modal fade" id="edit-note-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-note-id">
+                <div class="mb-3">
+                    <label for="edit-note-title" class="form-label">Title</label>
+                    <input type="text" id="edit-note-title" class="form-control">
+                </div>
+                <div class="mb-3" id="edit-note-body-group">
+                    <label for="edit-note-body" class="form-label">Content</label>
+                    <textarea id="edit-note-body" class="form-control" rows="5"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Color</label>
+                    <div class="d-flex gap-2" id="edit-note-colors">
+                        <button type="button" class="note-color-btn" data-color="#fff9c4" style="background:#fff9c4;" title="Yellow"></button>
+                        <button type="button" class="note-color-btn" data-color="#f8bbd0" style="background:#f8bbd0;" title="Pink"></button>
+                        <button type="button" class="note-color-btn" data-color="#c8e6c9" style="background:#c8e6c9;" title="Green"></button>
+                        <button type="button" class="note-color-btn" data-color="#bbdefb" style="background:#bbdefb;" title="Blue"></button>
+                        <button type="button" class="note-color-btn" data-color="#e1bee7" style="background:#e1bee7;" title="Purple"></button>
+                        <button type="button" class="note-color-btn" data-color="#ffe0b2" style="background:#ffe0b2;" title="Orange"></button>
+                        <button type="button" class="note-color-btn" data-color="#ffffff" style="background:#ffffff;" title="White"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="edit-note-save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Convert to TIL Modal -->
+<div class="modal fade" id="to-til-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="to-til-form" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Convert to TIL</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="to-til-date" class="form-label">Date</label>
+                        <input type="date" id="to-til-date" name="date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="to-til-tags" class="form-label">Tags</label>
+                        <input type="text" id="to-til-tags" name="tags" class="form-control" value="#misc" placeholder="#tag1 #tag2">
+                        <span class="form-text text-muted">Space-separated hashtags</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create TIL</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include ('partials/footer_text.ejs') %>
+<%- include ('partials/footer.ejs') %>
+<script src="/static/js/notes.js"></script>
+</body>
+
+</html>

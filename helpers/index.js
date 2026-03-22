@@ -211,7 +211,7 @@ exports.getUserByApiKey = function(api_key) {
 // Clean up orphan images (uploaded but never associated with a TIL)
 exports.cleanupOrphanImages = function(maxAgeMs = 24 * 60 * 60 * 1000) {
     const cutoff = Date.now() - maxAgeMs;
-    const result = sqldb.prepare('DELETE FROM til_images WHERE til_id IS NULL AND created_at < ?').run(cutoff);
+    const result = sqldb.prepare("DELETE FROM til_images WHERE til_id IS NULL AND (source = 'til' OR source IS NULL) AND created_at < ?").run(cutoff);
     return result.changes;
 }
 

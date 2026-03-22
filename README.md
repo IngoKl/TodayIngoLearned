@@ -18,6 +18,7 @@ TodayIngoLearned (inspired by [reddit.com/r/todayilearned](https://www.reddit.co
 - Multi-user support with admin roles
 - Markdown support
 - Image and drawing support
+- Sticky notes board
 - Tagging TILs using hashtags
 - Commenting existing TILs
 - Bookmarking

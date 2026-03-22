@@ -16,6 +16,7 @@ const tilRoutes = require('./routes/til');
 const todoRoutes = require('./routes/todo');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
+const notesRoutes = require('./routes/notes');
 
 const packageJson = require('./package.json');
 const version = packageJson.version;
@@ -146,6 +147,7 @@ app.use('/til', tilRoutes);
 app.use('/todo', todoRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
+app.use('/notes', notesRoutes);
 app.use('/api/v1', restApiRoutes);
 
 
