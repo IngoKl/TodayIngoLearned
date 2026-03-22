@@ -24,6 +24,7 @@ const version = packageJson.version;
 const config = require('./config.json');
 const sqldb = require('./db');
 const restApiRoutes = require('./routes/rest-api');
+const { TIL_BASE_QUERY } = require('./helpers/queries');
 
 // Run database migrations
 require('./db/migrate')();
@@ -107,8 +108,8 @@ app.use('/', express.static('public'));
 
 // Middleware
 app.use(require('morgan')('combined'));
-app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('body-parser').json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(require('express-session')({
   store: sessionStore,
   secret: config.expresssessionsecret,
@@ -184,9 +185,7 @@ app.get('/',
     FROM tils JOIN tags_join ON tags_join.til_id = tils.id
     WHERE tils.user_id = ?`).get(req.user.id).count;
 
-    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-    FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-    JOIN tags ON tags.id = tags_join.tag_id
+    const rows = sqldb.prepare(`${TIL_BASE_QUERY}
     WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.date DESC, tils.id DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
 
     const tils = tilsObject(rows, req.user.id);
@@ -203,30 +202,21 @@ app.post('/',
     let rows;
 
     if (searchtype === 'title') {
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-      FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-      JOIN tags ON tags.id = tags_join.tag_id
+      rows = sqldb.prepare(`${TIL_BASE_QUERY}
       WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
     }
     else if (searchtype === 'text') {
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-      FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-      JOIN tags ON tags.id = tags_join.tag_id
+      rows = sqldb.prepare(`${TIL_BASE_QUERY}
       WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
     }
     else if (searchtype === 'date') {
       const range = helpers.getDateRange(new Date(search).getTime());
-      rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-      FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-      JOIN tags ON tags.id = tags_join.tag_id
+      rows = sqldb.prepare(`${TIL_BASE_QUERY}
       WHERE tils.user_id = ? AND tils.date BETWEEN ? AND ? GROUP BY tils.id`).all(req.user.id, range[0], range[1]);
     }
     else if (searchtype === 'tag') {
       rows = sqldb.prepare(`SELECT * FROM (
-                  SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-                  FROM tils
-                  JOIN tags_join ON tags_join.til_id = tils.id
-                  JOIN tags ON tags.id = tags_join.tag_id
+                  ${TIL_BASE_QUERY}
                   WHERE tils.user_id = ?
                   GROUP BY tils.id
                 ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`).all(req.user.id, `${search}`, `%${search},%`, `%,${search}`);
@@ -248,9 +238,7 @@ app.post('/',
 // Public TIL view (no authentication required)
 app.get('/public/:til_id',
   function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.public, GROUP_CONCAT(tags.tag) AS tags
-              FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-              JOIN tags ON tags.id = tags_join.tag_id
+    const row = sqldb.prepare(`${TIL_BASE_QUERY}
               WHERE tils.id = ? AND tils.public = 1 GROUP BY tils.id`).get(req.params.til_id);
 
     if (!row) {

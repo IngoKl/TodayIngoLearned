@@ -1,5 +1,6 @@
 const express = require('express');
 const sqldb = require('./../../db');
+const { TIL_BASE_QUERY } = require('./../../helpers/queries');
 const router = express.Router();
 
 const tilsObject = require('./../../helpers/tilsObject');
@@ -9,10 +10,7 @@ router.get('/',
   function (req, res) {
     // TILs with #todo tag
     const todoRows = sqldb.prepare(`SELECT * FROM (
-                SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
-                FROM tils
-                JOIN tags_join ON tags_join.til_id = tils.id
-                JOIN tags ON tags.id = tags_join.tag_id
+                ${TIL_BASE_QUERY}
                 WHERE tils.user_id = ?
                 GROUP BY tils.id
               ) WHERE tags LIKE '#todo' OR tags LIKE '%#todo,%' OR tags LIKE '%,#todo'`).all(req.user.id);
@@ -20,10 +18,7 @@ router.get('/',
     const todoTils = tilsObject(todoRows);
 
     // Empty TILs (no description or whitespace-only)
-    const emptyRows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
-                FROM tils
-                JOIN tags_join ON tags_join.til_id = tils.id
-                JOIN tags ON tags.id = tags_join.tag_id
+    const emptyRows = sqldb.prepare(`${TIL_BASE_QUERY}
                 WHERE tils.user_id = ? AND (tils.description IS NULL OR TRIM(tils.description) = '')
                 GROUP BY tils.id
                 ORDER BY tils.id DESC`).all(req.user.id);

@@ -24,7 +24,7 @@
     "@highlightjs/cdn-assets": "^11.11.1",
     "better-sqlite3": "^12.8.0",
     "better-sqlite3-session-store": "^0.1.0",
-    "body-parser": "^1.20.2",
+
     "bootstrap": "^5.3.2",
     "connect-ensure-login": "^0.1.1",
     "dayjs": "^1.11.20",

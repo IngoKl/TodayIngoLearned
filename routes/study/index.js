@@ -1,6 +1,7 @@
 const express = require('express');
 const dayjs = require('dayjs');
 const sqldb = require('./../../db');
+const { TIL_BASE_QUERY } = require('./../../helpers/queries');
 const router = express.Router();
 const tilsObject = require('./../../helpers/tilsObject');
 
@@ -11,6 +12,7 @@ router.get('/stats',
     const total_tils = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ?").get(req.user.id).count;
     const studied = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND repetitions > 0").get(req.user.id).count;
     const never_studied = total_tils - studied;
+    // next_repetition is in Unix seconds (see helpers/queries.js for date conventions)
     const due_now = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND next_repetition < ?").get(req.user.id, dayjs().unix()).count;
     const total_repetitions = sqldb.prepare("SELECT COALESCE(SUM(repetitions), 0) AS total FROM tils WHERE user_id = ?").get(req.user.id).total;
 
@@ -33,12 +35,11 @@ router.get('/',
     require('connect-ensure-login').ensureLoggedIn(),
     function (req, res) {
 
+    // next_repetition is in Unix seconds (see helpers/queries.js for date conventions)
     const pick = sqldb.prepare("SELECT tils.id FROM tils WHERE tils.user_id = ? AND tils.next_repetition < ? ORDER BY RANDOM() LIMIT 1").get(req.user.id, dayjs().unix());
 
     if (pick) {
-        const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
-                    FROM tils
-                    JOIN tags_join ON tags_join.til_id = tils.id JOIN tags ON tags.id = tags_join.tag_id
+        const rows = sqldb.prepare(`${TIL_BASE_QUERY}
                     WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).all(req.user.id, pick.id);
 
         const tils = tilsObject(rows);
@@ -66,7 +67,7 @@ router.get('/:til_id/:study_result',
     let current_dt = dayjs();
     const study_result = req.params.study_result;
 
-    // This is a very simple spaced repetition approach
+    // last_repetition and next_repetition are stored as Unix seconds
     let next_repetition;
     if (study_result === 'easy') {
         next_repetition = current_dt.add(14 * repetitions, 'day');

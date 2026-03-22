@@ -1,4 +1,5 @@
-const CACHE_VERSION = 'v1.0.9';
+// Keep in sync with package.json version
+const CACHE_VERSION = 'v1.1.0';
 const CACHE_NAME = 'precache-' + CACHE_VERSION;
 
 self.addEventListener('install', function(event) {

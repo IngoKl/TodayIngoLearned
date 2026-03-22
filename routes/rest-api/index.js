@@ -3,6 +3,7 @@ const multer = require('multer');
 const sqldb = require('./../../db');
 const helpers = require('./../../helpers');
 const parseHashtags = require('./../../helpers/parseHashtags');
+const { TIL_BASE_QUERY } = require('./../../helpers/queries');
 const router = express.Router();
 
 const upload = multer({
@@ -49,27 +50,18 @@ router.get('/til/search', function (req, res) {
     let rows;
 
     if (searchtype === 'title') {
-        rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, GROUP_CONCAT(tags.tag) AS tags
-            FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-            JOIN tags ON tags.id = tags_join.tag_id
+        rows = sqldb.prepare(`${TIL_BASE_QUERY}
             WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`).all(req.apiUser.id, `%${search}%`);
     } else if (searchtype === 'text') {
-        rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, GROUP_CONCAT(tags.tag) AS tags
-            FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-            JOIN tags ON tags.id = tags_join.tag_id
+        rows = sqldb.prepare(`${TIL_BASE_QUERY}
             WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`).all(req.apiUser.id, `%${search}%`);
     } else if (searchtype === 'date') {
         const range = helpers.getDateRange(new Date(search).getTime());
-        rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, GROUP_CONCAT(tags.tag) AS tags
-            FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-            JOIN tags ON tags.id = tags_join.tag_id
+        rows = sqldb.prepare(`${TIL_BASE_QUERY}
             WHERE tils.user_id = ? AND tils.date BETWEEN ? AND ? GROUP BY tils.id`).all(req.apiUser.id, range[0], range[1]);
     } else if (searchtype === 'tag') {
         rows = sqldb.prepare(`SELECT * FROM (
-            SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, GROUP_CONCAT(tags.tag) AS tags
-            FROM tils
-            JOIN tags_join ON tags_join.til_id = tils.id
-            JOIN tags ON tags.id = tags_join.tag_id
+            ${TIL_BASE_QUERY}
             WHERE tils.user_id = ?
             GROUP BY tils.id
             ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`).all(req.apiUser.id, `${search}`, `%${search},%`, `%,${search}`);
@@ -90,10 +82,7 @@ router.get('/til/search', function (req, res) {
 
 // GET /api/v1/til/:id - Retrieve a single TIL
 router.get('/til/:id', function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, GROUP_CONCAT(tags.tag) AS tags
-        FROM tils
-        JOIN tags_join ON tags_join.til_id = tils.id
-        JOIN tags ON tags.id = tags_join.tag_id
+    const row = sqldb.prepare(`${TIL_BASE_QUERY}
         WHERE tils.user_id = ? AND tils.id = ?
         GROUP BY tils.id`).get(req.apiUser.id, req.params.id);
 

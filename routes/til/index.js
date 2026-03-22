@@ -4,6 +4,7 @@ const multer = require('multer');
 const sqldb = require('./../../db');
 const helpers = require('./../../helpers');
 const parseHashtags = require('./../../helpers/parseHashtags');
+const { TIL_BASE_QUERY } = require('./../../helpers/queries');
 const router = express.Router();
 
 const upload = multer({
@@ -21,9 +22,7 @@ const tilsObject = require('./../../helpers/tilsObject');
 router.get('/view/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-              FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-              JOIN tags ON tags.id = tags_join.tag_id
+    const row = sqldb.prepare(`${TIL_BASE_QUERY}
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(req.user.id, req.params.til_id);
 
     if (!row) {
@@ -69,9 +68,7 @@ router.get('/view/:til_id',
 router.get('/view/:til_id/markdown',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const row = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-              FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-              JOIN tags ON tags.id = tags_join.tag_id
+    const row = sqldb.prepare(`${TIL_BASE_QUERY}
               WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(req.user.id, req.params.til_id);
 
     if (!row) {
@@ -184,8 +181,14 @@ router.post('/edit/:til_id',
 router.get('/edit/:til_id/delete',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
+    const til = sqldb.prepare("SELECT id FROM tils WHERE id = ? AND user_id = ?").get(req.params.til_id, req.user.id);
+    if (!til) return res.status(404).send('TIL not found');
+
+    sqldb.prepare("DELETE FROM tags_join WHERE til_id = ?").run(req.params.til_id);
+    sqldb.prepare("DELETE FROM bookmarks WHERE til_id = ?").run(req.params.til_id);
+    sqldb.prepare("DELETE FROM til_comments WHERE til_id = ?").run(req.params.til_id);
     sqldb.prepare("DELETE FROM til_images WHERE til_id = ?").run(req.params.til_id);
-    sqldb.prepare("DELETE FROM tils WHERE id = ? AND user_id = ?").run(req.params.til_id, req.user.id);
+    sqldb.prepare("DELETE FROM tils WHERE id = ?").run(req.params.til_id);
     res.redirect('/');
   });
 
@@ -210,9 +213,7 @@ router.get('/edit/:til_id/bookmark',
 router.get('/bookmarks',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags FROM tils
-              JOIN tags_join ON tags_join.til_id = tils.id
-              JOIN tags ON tags.id = tags_join.tag_id
+    const rows = sqldb.prepare(`${TIL_BASE_QUERY}
               JOIN bookmarks ON bookmarks.til_id = tils.id
               WHERE bookmarks.user_id = ? GROUP BY tils.id`).all(req.user.id);
 

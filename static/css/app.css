@@ -89,10 +89,6 @@ main>.container {
     padding: 10px;
 }
 
-.darkmode--activated .card {
-    color: #f5f5f5;
-    background-color: #2b353f;
-}
 
 .version-number {
     font-size: 0.8em;
@@ -321,19 +317,5 @@ main>.container {
     box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
 }
 
-/* Dark mode support */
-.darkmode--activated .notes-board {
-    background:
-        radial-gradient(circle, #555 1px, transparent 1px);
-    background-size: 20px 20px;
-    border-color: #555;
-}
 
-.darkmode--activated .sticky-note-title {
-    color: #222;
-}
-
-.darkmode--activated .sticky-note-body {
-    color: #222;
-}
 

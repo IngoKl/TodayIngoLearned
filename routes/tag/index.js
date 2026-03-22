@@ -1,6 +1,7 @@
 const express = require('express');
 const helpers = require('./../../helpers');
 const sqldb = require('./../../db');
+const { TIL_BASE_QUERY } = require('./../../helpers/queries');
 const router = express.Router();
 
 const tilsObject = require('./../../helpers/tilsObject');
@@ -25,10 +26,7 @@ router.get('/:tag',
     const escaped_tag = escapeLike(request_tag);
 
     const rows = sqldb.prepare(`SELECT * FROM (
-                SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, tils.public, GROUP_CONCAT(tags.tag) AS tags
-                FROM tils
-                JOIN tags_join ON tags_join.til_id = tils.id
-                JOIN tags ON tags.id = tags_join.tag_id
+                ${TIL_BASE_QUERY}
                 WHERE tils.user_id = ?
                 GROUP BY tils.id
               ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(req.user.id, escaped_tag, `%${escaped_tag},%`, `%,${escaped_tag}`);

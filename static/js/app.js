@@ -111,7 +111,7 @@ if (typeof hljs !== 'undefined') {
 
 
 // Markdown Editor
-editTil = document.getElementById("md-bold");
+const editTil = document.getElementById("md-bold");
 if (editTil != null) {
   document.getElementById("md-bold").addEventListener("click", mdBold);
   document.getElementById("md-italics").addEventListener("click", mdItalics);
@@ -235,10 +235,11 @@ function addImageToGallery(id, filename) {
   const gallery = document.getElementById('image-gallery');
   if (!gallery) return;
 
+  const safeFilename = escapeHtml(filename);
   const wrapper = document.createElement('div');
   wrapper.className = 'position-relative';
   wrapper.innerHTML = `
-    <img src="/image/${id}" alt="${filename}" style="max-width:100px;max-height:75px;object-fit:cover;" class="rounded border">
+    <img src="/image/${id}" alt="${safeFilename}" style="max-width:100px;max-height:75px;object-fit:cover;" class="rounded border">
     <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
             style="padding:0 4px;font-size:10px;line-height:1.2;"
             onclick="deleteImage(${id}, this)">x</button>

@@ -8,6 +8,7 @@ const config = require('./../config.json');
 exports.newDb = function () {
     const sqldb = new Database(config.dbpath);
 
+    // Date convention: `date` stores milliseconds (Date.now()); `last_repetition`/`next_repetition` store Unix seconds
     sqldb.exec('CREATE TABLE tils (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER, `title` TEXT, `description` TEXT, `date` INTEGER, `repetitions` INTEGER DEFAULT 0, `last_repetition` INTEGER DEFAULT 0, `next_repetition` INTEGER DEFAULT 0, `public` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE tags (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `tag` TEXT UNIQUE)');
     sqldb.exec('CREATE TABLE users (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` TEXT UNIQUE, `password` TEXT, `displayname` TEXT, `is_admin` INTEGER DEFAULT 0)');
