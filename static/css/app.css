@@ -236,6 +236,34 @@ main>.container {
     background: rgba(0,0,0,0.05);
     border-bottom: 1px solid rgba(0,0,0,0.08);
     min-height: 28px;
+    touch-action: none;
+}
+
+/* Drag grip indicator */
+.sticky-note-grip {
+    display: none;
+}
+
+@media (pointer: coarse) {
+    .sticky-note-header {
+        min-height: 44px;
+        padding: 8px 10px;
+    }
+    .sticky-note-grip {
+        display: inline-block;
+        margin-right: 6px;
+        color: #999;
+        font-size: 1rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+    .sticky-note-actions {
+        opacity: 1;
+    }
+    .sticky-note-btn {
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
 }
 
 .sticky-note.dragging .sticky-note-header {

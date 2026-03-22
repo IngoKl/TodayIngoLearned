@@ -27,6 +27,7 @@
                  data-note-color="<%= note.color %>"
                  style="left:<%= note.pos_x %>px; top:<%= note.pos_y %>px; width:<%= note.width %>px; height:<%= note.height %>px; background-color:<%= note.color %>; z-index:<%= note.z_index %>;">
                 <div class="sticky-note-header">
+                    <span class="sticky-note-grip">⠿</span>
                     <span class="sticky-note-title"><%= note.title %></span>
                     <div class="sticky-note-actions">
                         <button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i></button>

@@ -7,8 +7,11 @@
   let dragTarget = null;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
+  let dragStartX = 0;
+  let dragStartY = 0;
   let maxZ = 0;
   let hasDragged = false;
+  var DRAG_THRESHOLD = 8; // px — prevents accidental drags on touch
 
   // Compute max z-index from existing notes
   board.querySelectorAll('.sticky-note').forEach(note => {
@@ -27,6 +30,8 @@
 
     dragTarget = note;
     hasDragged = false;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
     const rect = note.getBoundingClientRect();
     dragOffsetX = e.clientX - rect.left;
     dragOffsetY = e.clientY - rect.top;
@@ -43,7 +48,14 @@
   board.addEventListener('pointermove', function (e) {
     if (!dragTarget) return;
 
-    hasDragged = true;
+    // Require minimum movement before starting drag (prevents accidental drags on touch)
+    if (!hasDragged) {
+      var dx = e.clientX - dragStartX;
+      var dy = e.clientY - dragStartY;
+      if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+      hasDragged = true;
+    }
+
     const boardRect = board.getBoundingClientRect();
     const newX = e.clientX - boardRect.left - dragOffsetX + board.scrollLeft;
     const newY = e.clientY - boardRect.top - dragOffsetY + board.scrollTop;
