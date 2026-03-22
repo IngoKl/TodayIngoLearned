@@ -47,11 +47,22 @@
   -H "Content-Type: application/json" ^
   -d "{\"title\": \"My TIL\", \"description\": \"Learned something #misc\", \"date\": \"2026-03-21\"}"</code></pre>
 
-                        <p class="mb-1"><strong>Search TILs by title:</strong></p>
-                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=title&q=javascript"</code></pre>
+                        <p class="mb-1"><strong>Search TILs</strong> (type: title, text, tag, date)<strong>:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=title&q=javascript"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=text&q=example"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=tag&q=%23misc"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=date&q=2026-03-22"</code></pre>
 
-                        <p class="mb-1"><strong>Search TILs by tag:</strong></p>
-                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=tag&q=%23misc"</code></pre>
+                        <p class="mb-1"><strong>Upload image to a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -X POST http://localhost:3000/api/v1/til/1/image ^
+  -H "X-API-Key: <%= api_key %>" ^
+  -F "image=@photo.png"</code></pre>
+
+                        <p class="mb-1"><strong>List images for a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" http://localhost:3000/api/v1/til/1/images</code></pre>
+
+                        <p class="mb-1"><strong>Delete an image:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -X DELETE -H "X-API-Key: <%= api_key %>" http://localhost:3000/api/v1/til/1/image/1</code></pre>
                     </div>
                 </details>
                 <% } %>
