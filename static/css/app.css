@@ -196,7 +196,7 @@ main>.container {
 
 .notes-board {
     position: relative;
-    min-height: 80vh;
+    min-height: 70vh;
     overflow: auto;
     background:
         radial-gradient(circle, #ccc 1px, transparent 1px);

@@ -190,6 +190,43 @@
     });
   }
 
+  // --- Sort / Arrange Notes in Grid ---
+
+  document.getElementById('sort-notes').addEventListener('click', function () {
+    var notes = Array.from(board.querySelectorAll('.sticky-note'));
+    if (notes.length === 0) return;
+
+    // Sort by title alphabetically
+    notes.sort(function (a, b) {
+      return (a.dataset.noteTitle || '').localeCompare(b.dataset.noteTitle || '');
+    });
+
+    var gap = 20;
+    var x = gap;
+    var y = gap;
+    var rowHeight = 0;
+    var boardWidth = board.clientWidth;
+
+    notes.forEach(function (note) {
+      var w = note.offsetWidth;
+      var h = note.offsetHeight;
+
+      // Wrap to next row if note doesn't fit
+      if (x + w + gap > boardWidth && x > gap) {
+        x = gap;
+        y += rowHeight + gap;
+        rowHeight = 0;
+      }
+
+      note.style.left = x + 'px';
+      note.style.top = y + 'px';
+      savePosition(note);
+
+      x += w + gap;
+      if (h > rowHeight) rowHeight = h;
+    });
+  });
+
   // --- Add Text Note ---
 
   document.getElementById('add-text-note').addEventListener('click', function () {
