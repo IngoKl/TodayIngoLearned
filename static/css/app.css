@@ -236,14 +236,18 @@ main>.container {
     background: rgba(0,0,0,0.05);
     border-bottom: 1px solid rgba(0,0,0,0.08);
     min-height: 28px;
-    touch-action: none;
 }
 
-/* Drag grip indicator */
+.sticky-note.dragging .sticky-note-header {
+    cursor: grabbing;
+}
+
+/* Drag grip indicator (touch devices only) */
 .sticky-note-grip {
     display: none;
 }
 
+/* --- Touch device overrides --- */
 @media (pointer: coarse) {
     .sticky-note-header {
         min-height: 44px;
@@ -264,10 +268,16 @@ main>.container {
         padding: 4px 8px;
         font-size: 0.85rem;
     }
-}
-
-.sticky-note.dragging .sticky-note-header {
-    cursor: grabbing;
+    /* Long-press picked up state */
+    .sticky-note.drag-ready {
+        transform: scale(1.05);
+        box-shadow: 5px 8px 25px rgba(0,0,0,0.35);
+        z-index: 9999;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .sticky-note.dragging {
+        opacity: 0.9;
+    }
 }
 
 .sticky-note-title {

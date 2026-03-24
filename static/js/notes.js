@@ -4,86 +4,191 @@
   const board = document.getElementById('notes-board');
   if (!board) return;
 
-  let dragTarget = null;
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-  let dragStartX = 0;
-  let dragStartY = 0;
-  let maxZ = 0;
-  let hasDragged = false;
-  var DRAG_THRESHOLD = 8; // px — prevents accidental drags on touch
+  var maxZ = 0;
+  var isTouch = window.matchMedia('(pointer: coarse)').matches;
 
   // Compute max z-index from existing notes
-  board.querySelectorAll('.sticky-note').forEach(note => {
-    const z = parseInt(note.style.zIndex) || 0;
+  board.querySelectorAll('.sticky-note').forEach(function (note) {
+    var z = parseInt(note.style.zIndex) || 0;
     if (z > maxZ) maxZ = z;
   });
 
-  // --- Drag and Drop via Pointer Events ---
+  // =============================================
+  // Desktop: instant drag from header via pointer events (unchanged behavior)
+  // Touch:   long-press (300ms) anywhere on note to pick up, then drag
+  //          Normal swipes always scroll the board
+  // =============================================
 
-  board.addEventListener('pointerdown', function (e) {
-    const note = e.target.closest('.sticky-note');
-    if (!note) return;
+  if (!isTouch) {
+    // --- Desktop drag (pointer events, header only) ---
+    var dragTarget = null;
+    var dragStartX = 0, dragStartY = 0;
+    var dragInitialLeft = 0, dragInitialTop = 0;
+    var hasDragged = false;
 
-    // Only drag from the header (not action buttons or body)
-    if (!e.target.closest('.sticky-note-header') || e.target.closest('.sticky-note-actions')) return;
+    board.addEventListener('pointerdown', function (e) {
+      var note = e.target.closest('.sticky-note');
+      if (!note) return;
+      if (!e.target.closest('.sticky-note-header') || e.target.closest('.sticky-note-actions')) return;
 
-    dragTarget = note;
-    hasDragged = false;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    const rect = note.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+      dragTarget = note;
+      hasDragged = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      dragInitialLeft = parseInt(note.style.left) || 0;
+      dragInitialTop = parseInt(note.style.top) || 0;
 
-    // Bring to front
-    maxZ++;
-    note.style.zIndex = maxZ;
+      maxZ++;
+      note.style.zIndex = maxZ;
+      note.setPointerCapture(e.pointerId);
+      note.classList.add('dragging');
+      e.preventDefault();
+    });
 
-    note.setPointerCapture(e.pointerId);
-    note.classList.add('dragging');
-    e.preventDefault();
-  });
-
-  board.addEventListener('pointermove', function (e) {
-    if (!dragTarget) return;
-
-    // Require minimum movement before starting drag (prevents accidental drags on touch)
-    if (!hasDragged) {
-      var dx = e.clientX - dragStartX;
-      var dy = e.clientY - dragStartY;
-      if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+    board.addEventListener('pointermove', function (e) {
+      if (!dragTarget) return;
       hasDragged = true;
+      dragTarget.style.left = Math.max(0, dragInitialLeft + (e.clientX - dragStartX)) + 'px';
+      dragTarget.style.top = Math.max(0, dragInitialTop + (e.clientY - dragStartY)) + 'px';
+      e.preventDefault();
+    });
+
+    board.addEventListener('pointerup', function (e) {
+      if (!dragTarget) return;
+      if (hasDragged) savePosition(dragTarget);
+      dragTarget.classList.remove('dragging');
+      dragTarget = null;
+    });
+
+  } else {
+    // --- Touch drag: long-press to pick up, then move ---
+    var holdTimer = null;
+    var touchNote = null;      // note being held
+    var dragActive = false;    // true once long-press fires and we're dragging
+    var touchId = null;        // tracked touch identifier
+    var startX = 0, startY = 0;
+    var noteInitialLeft = 0, noteInitialTop = 0;
+    var HOLD_MS = 300;
+    var MOVE_CANCEL = 10;      // px of movement that cancels the hold
+
+    board.addEventListener('touchstart', function (e) {
+      if (dragActive) return;
+      var touch = e.touches[0];
+      var note = document.elementFromPoint(touch.clientX, touch.clientY);
+      note = note ? note.closest('.sticky-note') : null;
+      if (!note) return;
+      // Don't start hold on action buttons
+      var target = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (target && target.closest('.sticky-note-actions')) return;
+
+      touchNote = note;
+      touchId = touch.identifier;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      noteInitialLeft = parseInt(note.style.left) || 0;
+      noteInitialTop = parseInt(note.style.top) || 0;
+
+      // Start hold timer — if finger stays still for HOLD_MS, activate drag
+      holdTimer = setTimeout(function () {
+        dragActive = true;
+        maxZ++;
+        touchNote.style.zIndex = maxZ;
+        touchNote.classList.add('drag-ready', 'dragging');
+        // Haptic feedback if available
+        if (navigator.vibrate) navigator.vibrate(30);
+      }, HOLD_MS);
+
+      // Don't preventDefault here — allow scroll to start naturally
+    }, { passive: true });
+
+    board.addEventListener('touchmove', function (e) {
+      if (!touchNote) return;
+
+      var touch = getTouch(e, touchId);
+      if (!touch) return;
+
+      if (!dragActive) {
+        // Still in hold-wait phase: cancel if finger moved too much
+        var dx = touch.clientX - startX;
+        var dy = touch.clientY - startY;
+        if (dx * dx + dy * dy > MOVE_CANCEL * MOVE_CANCEL) {
+          cancelHold();
+          // Let the browser handle this as a scroll
+        }
+        return;
+      }
+
+      // Drag is active — move the note, prevent scroll
+      e.preventDefault();
+      touchNote.style.left = Math.max(0, noteInitialLeft + (touch.clientX - startX)) + 'px';
+      touchNote.style.top = Math.max(0, noteInitialTop + (touch.clientY - startY)) + 'px';
+    }, { passive: false });
+
+    board.addEventListener('touchend', function (e) {
+      if (!touchNote) return;
+      var touch = getTouch(e, touchId);
+      // touchend puts changed touches in changedTouches
+      if (!touch) touch = getChangedTouch(e, touchId);
+      if (!touch && e.touches.length === 0) {
+        // All fingers lifted
+      }
+
+      if (dragActive) {
+        savePosition(touchNote);
+      }
+      cleanup();
+    }, { passive: true });
+
+    board.addEventListener('touchcancel', function () {
+      cleanup();
+    }, { passive: true });
+
+    function cancelHold() {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      touchNote = null;
+      touchId = null;
     }
 
-    const boardRect = board.getBoundingClientRect();
-    const newX = e.clientX - boardRect.left - dragOffsetX + board.scrollLeft;
-    const newY = e.clientY - boardRect.top - dragOffsetY + board.scrollTop;
-
-    dragTarget.style.left = Math.max(0, newX) + 'px';
-    dragTarget.style.top = Math.max(0, newY) + 'px';
-    e.preventDefault();
-  });
-
-  board.addEventListener('pointerup', function (e) {
-    if (!dragTarget) return;
-
-    if (hasDragged) {
-      // Save position to server
-      const noteId = dragTarget.dataset.noteId;
-      const posX = parseInt(dragTarget.style.left);
-      const posY = parseInt(dragTarget.style.top);
-
-      fetch('/notes/' + noteId + '/position', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pos_x: posX, pos_y: posY, z_index: maxZ })
-      });
+    function cleanup() {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      if (touchNote) {
+        touchNote.classList.remove('drag-ready', 'dragging');
+      }
+      touchNote = null;
+      touchId = null;
+      dragActive = false;
     }
 
-    dragTarget.classList.remove('dragging');
-    dragTarget = null;
-  });
+    function getTouch(e, id) {
+      for (var i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === id) return e.touches[i];
+      }
+      return null;
+    }
+
+    function getChangedTouch(e, id) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === id) return e.changedTouches[i];
+      }
+      return null;
+    }
+  }
+
+  // --- Save position to server ---
+
+  function savePosition(note) {
+    var noteId = note.dataset.noteId;
+    var posX = parseInt(note.style.left);
+    var posY = parseInt(note.style.top);
+
+    fetch('/notes/' + noteId + '/position', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pos_x: posX, pos_y: posY, z_index: maxZ })
+    });
+  }
 
   // --- Add Text Note ---
 
