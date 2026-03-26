@@ -157,6 +157,7 @@ main>.container {
     cursor: crosshair;
     touch-action: none;
     border: 1px solid #dee2e6;
+    background: repeating-conic-gradient(#e8e8e8 0% 25%, #fff 0% 50%) 50% / 16px 16px;
 }
 
 #drawing-toolbar {
@@ -166,6 +167,30 @@ main>.container {
     padding: 0.5rem;
     border-bottom: 1px solid #dee2e6;
     align-items: center;
+}
+
+.draw-color-presets {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.draw-color-preset {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    padding: 0;
+}
+
+.draw-color-preset:hover {
+    transform: scale(1.15);
+}
+
+.draw-color-preset.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
 }
 
 /* Image display in markdown content */
@@ -287,7 +312,6 @@ main>.container {
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
-    color: #333;
 }
 
 .sticky-note-actions {
@@ -307,12 +331,13 @@ main>.container {
     font-size: 0.7rem;
     border: none;
     background: transparent;
-    color: #555;
+    color: inherit;
+    opacity: 0.7;
 }
 
 .sticky-note-btn:hover {
-    color: #000;
-    background: rgba(0,0,0,0.1);
+    opacity: 1;
+    background: rgba(128,128,128,0.2);
     border-radius: 3px;
 }
 
@@ -321,7 +346,6 @@ main>.container {
     padding: 8px;
     overflow: auto;
     font-size: 0.85rem;
-    color: #333;
 }
 
 .sticky-note-text {

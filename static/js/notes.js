@@ -4,6 +4,7 @@
   const board = document.getElementById('notes-board');
   if (!board) return;
 
+  var currentBoardId = board.dataset.boardId || '';
   var maxZ = 0;
   var isTouch = window.matchMedia('(pointer: coarse)').matches;
 
@@ -230,10 +231,15 @@
   // --- Add Text Note ---
 
   document.getElementById('add-text-note').addEventListener('click', function () {
+    var body = 'title=New+Note&body=&color=%238b575c';
+    if (currentBoardId) {
+      body += '&board_id=' + encodeURIComponent(currentBoardId);
+    }
+
     fetch('/notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'title=New+Note&body=&color=%23fff9c4'
+      body: body
     }).then(function () {
       window.location.reload();
     });
@@ -246,6 +252,9 @@
       onSave: async function (file) {
         const formData = new FormData();
         formData.append('image', file);
+        if (currentBoardId) {
+          formData.append('board_id', currentBoardId);
+        }
 
         const res = await fetch('/notes/drawing', {
           method: 'POST',
@@ -284,7 +293,7 @@
   // --- Edit Modal ---
 
   var editModal = new bootstrap.Modal(document.getElementById('edit-note-modal'));
-  var selectedColor = '#fff9c4';
+  var selectedColor = '#fffffc';
 
   // Color picker buttons
   document.querySelectorAll('.note-color-btn').forEach(function (btn) {
@@ -316,6 +325,12 @@
       btn.classList.toggle('active', btn.dataset.color === selectedColor);
     });
 
+    // Set current board in dropdown
+    var boardSelect = document.getElementById('edit-note-board');
+    if (boardSelect) {
+      boardSelect.value = note.dataset.noteBoard || '';
+    }
+
     editModal.show();
   }
 
@@ -323,12 +338,30 @@
     var noteId = document.getElementById('edit-note-id').value;
     var title = document.getElementById('edit-note-title').value;
     var body = document.getElementById('edit-note-body').value;
+    var newBoardId = document.getElementById('edit-note-board').value;
 
-    fetch('/notes/' + noteId, {
+    // Save content and color
+    var savePromise = fetch('/notes/' + noteId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: title, body: body, color: selectedColor })
-    }).then(function () {
+    });
+
+    // Move board if changed
+    var note = document.querySelector('[data-note-id="' + noteId + '"]');
+    var oldBoardId = note ? (note.dataset.noteBoard || '') : '';
+
+    if (newBoardId !== oldBoardId) {
+      savePromise = savePromise.then(function () {
+        return fetch('/notes/' + noteId + '/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ board_id: newBoardId || null })
+        });
+      });
+    }
+
+    savePromise.then(function () {
       editModal.hide();
       window.location.reload();
     });

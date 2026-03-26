@@ -5,6 +5,15 @@ function openDrawingCanvas(options = {}) {
   const existing = document.getElementById('drawing-modal');
   if (existing) existing.remove();
 
+  // Get pen color presets from page data attribute (set by server)
+  const penColorsEl = document.getElementById('pen-colors-data');
+  const penColors = penColorsEl ? penColorsEl.dataset.colors.split(',') : ['#4ecdc4', '#ffc145', '#fffbff', '#364652', '#ca1551'];
+
+  // Build color preset buttons HTML
+  const presetBtns = penColors.map((c, i) =>
+    `<button type="button" class="draw-color-preset${i === 0 ? ' active' : ''}" data-color="${c}" style="background:${c};" title="${c}"></button>`
+  ).join('');
+
   // Create modal HTML
   const modal = document.createElement('div');
   modal.id = 'drawing-modal';
@@ -20,13 +29,14 @@ function openDrawingCanvas(options = {}) {
         <div id="drawing-toolbar">
           <button type="button" class="btn btn-sm btn-outline-secondary active" data-tool="pen">Pen</button>
           <button type="button" class="btn btn-sm btn-outline-secondary" data-tool="eraser">Eraser</button>
-          <input type="color" id="draw-color" value="#000000" title="Color">
+          <span class="draw-color-presets">${presetBtns}</span>
+          <input type="color" id="draw-color" value="${penColors[0]}" title="Custom color">
           <label class="ms-2 me-1" style="font-size:0.85rem;">Size</label>
           <input type="range" id="draw-size" min="1" max="20" value="3" style="width:100px;">
           <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="draw-clear">Clear</button>
         </div>
         <div class="modal-body">
-          <canvas id="drawing-canvas" width="750" height="450" style="width:100%;background:#fff;"></canvas>
+          <canvas id="drawing-canvas" width="750" height="450" style="width:100%;"></canvas>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -45,9 +55,7 @@ function openDrawingCanvas(options = {}) {
   let drawing = false;
   let currentTool = 'pen';
 
-  // Fill white background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Transparent background - no fill
 
   // Tool selection
   const toolButtons = modal.querySelectorAll('[data-tool]');
@@ -57,6 +65,21 @@ function openDrawingCanvas(options = {}) {
       btn.classList.add('active');
       currentTool = btn.dataset.tool;
     });
+  });
+
+  // Color preset selection
+  const colorPresets = modal.querySelectorAll('.draw-color-preset');
+  colorPresets.forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorPresets.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('draw-color').value = btn.dataset.color;
+    });
+  });
+
+  // Sync custom color picker with presets
+  document.getElementById('draw-color').addEventListener('input', () => {
+    colorPresets.forEach(b => b.classList.remove('active'));
   });
 
   function getPos(e) {
@@ -126,11 +149,10 @@ function openDrawingCanvas(options = {}) {
   canvas.addEventListener('touchend', stopDraw);
   canvas.addEventListener('touchcancel', stopDraw);
 
-  // Clear
+  // Clear - now clears to transparent
   document.getElementById('draw-clear').addEventListener('click', () => {
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   });
 
   // Save

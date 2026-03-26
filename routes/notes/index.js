@@ -19,11 +19,87 @@ const upload = multer({
 router.get('/',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    const notes = sqldb.prepare(
-      'SELECT * FROM sticky_notes WHERE user_id = ? ORDER BY z_index ASC'
+    const boardId = req.query.board || null;
+
+    const boards = sqldb.prepare(
+      'SELECT * FROM note_boards WHERE user_id = ? ORDER BY name ASC'
     ).all(req.user.id);
 
-    res.render('notes', { notes: notes, user: req.user });
+    let notes;
+    if (boardId) {
+      notes = sqldb.prepare(
+        'SELECT * FROM sticky_notes WHERE user_id = ? AND board_id = ? ORDER BY z_index ASC'
+      ).all(req.user.id, boardId);
+    } else {
+      notes = sqldb.prepare(
+        'SELECT * FROM sticky_notes WHERE user_id = ? AND board_id IS NULL ORDER BY z_index ASC'
+      ).all(req.user.id);
+    }
+
+    // Load note colors from settings
+    const noteColorsRow = sqldb.prepare("SELECT value FROM app_settings WHERE key = 'note_colors'").get();
+    const noteColors = noteColorsRow ? noteColorsRow.value.split(',') : ['#fffffc', '#508991', '#fe5f55', '#0b1d51', '#1e2019'];
+
+    res.render('notes', {
+      notes: notes,
+      boards: boards,
+      currentBoard: boardId,
+      noteColors: noteColors,
+      user: req.user
+    });
+  });
+
+
+// POST /notes/boards - Create a new board
+router.post('/boards',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const name = (req.body.name || '').trim();
+    if (!name) {
+      return res.redirect('/notes');
+    }
+
+    sqldb.prepare(
+      'INSERT INTO note_boards(user_id, name, created_at) VALUES (?,?,?)'
+    ).run(req.user.id, name, Date.now());
+
+    const board = sqldb.prepare(
+      'SELECT id FROM note_boards WHERE user_id = ? AND name = ? ORDER BY id DESC'
+    ).get(req.user.id, name);
+
+    res.redirect('/notes?board=' + board.id);
+  });
+
+
+// POST /notes/boards/:id/rename - Rename a board
+router.post('/boards/:id/rename',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const name = (req.body.name || '').trim();
+    if (!name) return res.redirect('/notes');
+
+    sqldb.prepare(
+      'UPDATE note_boards SET name = ? WHERE id = ? AND user_id = ?'
+    ).run(name, req.params.id, req.user.id);
+
+    res.redirect('/notes?board=' + req.params.id);
+  });
+
+
+// GET /notes/boards/:id/delete - Delete a board (moves notes to unassigned)
+router.get('/boards/:id/delete',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const board = sqldb.prepare('SELECT * FROM note_boards WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    if (!board) return res.redirect('/notes');
+
+    // Move notes from this board back to unassigned
+    sqldb.prepare(
+      'UPDATE sticky_notes SET board_id = NULL WHERE board_id = ? AND user_id = ?'
+    ).run(req.params.id, req.user.id);
+
+    sqldb.prepare('DELETE FROM note_boards WHERE id = ?').run(req.params.id);
+    res.redirect('/notes');
   });
 
 
@@ -33,22 +109,30 @@ router.post('/',
   function (req, res) {
     const title = req.body.title || '';
     const body = req.body.body || '';
-    const color = req.body.color || '#fff9c4';
+    const color = req.body.color || '#fffffc';
+    const boardId = req.body.board_id || null;
 
     // Offset new notes slightly so they don't stack exactly
-    const count = sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ?').get(req.user.id).c;
+    const countQuery = boardId
+      ? sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ? AND board_id = ?').get(req.user.id, boardId)
+      : sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ? AND board_id IS NULL').get(req.user.id);
+    const count = countQuery.c;
     const offset = (count % 10) * 30;
 
-    const maxZ = sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ?').get(req.user.id).m || 0;
+    const maxZQuery = boardId
+      ? sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ? AND board_id = ?').get(req.user.id, boardId)
+      : sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ? AND board_id IS NULL').get(req.user.id);
+    const maxZ = maxZQuery.m || 0;
 
     const result = sqldb.prepare(
-      'INSERT INTO sticky_notes(user_id, title, body, type, color, pos_x, pos_y, z_index, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
-    ).run(req.user.id, title, body, 'text', color, 50 + offset, 50 + offset, maxZ + 1, Date.now(), Date.now());
+      'INSERT INTO sticky_notes(user_id, title, body, type, color, pos_x, pos_y, z_index, board_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+    ).run(req.user.id, title, body, 'text', color, 50 + offset, 50 + offset, maxZ + 1, boardId, Date.now(), Date.now());
 
     if (req.accepts('json') && req.xhr) {
       return res.json({ success: true, id: Number(result.lastInsertRowid) });
     }
-    res.redirect('/notes');
+    const redirect = boardId ? '/notes?board=' + boardId : '/notes';
+    res.redirect(redirect);
   });
 
 
@@ -61,6 +145,8 @@ router.post('/drawing',
       return res.status(400).json({ error: 'No valid image file provided' });
     }
 
+    const boardId = req.body.board_id || null;
+
     // Store image in til_images with source='note'
     const imgResult = sqldb.prepare(
       "INSERT INTO til_images(til_id, image_data, mime_type, filename, created_at, source) VALUES (NULL,?,?,?,?,'note')"
@@ -68,13 +154,20 @@ router.post('/drawing',
 
     const imageId = Number(imgResult.lastInsertRowid);
 
-    const count = sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ?').get(req.user.id).c;
+    const countQuery = boardId
+      ? sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ? AND board_id = ?').get(req.user.id, boardId)
+      : sqldb.prepare('SELECT COUNT(*) AS c FROM sticky_notes WHERE user_id = ? AND board_id IS NULL').get(req.user.id);
+    const count = countQuery.c;
     const offset = (count % 10) * 30;
-    const maxZ = sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ?').get(req.user.id).m || 0;
+
+    const maxZQuery = boardId
+      ? sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ? AND board_id = ?').get(req.user.id, boardId)
+      : sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ? AND board_id IS NULL').get(req.user.id);
+    const maxZ = maxZQuery.m || 0;
 
     const result = sqldb.prepare(
-      'INSERT INTO sticky_notes(user_id, title, type, image_id, color, pos_x, pos_y, z_index, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
-    ).run(req.user.id, 'Drawing', 'drawing', imageId, '#fff9c4', 50 + offset, 50 + offset, maxZ + 1, Date.now(), Date.now());
+      'INSERT INTO sticky_notes(user_id, title, type, image_id, color, pos_x, pos_y, z_index, board_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+    ).run(req.user.id, 'Drawing', 'drawing', imageId, '#fffffc', 50 + offset, 50 + offset, maxZ + 1, boardId, Date.now(), Date.now());
 
     res.json({ success: true, id: Number(result.lastInsertRowid), image_id: imageId });
   });
@@ -116,6 +209,20 @@ router.post('/:id/position',
   });
 
 
+// POST /notes/:id/move - Move note to a different board
+router.post('/:id/move',
+  require('connect-ensure-login').ensureLoggedIn(),
+  function (req, res) {
+    const boardId = req.body.board_id || null;
+
+    sqldb.prepare(
+      'UPDATE sticky_notes SET board_id = ?, updated_at = ? WHERE id = ? AND user_id = ?'
+    ).run(boardId, Date.now(), req.params.id, req.user.id);
+
+    res.json({ success: true });
+  });
+
+
 // GET /notes/:id/delete - Delete a note
 router.get('/:id/delete',
   require('connect-ensure-login').ensureLoggedIn(),
@@ -129,7 +236,9 @@ router.get('/:id/delete',
     }
 
     sqldb.prepare('DELETE FROM sticky_notes WHERE id = ?').run(req.params.id);
-    res.redirect('/notes');
+
+    const redirect = note.board_id ? '/notes?board=' + note.board_id : '/notes';
+    res.redirect(redirect);
   });
 
 

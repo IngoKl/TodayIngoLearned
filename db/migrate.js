@@ -58,4 +58,33 @@ module.exports = function () {
       updated_at INTEGER DEFAULT 0
     )`);
   }
+
+  // Add board_id column to sticky_notes
+  const stickyNoteColumns = sqldb.pragma('table_info(sticky_notes)').map(c => c.name);
+  if (!stickyNoteColumns.includes('board_id')) {
+    sqldb.exec('ALTER TABLE sticky_notes ADD COLUMN board_id INTEGER DEFAULT NULL');
+  }
+
+  // Create note_boards table
+  const noteBoardsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='note_boards'").get();
+  if (!noteBoardsTable) {
+    sqldb.exec(`CREATE TABLE note_boards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      created_at INTEGER DEFAULT 0
+    )`);
+  }
+
+  // Create app_settings table
+  const appSettingsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='app_settings'").get();
+  if (!appSettingsTable) {
+    sqldb.exec(`CREATE TABLE app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )`);
+    // Insert default values
+    sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?, ?)").run('note_colors', '#fffffc,#508991,#fe5f55,#0b1d51,#1e2019');
+    sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?, ?)").run('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551');
+  }
 };

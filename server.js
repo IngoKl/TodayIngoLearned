@@ -122,10 +122,21 @@ app.use(require('express-session')({
 }));
 
 
+// Helper to load app settings from DB
+function getAppSettings() {
+  const rows = sqldb.prepare('SELECT key, value FROM app_settings').all();
+  const settings = {};
+  for (const row of rows) {
+    settings[row.key] = row.value;
+  }
+  return settings;
+}
+
 // Middleware for locals
 app.use((req, res, next) => {
   res.locals.version = version;
   res.locals.appName = config.name || 'TodayIngoLearned';
+  res.locals.appSettings = getAppSettings();
   next();
 });
 

@@ -11,7 +11,7 @@
 
 <main class="flex-shrink-0">
     <div class="container">
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Admin</h5>
                 <p class="text-muted"><%= users.length %> registered user<%= users.length !== 1 ? 's' : '' %></p>
@@ -68,6 +68,35 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Default Colors</h5>
+                <p class="text-muted">Comma-separated hex colors (e.g. #fffffc,#508991,#fe5f55)</p>
+
+                <form action="/admin/settings/colors" method="POST">
+                    <div class="mb-3">
+                        <label for="note_colors" class="form-label">Sticky Note Colors</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <% noteColors.split(',').forEach(function(c) { %>
+                            <span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:<%= c %>;border:2px solid #dee2e6;" title="<%= c %>"></span>
+                            <% }); %>
+                        </div>
+                        <input type="text" class="form-control" id="note_colors" name="note_colors" value="<%= noteColors %>" pattern="^#[0-9a-fA-F]{6}(,#[0-9a-fA-F]{6})*$" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pen_colors" class="form-label">Drawing Pen Colors</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <% penColors.split(',').forEach(function(c) { %>
+                            <span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:<%= c %>;border:2px solid #dee2e6;" title="<%= c %>"></span>
+                            <% }); %>
+                        </div>
+                        <input type="text" class="form-control" id="pen_colors" name="pen_colors" value="<%= penColors %>" pattern="^#[0-9a-fA-F]{6}(,#[0-9a-fA-F]{6})*$" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Colors</button>
+                </form>
             </div>
         </div>
     </div>
