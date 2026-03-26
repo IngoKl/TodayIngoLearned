@@ -123,7 +123,6 @@ router.post('/til', function (req, res) {
     const result = sqldb.prepare("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)")
         .run(req.apiUser.id, title, description, tilDate, 0);
     helpers.updateTags(result.lastInsertRowid, tags);
-    helpers.ftsInsert(Number(result.lastInsertRowid), title, description);
 
     res.status(201).json({
         id: Number(result.lastInsertRowid),

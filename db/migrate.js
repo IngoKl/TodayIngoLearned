@@ -95,4 +95,19 @@ module.exports = function () {
     // Populate FTS index from existing data
     sqldb.exec(`INSERT INTO tils_fts(rowid, title, description) SELECT id, title, description FROM tils`);
   }
+
+  // Add FTS auto-sync triggers so the index stays up-to-date automatically
+  const ftsInsertTrigger = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name='tils_fts_insert'").get();
+  if (!ftsInsertTrigger) {
+    sqldb.exec(`CREATE TRIGGER tils_fts_insert AFTER INSERT ON tils BEGIN
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_update AFTER UPDATE OF title, description ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_delete BEFORE DELETE ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+    END`);
+  }
 };

@@ -191,7 +191,6 @@ exports.generateRandomTils = function(count) {
         const result = insertStmt.run(1, title, description, randomDate, 0);
         const tags = parseHashtags(description);
         module.exports.updateTags(result.lastInsertRowid, tags);
-        module.exports.ftsInsert(Number(result.lastInsertRowid), title, description);
     }
 
     console.log(`Generated ${count} random TILs`);
