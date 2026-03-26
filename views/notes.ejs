@@ -12,7 +12,7 @@
 <main class="flex-shrink-0">
     <div class="container-fluid px-3">
         <div class="notes-toolbar">
-            <h2 class="me-auto mb-0">Notes</h2>
+            <h2 class="me-auto mb-0 d-none d-md-block">Notes</h2>
 
             <!-- Board Switcher -->
             <div class="dropdown me-2">
@@ -204,6 +204,7 @@ function renameBoard(boardId, currentName) {
   });
 })();
 </script>
+<script>var defaultNoteColor = '<%= noteColors[0] %>';</script>
 <script src="/static/js/notes.js"></script>
 </body>
 

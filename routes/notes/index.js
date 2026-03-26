@@ -165,9 +165,12 @@ router.post('/drawing',
       : sqldb.prepare('SELECT MAX(z_index) AS m FROM sticky_notes WHERE user_id = ? AND board_id IS NULL').get(req.user.id);
     const maxZ = maxZQuery.m || 0;
 
+    const noteColorsRow = sqldb.prepare("SELECT value FROM app_settings WHERE key = 'note_colors'").get();
+    const drawingColor = noteColorsRow ? noteColorsRow.value.split(',')[0] : '#fffffc';
+
     const result = sqldb.prepare(
       'INSERT INTO sticky_notes(user_id, title, type, image_id, color, pos_x, pos_y, z_index, board_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
-    ).run(req.user.id, 'Drawing', 'drawing', imageId, '#fffffc', 50 + offset, 50 + offset, maxZ + 1, boardId, Date.now(), Date.now());
+    ).run(req.user.id, 'Drawing', 'drawing', imageId, drawingColor, 50 + offset, 50 + offset, maxZ + 1, boardId, Date.now(), Date.now());
 
     res.json({ success: true, id: Number(result.lastInsertRowid), image_id: imageId });
   });

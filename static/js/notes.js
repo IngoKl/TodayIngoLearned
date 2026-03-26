@@ -231,7 +231,8 @@
   // --- Add Text Note ---
 
   document.getElementById('add-text-note').addEventListener('click', function () {
-    var body = 'title=New+Note&body=&color=%238b575c';
+    var color = (typeof defaultNoteColor !== 'undefined' ? defaultNoteColor : '#fffffc');
+    var body = 'title=New+Note&body=&color=' + encodeURIComponent(color);
     if (currentBoardId) {
       body += '&board_id=' + encodeURIComponent(currentBoardId);
     }
