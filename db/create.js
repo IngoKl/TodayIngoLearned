@@ -22,6 +22,9 @@ exports.newDb = function () {
     sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('note_colors', '#fffffc,#508991,#fe5f55,#0b1d51,#1e2019')");
     sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551')");
 
+    // Full-text search index (FTS5)
+    sqldb.exec(`CREATE VIRTUAL TABLE tils_fts USING fts5(title, description, content='tils', content_rowid='id')`);
+
     sqldb.close();
     console.log('New database created ' + config.dbpath);
 }

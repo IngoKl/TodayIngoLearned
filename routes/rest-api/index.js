@@ -51,10 +51,14 @@ router.get('/til/search', function (req, res) {
 
     if (searchtype === 'title') {
         rows = sqldb.prepare(`${TIL_BASE_QUERY}
-            WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`).all(req.apiUser.id, `%${search}%`);
+            JOIN tils_fts ON tils_fts.rowid = tils.id
+            WHERE tils.user_id = ? AND tils_fts.title MATCH ?
+            GROUP BY tils.id ORDER BY rank`).all(req.apiUser.id, `"${search.replace(/"/g, '""')}"`);
     } else if (searchtype === 'text') {
         rows = sqldb.prepare(`${TIL_BASE_QUERY}
-            WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`).all(req.apiUser.id, `%${search}%`);
+            JOIN tils_fts ON tils_fts.rowid = tils.id
+            WHERE tils.user_id = ? AND tils_fts.description MATCH ?
+            GROUP BY tils.id ORDER BY rank`).all(req.apiUser.id, `"${search.replace(/"/g, '""')}"`);
     } else if (searchtype === 'date') {
         const range = helpers.getDateRange(new Date(search).getTime());
         rows = sqldb.prepare(`${TIL_BASE_QUERY}
@@ -119,6 +123,7 @@ router.post('/til', function (req, res) {
     const result = sqldb.prepare("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)")
         .run(req.apiUser.id, title, description, tilDate, 0);
     helpers.updateTags(result.lastInsertRowid, tags);
+    helpers.ftsInsert(Number(result.lastInsertRowid), title, description);
 
     res.status(201).json({
         id: Number(result.lastInsertRowid),

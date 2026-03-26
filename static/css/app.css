@@ -112,6 +112,28 @@ main>.container {
     font-size: 1.2em;
 }
 
+.search-snippet {
+    background-color: #fefce8;
+    border-left: 3px solid #a25776;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.95em;
+    color: #555;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+[data-bs-theme="dark"] .search-snippet {
+    background-color: #3a3520;
+    color: #ccc;
+}
+
+.search-snippet mark {
+    background-color: #fbbf24;
+    color: #000;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
 .page-link {
     color: #a25776;
 }

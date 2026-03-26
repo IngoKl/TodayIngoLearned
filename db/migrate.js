@@ -87,4 +87,12 @@ module.exports = function () {
     sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?, ?)").run('note_colors', '#fffffc,#508991,#fe5f55,#0b1d51,#1e2019');
     sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?, ?)").run('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551');
   }
+
+  // Create FTS5 virtual table for full-text search
+  const ftsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tils_fts'").get();
+  if (!ftsTable) {
+    sqldb.exec(`CREATE VIRTUAL TABLE tils_fts USING fts5(title, description, content='tils', content_rowid='id')`);
+    // Populate FTS index from existing data
+    sqldb.exec(`INSERT INTO tils_fts(rowid, title, description) SELECT id, title, description FROM tils`);
+  }
 };

@@ -214,11 +214,30 @@ app.post('/',
 
     if (searchtype === 'title') {
       rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      WHERE tils.user_id = ? AND tils.title LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
+      JOIN tils_fts ON tils_fts.rowid = tils.id
+      WHERE tils.user_id = ? AND tils_fts.title MATCH ?
+      GROUP BY tils.id ORDER BY rank`).all(req.user.id, `"${search.replace(/"/g, '""')}"`);
     }
     else if (searchtype === 'text') {
       rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      WHERE tils.user_id = ? AND tils.description LIKE ? GROUP BY tils.id`).all(req.user.id, `%${search}%`);
+      WHERE tils.user_id = ? AND tils.id IN (
+        SELECT rowid FROM tils_fts WHERE tils_fts.description MATCH ?
+      ) GROUP BY tils.id`).all(req.user.id, `"${search.replace(/"/g, '""')}"`);
+
+      // Build snippets in JS since snippet() doesn't work with external-content FTS
+      const searchLower = search.toLowerCase();
+      for (const row of rows) {
+        const desc = row.description || '';
+        const idx = desc.toLowerCase().indexOf(searchLower);
+        if (idx !== -1) {
+          const start = Math.max(0, idx - 40);
+          const end = Math.min(desc.length, idx + search.length + 40);
+          const before = (start > 0 ? '...' : '') + desc.substring(start, idx).replace(/</g, '&lt;');
+          const match = '<mark>' + desc.substring(idx, idx + search.length).replace(/</g, '&lt;') + '</mark>';
+          const after = desc.substring(idx + search.length, end).replace(/</g, '&lt;') + (end < desc.length ? '...' : '');
+          row.snippet = before + match + after;
+        }
+      }
     }
     else if (searchtype === 'date') {
       const range = helpers.getDateRange(new Date(search).getTime());
@@ -246,6 +265,25 @@ app.post('/',
   });
 
 
+// Public profile page — lists all public TILs for a user
+// (must be registered before /public/:til_id to avoid "user" matching as a til_id)
+app.get('/public/user/:user_id',
+  function (req, res) {
+    const author = sqldb.prepare('SELECT id, displayname FROM users WHERE id = ?').get(req.params.user_id);
+    if (!author) {
+      return res.status(404).render('404', { url: req.url });
+    }
+
+    const rows = sqldb.prepare(`${TIL_BASE_QUERY}
+      WHERE tils.user_id = ? AND tils.public = 1
+      GROUP BY tils.id ORDER BY tils.date DESC`).all(req.params.user_id);
+
+    const tils = tilsObject(rows);
+
+    res.render('public_profile', { tils_objects: tils[0], tils_keys: tils[1], author: author.displayname, userId: author.id });
+  });
+
+
 // Public TIL view (no authentication required)
 app.get('/public/:til_id',
   function (req, res) {
@@ -263,9 +301,13 @@ app.get('/public/:til_id',
       til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
     }
 
+    const tilRow = sqldb.prepare('SELECT user_id FROM tils WHERE id = ?').get(req.params.til_id);
+    const userId = tilRow.user_id;
+    const author = sqldb.prepare('SELECT displayname FROM users WHERE id = ?').get(userId);
     const til_images = sqldb.prepare('SELECT id, filename, mime_type FROM til_images WHERE til_id = ?').all(req.params.til_id);
+    const publicCount = sqldb.prepare('SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND public = 1').get(userId).count;
 
-    res.render('public_view', { til: til, til_urls: til_urls, til_images: til_images });
+    res.render('public_view', { til: til, til_urls: til_urls, til_images: til_images, author: author ? author.displayname : 'Unknown', authorPublicCount: publicCount, userId: userId });
   });
 
 

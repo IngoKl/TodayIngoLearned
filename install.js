@@ -77,6 +77,9 @@ else if (command === 'setadmin') {
 else if (command === 'removeadmin') {
     helpers.setAdmin(process.argv.slice(2)[1], false);
 }
+else if (command === 'rebuildfts') {
+    helpers.rebuildFts();
+}
 else {
-    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|showtil|generatetils|fixnulldates|setadmin|removeadmin');
+    console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|rebuildfts|showtil|generatetils|fixnulldates|setadmin|removeadmin');
 }

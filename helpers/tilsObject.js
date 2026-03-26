@@ -16,6 +16,9 @@ function tilsObject(tils, user_id) {
       tils_combined[key]["description"] = element.description;
       tils_combined[key]["tags"] = element.tags ? element.tags.split(',') : [];
       tils_combined[key]["public"] = element.public || 0;
+      if (element.snippet) {
+        tils_combined[key]["snippet"] = element.snippet;
+      }
     });
 
     return [tils_combined, tils_keys];

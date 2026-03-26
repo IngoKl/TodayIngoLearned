@@ -191,6 +191,7 @@ exports.generateRandomTils = function(count) {
         const result = insertStmt.run(1, title, description, randomDate, 0);
         const tags = parseHashtags(description);
         module.exports.updateTags(result.lastInsertRowid, tags);
+        module.exports.ftsInsert(Number(result.lastInsertRowid), title, description);
     }
 
     console.log(`Generated ${count} random TILs`);
@@ -206,6 +207,34 @@ exports.generateApiKey = function(user_id) {
 // Get user by API key
 exports.getUserByApiKey = function(api_key) {
     return sqldb.prepare('SELECT id, username FROM users WHERE api_key = ?').get(api_key);
+}
+
+// FTS index sync helpers
+exports.ftsInsert = function(tilId, title, description) {
+    sqldb.prepare("INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)").run(tilId, title, description);
+}
+
+exports.ftsUpdate = function(tilId, title, description) {
+    // For content= tables, delete old then insert new
+    const old = sqldb.prepare("SELECT title, description FROM tils WHERE id = ?").get(tilId);
+    if (old) {
+        sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
+    }
+    sqldb.prepare("INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)").run(tilId, title, description);
+}
+
+exports.ftsDelete = function(tilId) {
+    const old = sqldb.prepare("SELECT title, description FROM tils WHERE id = ?").get(tilId);
+    if (old) {
+        sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
+    }
+}
+
+// Rebuild the entire FTS index from scratch
+exports.rebuildFts = function() {
+    sqldb.exec("INSERT INTO tils_fts(tils_fts) VALUES ('delete-all')");
+    sqldb.exec("INSERT INTO tils_fts(rowid, title, description) SELECT id, title, description FROM tils");
+    console.log('FTS index rebuilt successfully.');
 }
 
 // Clean up orphan images (uploaded but never associated with a TIL)

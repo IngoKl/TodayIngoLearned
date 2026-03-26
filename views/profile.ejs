@@ -67,6 +67,15 @@ curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?typ
                 </details>
                 <% } %>
                 <hr>
+                <h6>Public Profile</h6>
+                <% if (publicCount > 0) { %>
+                    <p>You have <strong><%= publicCount %></strong> public TIL<%= publicCount !== 1 ? 's' : '' %>.
+                    <a href="/public/user/<%= user.id %>">View your public profile</a></p>
+                <% } else { %>
+                    <p class="text-muted">You don't have any public TILs yet. Mark a TIL as public when editing to share it.</p>
+                <% } %>
+
+                <hr>
 
                 <p>
                     <button id="themeToggle" class="btn btn-primary">Toggle Dark Mode</button>

@@ -58,6 +58,9 @@
                         <span class="badge bg-success">Public</span>
                     <% } %>
                     <hr>
+                    <% if (til.snippet) { %>
+                        <p class="card-text search-snippet"><%- til.snippet %></p>
+                    <% } %>
                     <p class="card-text md description" data-til-id="<%= til.til_id %>"><%=til.description %></p>
                     <hr>
                     <a href="/til/view/<%= til.til_id %>" class="btn btn-secondary">View</a>

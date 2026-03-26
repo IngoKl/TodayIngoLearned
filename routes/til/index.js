@@ -120,6 +120,7 @@ router.post('/add',
 
     const result = sqldb.prepare("INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)").run(req.user.id, title, description, date, 0);
     helpers.updateTags(result.lastInsertRowid, tags);
+    helpers.ftsInsert(Number(result.lastInsertRowid), title, description);
 
     // Associate any images referenced in the description
     const imageRefs = description.match(/!\[.*?\]\(\/image\/(\d+)\)/g);
@@ -161,6 +162,7 @@ router.post('/edit/:til_id',
 
     const isPublic = req.body.public ? 1 : 0;
 
+    helpers.ftsUpdate(Number(req.params.til_id), title, description);
     sqldb.prepare("UPDATE tils SET title = ?, date = ?, description = ?, public = ? WHERE id = ? AND user_id = ?").run(title, date, description, isPublic, req.params.til_id, req.user.id);
     helpers.updateTags(req.params.til_id, tags);
 
@@ -184,6 +186,7 @@ router.get('/edit/:til_id/delete',
     const til = sqldb.prepare("SELECT id FROM tils WHERE id = ? AND user_id = ?").get(req.params.til_id, req.user.id);
     if (!til) return res.status(404).send('TIL not found');
 
+    helpers.ftsDelete(Number(req.params.til_id));
     sqldb.prepare("DELETE FROM tags_join WHERE til_id = ?").run(req.params.til_id);
     sqldb.prepare("DELETE FROM bookmarks WHERE til_id = ?").run(req.params.til_id);
     sqldb.prepare("DELETE FROM til_comments WHERE til_id = ?").run(req.params.til_id);

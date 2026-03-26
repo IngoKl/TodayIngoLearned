@@ -1,73 +1,117 @@
 <!doctype html>
-<%- include ('partials/html.ejs') %>
+<html lang="en">
 
 <head>
-    <%- include ('partials/head.ejs') %>
-    <title><%= til.title %> – <%= appName %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="author" content="<%= author %>">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="<%= til.title %>">
+    <meta property="og:description" content="<%= til.description.replace(/[#*_\[\]`>]/g, '').substring(0, 200) %>">
+    <meta property="og:site_name" content="<%= appName %>">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="<%= til.title %>">
+    <meta name="twitter:description" content="<%= til.description.replace(/[#*_\[\]`>]/g, '').substring(0, 200) %>">
+
+    <title><%= til.title %> &mdash; <%= appName %></title>
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/hljs/github-dark-dimmed.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/public.css">
+    <meta name="theme-color" content="#a25776">
 </head>
 
-<body>
-<nav class="navbar navbar-expand-md navbar-dark dark_grey fixed-top">
-    <div class="container" style="margin-left: 10px;">
-        <a class="navbar-brand" href="#"><img src="/static/images/icons/app-icon-96.png" width="32" alt="TIL"/> <%= appName %></a>
-    </div>
-</nav>
+<body class="public-page">
 
-<main class="flex-shrink-0">
-    <div class="container">
+    <div class="public-container">
+        <!-- Header -->
+        <header class="public-header">
+            <a href="/" class="public-brand">
+                <img src="/static/images/icons/app-icon-96.png" width="28" alt="TIL"/>
+                <span><%= appName %></span>
+            </a>
+        </header>
 
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><%= til.title %></h5>
-                <h6 class="card-subtitle mb-2 text-muted"><%= til.date.toLocaleDateString('de-DE') %></h6>
-                <% for (let tag in til.tags) { %>
-                    <span class="badge bg-secondary"><%=til.tags[tag] %></span>
-                <% } %>
-
-                <hr>
-                <p id="tildescription" class="card-text md description"><%=til.description %></p>
+        <!-- Article -->
+        <article class="public-article">
+            <div class="public-article-meta">
+                <time datetime="<%= til.date.toISOString() %>"><%= til.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></time>
+                <span class="public-meta-sep">&middot;</span>
+                <span>by <strong><%= author %></strong></span>
             </div>
-        </div>
 
-        <br>
+            <h1 class="public-article-title"><%= til.title %></h1>
+
+            <div class="public-tags">
+                <% for (let tag in til.tags) { %>
+                    <span class="public-tag"><%= til.tags[tag] %></span>
+                <% } %>
+            </div>
+
+            <div class="public-article-body">
+                <div id="tildescription" class="md description"><%= til.description %></div>
+            </div>
+        </article>
 
         <% if (til_images && til_images.length > 0) { %>
-        <br>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Images</h5>
-                <div class="d-flex flex-wrap gap-2 til-images-gallery">
-                    <% for (let img of til_images) { %>
-                        <a href="/image/<%= img.id %>" target="_blank">
-                            <img src="/image/<%= img.id %>" alt="<%= img.filename %>"
-                                 style="max-width: 200px; max-height: 150px; object-fit: cover;"
-                                 class="rounded border">
-                        </a>
-                    <% } %>
-                </div>
+        <section class="public-section">
+            <h2 class="public-section-title">Images</h2>
+            <div class="public-images-grid">
+                <% for (let img of til_images) { %>
+                    <a href="/image/<%= img.id %>" target="_blank" class="public-image-link">
+                        <img src="/image/<%= img.id %>" alt="<%= img.filename %>" loading="lazy">
+                    </a>
+                <% } %>
             </div>
-        </div>
+        </section>
         <% } %>
 
-        <%if (til_urls) { %>
-            <%if (til_urls.length > 0) { %>
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">URLs</h5>
-                    <% for (let i in til_urls) { %>
-                        <a href="<%= til_urls[i] %>" target="_blank" rel="noopener noreferrer"><%= til_urls[i] %></a><br>
-                    <% } %>
-                </div>
-            </div>
-            <% } %>
+        <% if (til_urls && til_urls.length > 0) { %>
+        <section class="public-section">
+            <h2 class="public-section-title">References</h2>
+            <ul class="public-urls">
+                <% for (let i in til_urls) { %>
+                    <li><a href="<%= til_urls[i] %>" target="_blank" rel="noopener noreferrer"><%= til_urls[i].replace(/^https?:\/\//, '') %></a></li>
+                <% } %>
+            </ul>
+        </section>
         <% } %>
 
+        <!-- Footer -->
+        <footer class="public-footer">
+            <div class="public-footer-inner">
+                <p class="public-footer-cta">
+                    <% if (authorPublicCount > 1) { %>
+                        <a href="/public/user/<%= userId %>">See all <%= authorPublicCount %> public learnings by <%= author %></a>
+                    <% } %>
+                </p>
+                <p class="public-footer-brand">
+                    Shared via <a href="/"><%= appName %></a>
+                </p>
+            </div>
+        </footer>
     </div>
-</main>
 
-<%- include ('partials/footer_text.ejs') %>
-
-<%- include ('partials/footer.ejs') %>
+<script src="/static/js/showdown.min.js"></script>
+<script src="/static/js/hljs/highlight.min.js"></script>
+<script>
+// Render markdown
+const converter = new showdown.Converter();
+const mdElements = document.getElementsByClassName('md');
+for (let mde of mdElements) {
+    mde.innerHTML = converter.makeHtml(mde.textContent);
+}
+// Syntax highlighting
+if (typeof hljs !== 'undefined') {
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+}
+</script>
 </body>
 
 </html>
