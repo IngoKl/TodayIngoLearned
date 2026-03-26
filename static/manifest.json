@@ -1,11 +1,12 @@
 {
+    "id": "/",
     "name": "TodayIngoLearned",
     "short_name": "TIL",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#3b4045",
-    "theme_color": "#353A3F",
+    "background_color": "#f5f5f5",
+    "theme_color": "#a25776",
     "description": "TodayIngoLearned",
     "dir": "ltr",
     "lang": "en-US",
@@ -33,6 +34,12 @@
           "purpose": "any"
         },
         {
+          "src": "/static/images/icons/app-icon-192.png",
+          "type": "image/png",
+          "sizes": "192x192",
+          "purpose": "maskable"
+        },
+        {
           "src": "/static/images/icons/app-icon-256.png",
           "type": "image/png",
           "sizes": "256x256"
@@ -47,6 +54,12 @@
           "type": "image/png",
           "sizes": "512x512",
           "purpose": "any"
+        },
+        {
+          "src": "/static/images/icons/app-icon-512.png",
+          "type": "image/png",
+          "sizes": "512x512",
+          "purpose": "maskable"
         }
       ],
       "screenshots" : [

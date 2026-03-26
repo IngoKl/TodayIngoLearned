@@ -1,10 +1,26 @@
 // Register SW
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-    .register('/sw.js')
-    // Returns a promise
-    .then(function() {
-        console.log('[SW] Registered');
+    navigator.serviceWorker.register('/sw.js')
+        .then(function(reg) {
+            console.log('[SW] Registered');
+            // Check for updates on page load
+            reg.addEventListener('updatefound', function() {
+                var newWorker = reg.installing;
+                newWorker.addEventListener('statechange', function() {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        if (confirm('A new version is available. Reload to update?')) {
+                            newWorker.postMessage('skipWaiting');
+                        }
+                    }
+                });
+            });
+        })
+        .catch(function(err) {
+            console.warn('[SW] Registration failed:', err);
+        });
+    // Reload when the new SW takes over
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+        window.location.reload();
     });
 }
 

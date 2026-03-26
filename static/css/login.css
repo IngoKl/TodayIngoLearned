@@ -18,10 +18,6 @@ body {
     margin: auto;
 }
 
-.form-signin .checkbox {
-    font-weight: 400;
-}
-
 .form-signin .form-control:focus {
     z-index: 2;
 }
