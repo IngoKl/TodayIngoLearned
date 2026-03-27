@@ -20,7 +20,7 @@ exports.renameBoard = function (boardId, userId, name) {
 
 exports.deleteBoard = function (boardId, userId) {
   sqldb.prepare('UPDATE sticky_notes SET board_id = NULL WHERE board_id = ? AND user_id = ?').run(boardId, userId);
-  sqldb.prepare('DELETE FROM note_boards WHERE id = ?').run(boardId);
+  sqldb.prepare('DELETE FROM note_boards WHERE id = ? AND user_id = ?').run(boardId, userId);
 };
 
 // Notes

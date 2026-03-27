@@ -23,9 +23,9 @@ router.get('/:tag',
       const rows = TagModel.findTilsByTag(req.user.id, request_tag);
       const tils = tilsObject(rows);
 
-      const related_tags = TagModel.getRelatedTags(req.user.id, request_tag);
+      const related_tags = TagModel.getRelatedTags(req.user.id, request_tag).filter(tag => tag !== request_tag);
 
-      if (related_tags.length > 0) {
+      if (tils[1].length > 0) {
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const perPage = 10;
         const totalPages = Math.ceil(tils[1].length / perPage);

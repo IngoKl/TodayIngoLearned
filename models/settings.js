@@ -1,17 +1,27 @@
 const sqldb = require('../db');
 
-exports.getAll = function () {
+let settingsCache = null;
+
+function loadSettings() {
   const rows = sqldb.prepare('SELECT key, value FROM app_settings').all();
   const settings = {};
   for (const row of rows) {
     settings[row.key] = row.value;
   }
+  settingsCache = settings;
   return settings;
+}
+
+exports.getAll = function () {
+  if (settingsCache) {
+    return settingsCache;
+  }
+  return loadSettings();
 };
 
 exports.get = function (key) {
-  const row = sqldb.prepare('SELECT value FROM app_settings WHERE key = ?').get(key);
-  return row ? row.value : null;
+  const settings = exports.getAll();
+  return Object.prototype.hasOwnProperty.call(settings, key) ? settings[key] : null;
 };
 
 exports.set = function (key, value) {
@@ -20,6 +30,9 @@ exports.set = function (key, value) {
     sqldb.prepare('UPDATE app_settings SET value = ? WHERE key = ?').run(value, key);
   } else {
     sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?,?)").run(key, value);
+  }
+  if (settingsCache) {
+    settingsCache[key] = value;
   }
 };
 

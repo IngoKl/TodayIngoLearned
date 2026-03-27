@@ -21,11 +21,16 @@
         </p>
 
         <hr>
-            <a href="/study/<%= til.til_id %>/easy"><button class="btn btn-success">Easy</button></a>
-            <a href="/study/<%= til.til_id %>/ok"><button class="btn btn-warning">OK</button></a>
-            <a href="/study/<%= til.til_id %>/hard"><button class="btn btn-danger">Hard</button></a>
-            &nbsp;&nbsp;&nbsp;
-            <a href="/study/<%= til.til_id %>/mute"><button class="btn btn-secondary">Mute</button></a>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <% ['easy', 'ok', 'hard', 'mute'].forEach(function(result) { %>
+                <form method="POST" action="/study/<%= til.til_id %>/<%= result %>" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn <%= result === 'easy' ? 'btn-success' : result === 'ok' ? 'btn-warning' : result === 'hard' ? 'btn-danger' : 'btn-secondary' %>">
+                        <%= result === 'ok' ? 'OK' : result.charAt(0).toUpperCase() + result.slice(1) %>
+                    </button>
+                </form>
+            <% }); %>
+        </div>
         <hr>
 
         <div class="card">

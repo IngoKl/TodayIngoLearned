@@ -4,6 +4,17 @@
   var board = document.getElementById('notes-board');
   if (!board) return;
 
+  function readJsonResponse(response) {
+    return response.json().catch(function () {
+      return {};
+    }).then(function (data) {
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    });
+  }
+
   // CSRF token from meta tag
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
@@ -297,9 +308,8 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ title: 'New Note', body: '', color: color, board_id: currentBoardId || null })
-    }).then(function (res) { return res.json(); })
+    }).then(readJsonResponse)
       .then(function (data) {
-        if (!data.success) return;
         var count = board.querySelectorAll('.sticky-note').length;
         var offset = (count % 10) * 30;
         var noteEl = buildNoteElement({
@@ -315,6 +325,8 @@
           height: 180
         });
         openEditModal(noteEl);
+      }).catch(function (err) {
+        alert(err.message);
       });
   });
 
@@ -325,23 +337,23 @@
       showNoteColor: true,
       noteColors: typeof window.noteColorList !== 'undefined' ? window.noteColorList : null,
       onSave: async function (file, blob, noteColor) {
-        const formData = new FormData();
-        formData.append('image', file);
-        if (currentBoardId) {
-          formData.append('board_id', currentBoardId);
-        }
-        if (noteColor) {
-          formData.append('color', noteColor);
-        }
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          if (currentBoardId) {
+            formData.append('board_id', currentBoardId);
+          }
+          if (noteColor) {
+            formData.append('color', noteColor);
+          }
 
-        const res = await fetch('/notes/drawing', {
-          method: 'POST',
-          headers: { 'X-CSRF-Token': csrfToken },
-          body: formData
-        });
-        const data = await res.json();
+          const res = await fetch('/notes/drawing', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+          });
+          const data = await readJsonResponse(res);
 
-        if (data.success) {
           var count = board.querySelectorAll('.sticky-note').length;
           var offset = (count % 10) * 30;
           buildNoteElement({
@@ -357,6 +369,9 @@
             width: 200,
             height: 180
           });
+        } catch (err) {
+          alert(err.message);
+          throw err;
         }
       }
     });
@@ -448,7 +463,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ title: title, body: body, color: selectedColor })
-    });
+    }).then(readJsonResponse);
 
     // Move board if changed
     var note = document.querySelector('[data-note-id="' + noteId + '"]');
@@ -460,13 +475,15 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
           body: JSON.stringify({ board_id: newBoardId || null })
-        });
+        }).then(readJsonResponse);
       });
     }
 
     savePromise.then(function () {
       editModal.hide();
       window.location.reload();
+    }).catch(function (err) {
+      alert(err.message);
     });
   });
 
@@ -481,15 +498,17 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ board_id: currentBoardId || null })
-      }).then(function (res) { return res.json(); })
+      }).then(readJsonResponse)
         .then(function (data) {
-          if (data.success && data.deleted > 0) {
+          if (data.deleted > 0) {
             // Remove empty notes from DOM
             data.ids.forEach(function (id) {
               var el = board.querySelector('[data-note-id="' + id + '"]');
               if (el) el.remove();
             });
           }
+        }).catch(function (err) {
+          alert(err.message);
         });
     });
   }

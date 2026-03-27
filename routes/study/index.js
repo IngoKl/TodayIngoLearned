@@ -43,7 +43,7 @@ router.get('/',
     } catch (err) { next(err); }
 });
 
-router.get('/:til_id/:study_result',
+router.post('/:til_id/:study_result',
     require('connect-ensure-login').ensureLoggedIn(),
     function (req, res, next) {
     try {

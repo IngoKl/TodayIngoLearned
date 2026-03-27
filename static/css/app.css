@@ -88,6 +88,12 @@ main>.container {
     font-size: 1.2em;
 }
 
+.search-toolbar-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
 .search-snippet {
     background-color: #fefce8;
     border-left: 3px solid var(--app-accent);

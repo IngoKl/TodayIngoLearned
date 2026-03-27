@@ -9,6 +9,19 @@ const Settings = require('./../../models/settings');
 const TilModel = require('./../../models/til');
 const router = express.Router();
 
+function resolveBoardId(userId, rawBoardId) {
+  if (!rawBoardId) {
+    return null;
+  }
+
+  const boardId = validate.positiveInt(rawBoardId);
+  if (!boardId) {
+    return false;
+  }
+
+  return NoteModel.getBoard(boardId, userId) ? boardId : false;
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -24,7 +37,11 @@ router.get('/',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
-      const boardId = req.query.board || null;
+      const boardId = resolveBoardId(req.user.id, req.query.board);
+      if (boardId === false) {
+        return res.redirect('/notes');
+      }
+
       const boards = NoteModel.listBoards(req.user.id);
       const notes = NoteModel.listNotes(req.user.id, boardId);
       const noteColors = Settings.getNoteColors();
@@ -99,7 +116,10 @@ router.post('/',
       const title = req.body.title || '';
       const body = req.body.body || '';
       const color = req.body.color || '#fffffc';
-      const boardId = req.body.board_id || null;
+      const boardId = resolveBoardId(req.user.id, req.body.board_id);
+      if (boardId === false) {
+        return res.status(400).json({ error: 'Invalid board' });
+      }
 
       // Offset new notes slightly so they don't stack exactly
       const count = NoteModel.countNotes(req.user.id, boardId);
@@ -127,10 +147,13 @@ router.post('/drawing',
         return res.status(400).json({ error: 'No valid image file provided' });
       }
 
-      const boardId = req.body.board_id || null;
+      const boardId = resolveBoardId(req.user.id, req.body.board_id);
+      if (boardId === false) {
+        return res.status(400).json({ error: 'Invalid board' });
+      }
 
       // Store image in til_images with source='note'
-      const imgResult = ImageModel.createForNote(req.file.buffer, req.file.mimetype, req.file.originalname);
+      const imgResult = ImageModel.createForNote(req.user.id, req.file.buffer, req.file.mimetype, req.file.originalname);
       const imageId = Number(imgResult.lastInsertRowid);
 
       const count = NoteModel.countNotes(req.user.id, boardId);
@@ -151,7 +174,10 @@ router.post('/delete-empty',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
-      const boardId = req.body.board_id || null;
+      const boardId = resolveBoardId(req.user.id, req.body.board_id);
+      if (boardId === false) {
+        return res.status(400).json({ error: 'Invalid board' });
+      }
       const emptyNotes = NoteModel.findEmptyNotes(req.user.id, boardId);
       const ids = emptyNotes.map(n => n.id);
 
@@ -206,7 +232,11 @@ router.post('/:id/move',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
-      const boardId = req.body.board_id || null;
+      const boardId = resolveBoardId(req.user.id, req.body.board_id);
+      if (boardId === false) {
+        return res.status(400).json({ error: 'Invalid board' });
+      }
+
       NoteModel.moveToBoard(req.params.id, req.user.id, boardId);
       res.json({ success: true });
     } catch (err) { next(err); }
@@ -223,7 +253,7 @@ router.post('/:id/delete',
 
       // Delete associated image if it's a drawing
       if (note.type === 'drawing' && note.image_id) {
-        ImageModel.deleteById(note.image_id);
+        ImageModel.deleteOwned(note.image_id, req.user.id);
       }
 
       NoteModel.deleteNote(req.params.id, req.user.id);
@@ -261,8 +291,8 @@ router.post('/:id/to-til',
       // For drawing notes, associate the image with the new TIL
       if (note.type === 'drawing' && note.image_id) {
         const sqldb = require('./../../db');
-        sqldb.prepare("UPDATE til_images SET til_id = ?, source = 'til' WHERE id = ?")
-          .run(result.lastInsertRowid, note.image_id);
+        sqldb.prepare("UPDATE til_images SET til_id = ?, source = 'til' WHERE id = ? AND user_id = ?")
+          .run(result.lastInsertRowid, note.image_id, req.user.id);
       }
 
       // Delete the sticky note (image is now owned by the TIL)

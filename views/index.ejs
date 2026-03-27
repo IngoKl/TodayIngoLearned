@@ -9,28 +9,32 @@
 <body>
 <%- include ('partials/navigation') %>
 
+<%
+    const currentSearchType = typeof searchtype !== 'undefined' ? searchtype : 'title';
+    const currentSearch = typeof search !== 'undefined' ? search : '';
+%>
 
 <main class="flex-shrink-0">
     <div class="container">
         <form method="POST" action="/">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="row align-items-center">
+            <div class="row g-2 align-items-end search-toolbar">
                 <div class="col-auto">
                     <label class="sr-only form-label" for="searchtype">Search Type</label>
                     <select class="form-select" id="searchtype" name="searchtype">
-                        <option value="title">Title</option>
-                        <option value="text">Text</option>
-                        <option value="tag">Tag</option>
-                        <option value="date">Date</option>
+                        <option value="title" <%= currentSearchType === 'title' ? 'selected' : '' %>>Title</option>
+                        <option value="text" <%= currentSearchType === 'text' ? 'selected' : '' %>>Text</option>
+                        <option value="tag" <%= currentSearchType === 'tag' ? 'selected' : '' %>>Tag</option>
+                        <option value="date" <%= currentSearchType === 'date' ? 'selected' : '' %>>Date</option>
                     </select>
                 </div>
                 <div class="col-auto">
                     <label class="sr-only form-label" for="search">Tag</label>
-                    <input type="text" class="form-control" id="search" name="search" placeholder="Search">
+                    <input type="<%= currentSearchType === 'date' ? 'date' : 'text' %>" class="form-control" id="search" name="search" placeholder="Search" value="<%= currentSearch %>">
                 </div>
-                <div class="col-auto">
+                <div class="col-auto search-toolbar-actions">
                     <button type="submit" class="btn btn-primary">Search</button>
-                    <a href="/til/add"><button style="margin: 5px;" type="button" class="btn btn-secondary">Add</button></a>
+                    <a href="/til/add" class="btn btn-secondary">Add</a>
                 </div>
             </div>
         </form>
@@ -39,9 +43,9 @@
 
         <p style="font-size: 1.5em;">Hey <strong><%= user.username %></strong>, here are your TILs:</p>
 
-        <% if (typeof searchtype !== 'undefined' && searchtype) { %>
+        <% if (currentSearch) { %>
             <div class="search-results">
-                <p>Searching for <%= searchtype %>: <strong><%= search %></strong>. <%= tils_keys.length %> results found.</p>
+                <p>Searching for <%= currentSearchType %>: <strong><%= currentSearch %></strong>. <%= typeof totalResults !== 'undefined' ? totalResults : tils_keys.length %> results found.</p>
             </div>
         <% } %>
 
@@ -78,9 +82,9 @@
 
         <%- include ('partials/pagination') %>
 
-        <a class="d-flex justify-content-center" style="text-decoration:none" href="/til/add">
-            <button type="button" class="btn btn-secondary pop">Add</button>
-        </a>
+        <div class="d-flex justify-content-center">
+            <a class="btn btn-secondary pop" style="text-decoration:none" href="/til/add">Add</a>
+        </div>
     </div>
 </main>
 

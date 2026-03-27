@@ -1,6 +1,7 @@
 const express = require('express');
 const TagModel = require('./../../models/tag');
 const ImageModel = require('./../../models/image');
+const TilModel = require('./../../models/til');
 const router = express.Router();
 const sqldb = require('./../../db');
 
@@ -49,6 +50,11 @@ router.get('/images/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
+      const til = TilModel.getIdOnly(req.user.id, req.params.til_id);
+      if (!til) {
+        return res.status(404).json({ error: 'TIL not found' });
+      }
+
       const images = ImageModel.listByTil(req.params.til_id);
       res.json({ images });
     } catch (err) { next(err); }

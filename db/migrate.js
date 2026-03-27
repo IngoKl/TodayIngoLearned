@@ -24,6 +24,7 @@ module.exports = function () {
     sqldb.exec(`CREATE TABLE til_images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       til_id INTEGER,
+      user_id INTEGER,
       image_data BLOB NOT NULL,
       mime_type TEXT NOT NULL,
       filename TEXT,
@@ -37,6 +38,22 @@ module.exports = function () {
   if (!tilImageColumns.includes('source')) {
     sqldb.exec("ALTER TABLE til_images ADD COLUMN source TEXT DEFAULT 'til'");
   }
+
+  // Add user_id column to til_images
+  if (!tilImageColumns.includes('user_id')) {
+    sqldb.exec('ALTER TABLE til_images ADD COLUMN user_id INTEGER');
+  }
+
+  // Backfill image ownership from linked TILs
+  sqldb.exec(`
+    UPDATE til_images
+    SET user_id = (
+      SELECT tils.user_id
+      FROM tils
+      WHERE tils.id = til_images.til_id
+    )
+    WHERE user_id IS NULL AND til_id IS NOT NULL
+  `);
 
   // Create sticky_notes table
   const stickyNotesTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='sticky_notes'").get();
@@ -64,6 +81,21 @@ module.exports = function () {
   if (!stickyNoteColumns.includes('board_id')) {
     sqldb.exec('ALTER TABLE sticky_notes ADD COLUMN board_id INTEGER DEFAULT NULL');
   }
+
+  // Backfill note image ownership once sticky_notes exists
+  sqldb.exec(`
+    UPDATE til_images
+    SET user_id = (
+      SELECT sticky_notes.user_id
+      FROM sticky_notes
+      WHERE sticky_notes.image_id = til_images.id
+      ORDER BY sticky_notes.id DESC
+      LIMIT 1
+    )
+    WHERE user_id IS NULL AND source = 'note'
+  `);
+  sqldb.exec('CREATE INDEX IF NOT EXISTS idx_til_images_til_id ON til_images(til_id)');
+  sqldb.exec('CREATE INDEX IF NOT EXISTS idx_til_images_user_id ON til_images(user_id)');
 
   // Create note_boards table
   const noteBoardsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='note_boards'").get();

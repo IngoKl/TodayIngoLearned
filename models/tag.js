@@ -24,16 +24,18 @@ exports.findTilsByTag = function (userId, tag) {
 };
 
 exports.getRelatedTags = function (userId, tag) {
-  const escaped = escapeLike(tag);
-  const row = sqldb.prepare(`SELECT GROUP_CONCAT(tags) AS tags FROM (
-    SELECT GROUP_CONCAT(tags.tag) AS tags
-    FROM tils
-    JOIN tags_join ON tags_join.til_id = tils.id
-    JOIN tags ON tags.id = tags_join.tag_id
+  return sqldb.prepare(`
+    SELECT DISTINCT related.tag
+    FROM tags AS current
+    JOIN tags_join AS current_join ON current_join.tag_id = current.id
+    JOIN tils ON tils.id = current_join.til_id
+    JOIN tags_join AS related_join ON related_join.til_id = tils.id
+    JOIN tags AS related ON related.id = related_join.tag_id
     WHERE tils.user_id = ?
-    GROUP BY tils.id
-  ) WHERE tags LIKE ? ESCAPE '\\'`).get(userId, `%${escaped}%`);
-  return row && row.tags ? Array.from(new Set(row.tags.split(','))) : [];
+      AND current.tag = ?
+      AND related.tag != current.tag
+    ORDER BY related.tag ASC
+  `).all(userId, tag).map(row => row.tag);
 };
 
 exports.getGraphData = function (userId) {

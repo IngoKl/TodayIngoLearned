@@ -15,7 +15,7 @@ exports.newDb = function () {
     sqldb.exec('CREATE TABLE tags_join (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `tag_id` INTEGER)');
     sqldb.exec('CREATE TABLE til_comments (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `comment` TEXT,`user_id` INTEGER)');
     sqldb.exec('CREATE TABLE bookmarks (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`user_id` INTEGER,`til_id` INTEGER)');
-    sqldb.exec('CREATE TABLE til_images (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `image_data` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT, `created_at` INTEGER DEFAULT 0, `source` TEXT DEFAULT \'til\')');
+    sqldb.exec('CREATE TABLE til_images (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `user_id` INTEGER, `image_data` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT, `created_at` INTEGER DEFAULT 0, `source` TEXT DEFAULT \'til\')');
     sqldb.exec('CREATE TABLE sticky_notes (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER NOT NULL, `title` TEXT DEFAULT \'\', `body` TEXT DEFAULT \'\', `type` TEXT NOT NULL DEFAULT \'text\', `image_id` INTEGER DEFAULT NULL, `color` TEXT DEFAULT \'#fff9c4\', `pos_x` INTEGER DEFAULT 50, `pos_y` INTEGER DEFAULT 50, `width` INTEGER DEFAULT 200, `height` INTEGER DEFAULT 200, `z_index` INTEGER DEFAULT 0, `board_id` INTEGER DEFAULT NULL, `created_at` INTEGER DEFAULT 0, `updated_at` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE note_boards (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `created_at` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE app_settings (`key` TEXT PRIMARY KEY, `value` TEXT NOT NULL)');

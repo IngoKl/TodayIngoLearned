@@ -145,6 +145,7 @@ app.use(require('express-session')({
   saveUninitialized: false,
   cookie: {
     secure: config.securecookies,
+    sameSite: 'lax',
     maxAge: config.maxage
   }
 }));
@@ -184,16 +185,13 @@ function verifyCsrf(req, res, next) {
   next();
 }
 
-// Apply CSRF verification to all POST/PUT/DELETE except REST API and login
+// Apply CSRF verification to all POST/PUT/DELETE except REST API
 app.use((req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     return next();
   }
-  // Exempt: REST API (uses API key auth) and login (no session yet)
+  // Exempt: REST API (uses API key auth)
   if (req.path.startsWith('/api/v1/')) {
-    return next();
-  }
-  if (req.path === '/login') {
     return next();
   }
   verifyCsrf(req, res, next);
@@ -246,19 +244,23 @@ app.use('/api/v1', restApiRoutes);
 
 app.get('/login',
   function (req, res) {
-    res.render('login');
+    let error = null;
+    if (req.query.error === 'invalid_credentials') {
+      error = 'Invalid username or password.';
+    }
+    res.render('login', { error: error });
   });
 
 
 app.post('/login',
   loginLimiter,
-  passport.authenticate('local', { failureRedirect: '/login' }),
+  passport.authenticate('local', { failureRedirect: '/login?error=invalid_credentials' }),
   function (req, res) {
     res.redirect('/');
   });
 
 
-app.get('/logout',
+app.post('/logout',
   function (req, res, next) {
     req.logout(function(err) {
       if (err) { return next(err); }
@@ -272,26 +274,47 @@ function handleSearch(req, res, next) {
   try {
     const searchtype = req.body.searchtype || req.query.searchtype;
     const search = req.body.search || req.query.search;
-    const page = Math.max(1, parseInt(req.body.page || req.query.page) || 1);
+    const requestedPage = Math.max(1, parseInt(req.body.page || req.query.page) || 1);
     const perPage = 10;
 
     // No search — show default paginated list
     if (!search || !validate.searchType(searchtype)) {
-      const offset = (page - 1) * perPage;
       const totalCount = TilModel.countAll(req.user.id);
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+      const page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+      const offset = (page - 1) * perPage;
       const rows = TilModel.listPaged(req.user.id, perPage, offset);
       const tils = tilsObject(rows, req.user.id);
-      const totalPages = Math.ceil(totalCount / perPage);
-      return res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, page: page, totalPages: totalPages });
+      return res.render('index', {
+        tils_objects: tils[0],
+        tils_keys: tils[1],
+        user: req.user,
+        page: page,
+        totalPages: totalPages,
+        totalResults: totalCount,
+        searchtype: 'title',
+        search: ''
+      });
     }
 
-    let rows;
+    let rows = [];
+    let totalCount = 0;
+    let page = requestedPage;
+    let offset = 0;
 
     if (searchtype === 'title') {
-      rows = TilModel.searchByTitle(req.user.id, search);
+      totalCount = TilModel.countSearchByTitle(req.user.id, search);
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+      page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+      offset = (page - 1) * perPage;
+      rows = TilModel.searchByTitlePaged(req.user.id, search, perPage, offset);
     }
     else if (searchtype === 'text') {
-      rows = TilModel.searchByText(req.user.id, search);
+      totalCount = TilModel.countSearchByText(req.user.id, search);
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+      page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+      offset = (page - 1) * perPage;
+      rows = TilModel.searchByTextPaged(req.user.id, search, perPage, offset);
 
       // Build snippets in JS since snippet() doesn't work with external-content FTS
       const searchLower = search.toLowerCase();
@@ -310,20 +333,27 @@ function handleSearch(req, res, next) {
     }
     else if (searchtype === 'date') {
       const range = dates.dayRangeMillis(dates.toMillis(search));
-      rows = TilModel.searchByDate(req.user.id, range[0], range[1]);
+      totalCount = TilModel.countSearchByDate(req.user.id, range[0], range[1]);
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+      page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+      offset = (page - 1) * perPage;
+      rows = TilModel.searchByDatePaged(req.user.id, range[0], range[1], perPage, offset);
     }
     else if (searchtype === 'tag') {
-      rows = TilModel.searchByTag(req.user.id, search);
+      totalCount = TilModel.countSearchByTag(req.user.id, search);
+      const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+      page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+      offset = (page - 1) * perPage;
+      rows = TilModel.searchByTagPaged(req.user.id, search, perPage, offset);
     }
 
     if (!rows) {
       return res.redirect('/');
     }
 
-    const totalPages = Math.ceil(rows.length / perPage);
-    const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
-    const tils = tilsObject(paginatedRows, req.user.id);
-    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / perPage) : 0;
+    const tils = tilsObject(rows, req.user.id);
+    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages, totalResults: totalCount });
   } catch (err) { next(err); }
 }
 
@@ -393,21 +423,21 @@ app.get('/image/:id', function (req, res, next) {
 
     // Access control: owner or public TIL
     const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
-    const isOwner = isAuthenticated && req.user && row.user_id === req.user.id;
+    const ownerUserId = row.owner_user_id || row.til_user_id;
+    const isOwner = isAuthenticated && req.user && ownerUserId === req.user.id;
     const isPublic = row.is_public === 1;
-    const isOrphan = row.til_id === null;
+    const isTemporaryUpload = row.til_id === null && (row.source === 'til' || row.source === null);
 
-    // Orphan images require authentication (uploaded during add flow)
-    if (isOrphan && !isAuthenticated) {
+    if (!isOwner && !isPublic && !isTemporaryUpload) {
       return res.status(403).send('Forbidden');
     }
 
-    if (!isOwner && !isPublic && !isOrphan) {
+    if (isTemporaryUpload && !isOwner) {
       return res.status(403).send('Forbidden');
     }
 
     res.set('Content-Type', row.mime_type);
-    res.set('Cache-Control', 'private, max-age=31536000, immutable');
+    res.set('Cache-Control', isPublic ? 'public, max-age=31536000, immutable' : 'private, max-age=31536000, immutable');
     res.send(row.image_data);
   } catch (err) { next(err); }
 });
@@ -447,4 +477,4 @@ app.use(function (err, req, res, next) {
 });
 
 
-app.listen(config.port, '127.0.0.1');
+app.listen(config.port, process.env.HOST || config.host || '0.0.0.0');

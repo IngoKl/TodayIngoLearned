@@ -181,13 +181,17 @@ function openDrawingCanvas(options = {}) {
   // Save
   document.getElementById('draw-save').addEventListener('click', () => {
     canvas.toBlob(async (blob) => {
-      const file = new File([blob], 'drawing.png', { type: 'image/png' });
-      if (typeof options.onSave === 'function') {
-        await options.onSave(file, blob, selectedNoteColor);
-      } else {
-        await uploadImage(file);
+      try {
+        const file = new File([blob], 'drawing.png', { type: 'image/png' });
+        if (typeof options.onSave === 'function') {
+          await options.onSave(file, blob, selectedNoteColor);
+        } else {
+          await uploadImage(file);
+        }
+        bsModal.hide();
+      } catch (err) {
+        alert(err.message || 'Unable to save drawing.');
       }
-      bsModal.hide();
     }, 'image/png');
   });
 

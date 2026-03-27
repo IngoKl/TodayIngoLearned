@@ -140,7 +140,7 @@ router.post('/til/:id/image', upload.single('image'), function (req, res, next) 
       return res.status(404).json({ error: 'TIL not found' });
     }
 
-    const result = ImageModel.create(req.params.id, req.file.buffer, req.file.mimetype, req.file.originalname);
+    const result = ImageModel.create(req.apiUser.id, req.params.id, req.file.buffer, req.file.mimetype, req.file.originalname);
 
     const imageId = Number(result.lastInsertRowid);
     res.status(201).json({

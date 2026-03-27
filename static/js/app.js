@@ -196,7 +196,11 @@ if (imageUploadBtn) {
   imageFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    await uploadImage(file);
+    try {
+      await uploadImage(file);
+    } catch (err) {
+      alert(err.message);
+    }
     imageFileInput.value = '';
   });
 
@@ -211,7 +215,11 @@ if (imageUploadBtn) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
-      await uploadImage(file);
+      try {
+        await uploadImage(file);
+      } catch (err) {
+        alert(err.message);
+      }
     }
   });
 
@@ -222,7 +230,11 @@ if (imageUploadBtn) {
       if (item.type.startsWith('image/')) {
         e.preventDefault();
         const file = item.getAsFile();
-        await uploadImage(file);
+        try {
+          await uploadImage(file);
+        } catch (err) {
+          alert(err.message);
+        }
         break;
       }
     }
@@ -243,6 +255,10 @@ async function uploadImage(file) {
     body: formData
   });
   const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Image upload failed');
+  }
 
   if (data.markdown) {
     const md = document.getElementById('description');
@@ -275,11 +291,13 @@ document.addEventListener('click', function (e) {
   if (!btn) return;
   var imageId = btn.dataset.deleteImage;
   if (!confirm('Delete this image?')) return;
-  fetch('/til/delete-image/' + imageId, {
+  fetchJsonOrThrow('/til/delete-image/' + imageId, {
     method: 'POST',
     headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrfToken }
   }).then(function () {
     btn.closest('.position-relative').remove();
+  }).catch(function (err) {
+    alert(err.message);
   });
 });
 
@@ -297,42 +315,55 @@ if (imageGallery && imageGallery.dataset.tilId) {
 const searchtype = document.getElementsByName('searchtype')[0];
 const search = document.getElementsByName('search')[0];
 if (searchtype != null) {
-  searchtype.addEventListener('change', function() {
-      if (searchtype.value == 'date') {
-        search.type = 'date';
-      }
-      else if (searchtype.value == 'tag') {
+  let tagChoicesPromise = null;
+  let tagAutocomplete = null;
 
-        search.type = 'text';
+  function loadTagChoices() {
+    if (!tagChoicesPromise) {
+      tagChoicesPromise = fetch('/json/tags')
+        .then((response) => response.json())
+        .then((data) => Array.isArray(data.tags) ? data.tags : [])
+        .catch(() => []);
+    }
+    return tagChoicesPromise;
+  }
 
-        let tags = []
-        fetch('/json/tags')
-        .then((response) => {
-          return response.json();
-        })
-        .then((data) => {
-          tags = data;
+  function ensureTagAutocomplete() {
+    if (tagAutocomplete) {
+      return;
+    }
+
+    tagAutocomplete = new autoComplete({
+      selector: 'input[name="search"]',
+      minChars: 1,
+      source: function(term, suggest) {
+        loadTagChoices().then((choices) => {
+          term = term.toLowerCase();
+          const matches = [];
+          for (let i = 0; i < choices.length; i++) {
+            if (~choices[i].toLowerCase().indexOf(term)) matches.push(choices[i]);
+          }
+          suggest(matches);
         });
-
-        const tag_complete = new autoComplete({
-          selector: 'input[name="search"]',
-          minChars: 1,
-          source: function(term, suggest){
-            term = term.toLowerCase();
-
-            const choices = tags["tags"];
-            const matches = [];
-            for (let i=0; i<choices.length; i++)
-                if (~choices[i].toLowerCase().indexOf(term)) matches.push(choices[i]);
-            suggest(matches);
-        }
-        });
-
       }
-      else {
-        search.type = 'text';
+    });
+  }
+
+  function updateSearchInputMode() {
+    if (searchtype.value == 'date') {
+      search.type = 'date';
+    }
+    else {
+      search.type = 'text';
+      if (searchtype.value == 'tag') {
+        ensureTagAutocomplete();
+        loadTagChoices();
       }
-  });
+    }
+  }
+
+  searchtype.addEventListener('change', updateSearchInputMode);
+  updateSearchInputMode();
 }
 
 
@@ -359,4 +390,19 @@ if (themeToggleBtn) {
         bodyElement.style.backgroundColor = newTheme === 'light' ? '#f5f5f5' : '#3b4045';
         localStorage.setItem('theme', newTheme);
     });
+}
+async function fetchJsonOrThrow(url, options) {
+  const response = await fetch(url, options);
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (err) {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error((data && data.error) || 'Request failed');
+  }
+
+  return data;
 }

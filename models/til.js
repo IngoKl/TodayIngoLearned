@@ -21,6 +21,34 @@ function ftsDelete(tilId) {
   }
 }
 
+function searchMatch(search) {
+  return `"${search.replace(/"/g, '""')}"`;
+}
+
+function ftsColumn(column) {
+  return column === 'title' ? 'title' : 'description';
+}
+
+function searchByFts(userId, search, column, limit, offset) {
+  const matchColumn = ftsColumn(column);
+  const limitClause = typeof limit === 'number' ? ' LIMIT ? OFFSET ?' : '';
+  const params = [searchMatch(search), userId];
+  if (typeof limit === 'number') {
+    params.push(limit, offset || 0);
+  }
+
+  return sqldb.prepare(`WITH fts_matches AS (
+      SELECT rowid, rank
+      FROM tils_fts
+      WHERE ${matchColumn} MATCH ?
+    )
+    ${TIL_BASE_QUERY}
+    JOIN fts_matches ON fts_matches.rowid = tils.id
+    WHERE tils.user_id = ?
+    GROUP BY tils.id
+    ORDER BY fts_matches.rank${limitClause}`).all(...params);
+}
+
 exports.getById = function (userId, tilId) {
   return sqldb.prepare(`${TIL_BASE_QUERY}
     WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).get(userId, tilId);
@@ -114,17 +142,11 @@ exports.getRelated = function (tilId, userId) {
 
 // Search methods
 exports.searchByTitle = function (userId, search) {
-  return sqldb.prepare(`${TIL_BASE_QUERY}
-    JOIN tils_fts ON tils_fts.rowid = tils.id
-    WHERE tils.user_id = ? AND tils_fts.title MATCH ?
-    GROUP BY tils.id ORDER BY rank`).all(userId, `"${search.replace(/"/g, '""')}"`);
+  return searchByFts(userId, search, 'title');
 };
 
 exports.searchByText = function (userId, search) {
-  return sqldb.prepare(`${TIL_BASE_QUERY}
-    WHERE tils.user_id = ? AND tils.id IN (
-      SELECT rowid FROM tils_fts WHERE tils_fts.description MATCH ?
-    ) GROUP BY tils.id`).all(userId, `"${search.replace(/"/g, '""')}"`);
+  return searchByFts(userId, search, 'description');
 };
 
 exports.searchByDate = function (userId, startMs, endMs) {
@@ -141,14 +163,71 @@ exports.searchByTag = function (userId, tag) {
   ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(userId, escaped, `${escaped},%`, `%,${escaped},%`, `%,${escaped}`);
 };
 
+exports.countSearchByTitle = function (userId, search) {
+  return sqldb.prepare(`
+    SELECT COUNT(*) AS count
+    FROM tils
+    JOIN tils_fts ON tils_fts.rowid = tils.id
+    WHERE tils.user_id = ? AND tils_fts.title MATCH ?
+  `).get(userId, searchMatch(search)).count;
+};
+
+exports.searchByTitlePaged = function (userId, search, limit, offset) {
+  return searchByFts(userId, search, 'title', limit, offset);
+};
+
+exports.countSearchByText = function (userId, search) {
+  return sqldb.prepare(`
+    SELECT COUNT(*) AS count
+    FROM tils
+    JOIN tils_fts ON tils_fts.rowid = tils.id
+    WHERE tils.user_id = ? AND tils_fts.description MATCH ?
+  `).get(userId, searchMatch(search)).count;
+};
+
+exports.searchByTextPaged = function (userId, search, limit, offset) {
+  return searchByFts(userId, search, 'description', limit, offset);
+};
+
+exports.countSearchByDate = function (userId, startMs, endMs) {
+  return sqldb.prepare('SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND date BETWEEN ? AND ?').get(userId, startMs, endMs).count;
+};
+
+exports.searchByDatePaged = function (userId, startMs, endMs, limit, offset) {
+  return sqldb.prepare(`${TIL_BASE_QUERY}
+    WHERE tils.user_id = ? AND tils.date BETWEEN ? AND ?
+    GROUP BY tils.id ORDER BY tils.date DESC, tils.id DESC LIMIT ? OFFSET ?`).all(userId, startMs, endMs, limit, offset);
+};
+
+exports.countSearchByTag = function (userId, tag) {
+  const escaped = tag.replace(/[%_]/g, '\\$&');
+  return sqldb.prepare(`SELECT COUNT(*) AS count FROM (
+    SELECT * FROM (
+      ${TIL_BASE_QUERY}
+      WHERE tils.user_id = ?
+      GROUP BY tils.id
+    ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'
+  )`).get(userId, escaped, `${escaped},%`, `%,${escaped},%`, `%,${escaped}`).count;
+};
+
+exports.searchByTagPaged = function (userId, tag, limit, offset) {
+  const escaped = tag.replace(/[%_]/g, '\\$&');
+  return sqldb.prepare(`SELECT * FROM (
+    ${TIL_BASE_QUERY}
+    WHERE tils.user_id = ?
+    GROUP BY tils.id
+  ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'
+    ORDER BY date DESC, id DESC LIMIT ? OFFSET ?`).all(userId, escaped, `${escaped},%`, `%,${escaped},%`, `%,${escaped}`, limit, offset);
+};
+
 // Associate orphan images referenced in description
-exports.associateImages = function (tilId, description) {
+exports.associateImages = function (tilId, userId, description) {
   const imageRefs = description.match(/!\[.*?\]\(\/image\/(\d+)\)/g);
   if (imageRefs) {
-    const stmt = sqldb.prepare('UPDATE til_images SET til_id = ? WHERE id = ? AND til_id IS NULL');
+    const stmt = sqldb.prepare('UPDATE til_images SET til_id = ? WHERE id = ? AND til_id IS NULL AND user_id = ?');
     const imageIds = imageRefs.map(ref => ref.match(/\/image\/(\d+)/)[1]);
     for (const imgId of imageIds) {
-      stmt.run(tilId, imgId);
+      stmt.run(tilId, imgId, userId);
     }
   }
 };

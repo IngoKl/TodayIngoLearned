@@ -115,7 +115,7 @@ router.post('/add',
 
       const result = TilModel.create(req.user.id, title, description, date);
       helpers.updateTags(result.lastInsertRowid, tags);
-      TilModel.associateImages(result.lastInsertRowid, description);
+      TilModel.associateImages(result.lastInsertRowid, req.user.id, description);
 
       res.redirect(`/til/view/${result.lastInsertRowid}`);
     } catch (err) { next(err); }
@@ -157,7 +157,7 @@ router.post('/edit/:til_id',
 
       TilModel.update(req.user.id, req.params.til_id, title, date, description, isPublic);
       helpers.updateTags(req.params.til_id, tags);
-      TilModel.associateImages(req.params.til_id, description);
+      TilModel.associateImages(req.params.til_id, req.user.id, description);
 
       res.redirect(`/til/view/${req.params.til_id}`);
     } catch (err) { next(err); }
@@ -231,7 +231,11 @@ router.post('/upload-image',
       }
 
       const tilId = req.body.til_id || null;
-      const result = ImageModel.create(tilId, req.file.buffer, req.file.mimetype, req.file.originalname);
+      if (tilId && !TilModel.getIdOnly(req.user.id, tilId)) {
+        return res.status(404).json({ error: 'TIL not found' });
+      }
+
+      const result = ImageModel.create(req.user.id, tilId, req.file.buffer, req.file.mimetype, req.file.originalname);
 
       const imageId = Number(result.lastInsertRowid);
       res.json({
@@ -249,13 +253,13 @@ router.post('/delete-image/:image_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
-      const image = ImageModel.getOwnedOrOrphan(req.params.image_id, req.user.id);
+      const image = ImageModel.getOwned(req.params.image_id, req.user.id);
 
       if (!image) {
         return res.status(404).json({ error: 'Image not found' });
       }
 
-      ImageModel.deleteById(req.params.image_id);
+      ImageModel.deleteOwned(req.params.image_id, req.user.id);
 
       if (req.accepts('json')) {
         return res.json({ success: true });

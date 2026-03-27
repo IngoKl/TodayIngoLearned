@@ -89,7 +89,10 @@ curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?typ
                     <button id="themeToggle" class="btn btn-primary">Toggle Dark Mode</button>
                 </p>
 
-                <a href="/logout" class="btn btn-secondary">Logout</a>
+                <form method="POST" action="/logout" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-secondary">Logout</button>
+                </form>
             </div>
         </div>
     </div>
