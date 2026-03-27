@@ -16,6 +16,7 @@
 
 
         <form id="edittil" method="POST" target="">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <% if(title){ %>
@@ -49,7 +50,7 @@
           <div class="mb-3">
             <button name="submit" type="submit" class="btn btn-primary">Add</button>
           </div>
-        </form>  
+        </form>
 
     </div>
 </main>

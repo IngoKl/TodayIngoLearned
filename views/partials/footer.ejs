@@ -1,10 +1,11 @@
-<script src="/static/js/bootstrap.bundle.min.js"></script>
-<script src="/static/js/jquery.min.js"></script>
-<script src="/static/js/showdown.min.js"></script>
-<script src="/static/js/hljs/highlight.min.js"></script>
-<script src="/static/js/auto-complete.min.js"></script>
-<script src="/static/js/app.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/bootstrap.bundle.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/jquery.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/showdown.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/purify.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/hljs/highlight.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/auto-complete.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/app.js"></script>
 <% if (typeof appSettings !== 'undefined' && appSettings.pen_colors) { %>
 <div id="pen-colors-data" data-colors="<%= appSettings.pen_colors %>" style="display:none;"></div>
 <% } %>
-<script src="/static/js/drawing.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/drawing.js"></script>

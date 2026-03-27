@@ -1,3 +1,7 @@
+// CSRF token helper — read from meta tag, include in all fetch requests
+var csrfToken = document.querySelector('meta[name="csrf-token"]');
+csrfToken = csrfToken ? csrfToken.getAttribute('content') : '';
+
 // Register SW
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
@@ -92,15 +96,15 @@ function autoLinkTitles(element, titles) {
 const converter = new showdown.Converter(),
 mdElements = document.getElementsByClassName('md');
 
-// Fetch titles once for auto-linking
-const titlesPromise = fetch('/json/titles')
-    .then(r => r.json())
-    .then(data => data.titles || [])
-    .catch(() => []);
+// Fetch titles once for auto-linking (only if there are markdown elements to process)
+const titlesPromise = mdElements.length > 0
+    ? fetch('/json/titles').then(r => r.json()).then(data => data.titles || []).catch(() => [])
+    : Promise.resolve([]);
 
 for (let mde of mdElements) {
-    // Markdown
-    mde.innerHTML = converter.makeHtml(mde.textContent);
+    // Markdown — sanitize HTML output with DOMPurify
+    var rawHtml = converter.makeHtml(mde.textContent);
+    mde.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
 
     // Tags
     const tagRegEx = /\B([#]+([A-Za-z0-9-_äöüÄÖÜß\u00F0-\u02AF]+))/ig;
@@ -233,7 +237,11 @@ async function uploadImage(file) {
   const tilId = gallery ? gallery.dataset.tilId : null;
   if (tilId) formData.append('til_id', tilId);
 
-  const res = await fetch('/til/upload-image', { method: 'POST', body: formData });
+  const res = await fetch('/til/upload-image', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken },
+    body: formData
+  });
   const data = await res.json();
 
   if (data.markdown) {
@@ -254,20 +262,26 @@ function addImageToGallery(id, filename) {
   const safeFilename = escapeHtml(filename);
   const wrapper = document.createElement('div');
   wrapper.className = 'position-relative';
-  wrapper.innerHTML = `
-    <img src="/image/${id}" alt="${safeFilename}" style="max-width:100px;max-height:75px;object-fit:cover;" class="rounded border">
-    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
-            style="padding:0 4px;font-size:10px;line-height:1.2;"
-            onclick="deleteImage(${id}, this)">x</button>
-  `;
+  wrapper.innerHTML =
+    '<img src="/image/' + id + '" alt="' + safeFilename + '" style="max-width:100px;max-height:75px;object-fit:cover;" class="rounded border">' +
+    '<button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" ' +
+    'style="padding:0 4px;font-size:10px;line-height:1.2;" data-delete-image="' + id + '">x</button>';
   gallery.appendChild(wrapper);
 }
 
-async function deleteImage(imageId, btn) {
+// Event delegation for image delete buttons
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('[data-delete-image]');
+  if (!btn) return;
+  var imageId = btn.dataset.deleteImage;
   if (!confirm('Delete this image?')) return;
-  await fetch('/til/delete-image/' + imageId, { headers: { 'Accept': 'application/json' } });
-  btn.closest('.position-relative').remove();
-}
+  fetch('/til/delete-image/' + imageId, {
+    method: 'POST',
+    headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrfToken }
+  }).then(function () {
+    btn.closest('.position-relative').remove();
+  });
+});
 
 // Load existing images when editing
 if (imageGallery && imageGallery.dataset.tilId) {
@@ -337,10 +351,12 @@ if (!savedTheme) {
 htmlElement.setAttribute('data-bs-theme', savedTheme);
 bodyElement.style.backgroundColor = savedTheme === 'light' ? '#f5f5f5' : '#3b4045';
 
-themeToggleBtn.addEventListener('click', () => {
-    const currentTheme = htmlElement.getAttribute('data-bs-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    htmlElement.setAttribute('data-bs-theme', newTheme);
-    bodyElement.style.backgroundColor = newTheme === 'light' ? '#f5f5f5' : '#3b4045';
-    localStorage.setItem('theme', newTheme);
-});
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = htmlElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        htmlElement.setAttribute('data-bs-theme', newTheme);
+        bodyElement.style.backgroundColor = newTheme === 'light' ? '#f5f5f5' : '#3b4045';
+        localStorage.setItem('theme', newTheme);
+    });
+}

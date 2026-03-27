@@ -162,7 +162,8 @@ exports.getUserStats = function(user_id) {
 }
 
 
-// Get the start/end timestamp of a given day
+// Get the start/end timestamp of a given day (kept for backwards compat with install.js)
+// Prefer helpers/dates.dayRangeMillis for new code.
 exports.getDateRange = function(timestamp) {
     const start_date = dayjs(timestamp).startOf('day').valueOf();
     const end_date = dayjs(timestamp).endOf('day').valueOf();

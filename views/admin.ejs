@@ -24,6 +24,7 @@
                     <div class="alert alert-success"><%= query.success %></div>
                 <% } %>
                 <form action="/admin/createuser" method="POST" class="row g-2 mb-4">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="col-auto">
                         <input type="text" class="form-control" name="username" placeholder="Username" required>
                     </div>
@@ -77,6 +78,7 @@
                 <p class="text-muted">Comma-separated hex colors (e.g. #fffffc,#508991,#fe5f55)</p>
 
                 <form action="/admin/settings/colors" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="mb-3">
                         <label for="note_colors" class="form-label">Sticky Note Colors</label>
                         <div class="d-flex gap-2 mb-2">

@@ -34,7 +34,10 @@
                         <a href="/til/view/<%= til.til_id %>" class="btn btn-secondary">View</a>
                         <a href="/comment/add/<%= til.til_id %>" class="btn btn-primary">Add Comment</a>
                         <a href="/til/edit/<%= til.til_id %>" class="btn btn-primary">Edit</a>
-                        <a href="/til/edit/<%= til.til_id %>/bookmark" class="btn bg-warning">⚑</a>
+                        <form method="POST" action="/til/edit/<%= til.til_id %>/bookmark" style="display:inline">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn bg-warning">⚑</button>
+                        </form>
                     </div>
                 </div>
                 <br>

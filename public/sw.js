@@ -1,5 +1,5 @@
 // Keep in sync with package.json version
-const CACHE_VERSION = 'v1.1.1';
+const CACHE_VERSION = 'v1.1.2';
 const CACHE_NAME = 'precache-' + CACHE_VERSION;
 
 const PRECACHE_URLS = [
@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
     '/static/css/bootstrap.min.css',
     '/static/js/bootstrap.bundle.min.js',
     '/static/js/showdown.min.js',
+    '/static/js/purify.min.js',
     '/static/js/jquery.min.js',
     '/static/js/auto-complete.min.js',
     '/static/js/hljs/highlight.min.js',

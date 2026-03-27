@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const express = require('express');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
@@ -7,6 +8,7 @@ const SQLiteStore = require('better-sqlite3-session-store')(session);
 const SQLite = require('better-sqlite3');
 const path = require('path');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const apiRoutes = require('./routes/api');
 const commentRoutes = require('./routes/comment');
@@ -24,7 +26,14 @@ const version = packageJson.version;
 const config = require('./config.json');
 const sqldb = require('./db');
 const restApiRoutes = require('./routes/rest-api');
-const { TIL_BASE_QUERY } = require('./helpers/queries');
+
+const TilModel = require('./models/til');
+const UserModel = require('./models/user');
+const ImageModel = require('./models/image');
+const Settings = require('./models/settings');
+const dates = require('./helpers/dates');
+const validate = require('./helpers/validate');
+const tilsObject = require('./helpers/tilsObject');
 
 // Run database migrations
 require('./db/migrate')();
@@ -44,7 +53,7 @@ const sessionStore = new SQLiteStore({
 
 // Passport for authentication (with scrypt upgrade on login)
 passport.use(new LocalStrategy(function (username, password, cb) {
-  const row = sqldb.prepare("SELECT id, username, password FROM users WHERE username = ?").get(username);
+  const row = UserModel.getByUsername(username);
   if (!row) return cb(null, false);
 
   if (!helpers.verifyPassword(password, row.password)) return cb(null, false);
@@ -52,7 +61,7 @@ passport.use(new LocalStrategy(function (username, password, cb) {
   // Upgrade legacy SHA-256 hash to scrypt on successful login
   if (helpers.isLegacyHash(row.password)) {
     const newHash = helpers.hashPassword(password);
-    sqldb.prepare("UPDATE users SET password = ? WHERE id = ?").run(newHash, row.id);
+    UserModel.updatePassword(row.id, newHash);
   }
 
   return cb(null, { id: row.id, username: row.username });
@@ -65,7 +74,7 @@ passport.serializeUser(function (user, cb) {
 
 
 passport.deserializeUser(function (id, done) {
-  const row = sqldb.prepare("SELECT id, username, is_admin FROM users WHERE id = ?").get(id);
+  const row = UserModel.getById(id);
   if (!row) return done(null, false);
   return done(null, row);
 });
@@ -84,10 +93,28 @@ app.set('view engine', 'ejs');
 app.set('trust proxy', 1);
 
 
-// Security headers
-app.use(helmet({
-  contentSecurityPolicy: false // disabled to allow inline scripts and CDN resources
-}));
+// Generate a nonce per request for CSP
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
+
+// Security headers with CSP
+app.use((req, res, next) => {
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`, "https://kit.fontawesome.com", "https://ka-f.fontawesome.com", "https://d3js.org"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://ka-f.fontawesome.com"],
+        fontSrc: ["'self'", "https://ka-f.fontawesome.com"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", "https://ka-f.fontawesome.com"],
+      }
+    }
+  })(req, res, next);
+});
 
 
 // Make all necessary node_module files available
@@ -99,6 +126,7 @@ app.use('/static/js', express.static(__dirname + '/node_modules/js-autocomplete'
 app.use('/static/css', express.static(__dirname + '/node_modules/js-autocomplete'));
 app.use('/static/js/hljs', express.static(__dirname + '/node_modules/@highlightjs/cdn-assets'));
 app.use('/static/css/hljs', express.static(__dirname + '/node_modules/@highlightjs/cdn-assets/styles'));
+app.use('/static/js', express.static(__dirname + '/node_modules/dompurify/dist'));
 
 
 // Make assets available
@@ -122,21 +150,11 @@ app.use(require('express-session')({
 }));
 
 
-// Helper to load app settings from DB
-function getAppSettings() {
-  const rows = sqldb.prepare('SELECT key, value FROM app_settings').all();
-  const settings = {};
-  for (const row of rows) {
-    settings[row.key] = row.value;
-  }
-  return settings;
-}
-
 // Middleware for locals
 app.use((req, res, next) => {
   res.locals.version = version;
   res.locals.appName = config.name || 'TodayIngoLearned';
-  res.locals.appSettings = getAppSettings();
+  res.locals.appSettings = Settings.getAll();
   next();
 });
 
@@ -146,8 +164,71 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-// Create an object to be used in a template from SQL rows
-const tilsObject = require('./helpers/tilsObject');
+// --- CSRF Protection ---
+// Generate a CSRF token per session and verify on state-changing requests.
+// REST API routes (authenticated via API key) are exempt.
+app.use((req, res, next) => {
+  // Ensure session has a CSRF token
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.locals.csrfToken = req.session.csrfToken;
+  next();
+});
+
+function verifyCsrf(req, res, next) {
+  const token = req.body._csrf || req.headers['x-csrf-token'];
+  if (!token || token !== req.session.csrfToken) {
+    return res.status(403).send('Invalid or missing CSRF token');
+  }
+  next();
+}
+
+// Apply CSRF verification to all POST/PUT/DELETE except REST API and login
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next();
+  }
+  // Exempt: REST API (uses API key auth) and login (no session yet)
+  if (req.path.startsWith('/api/v1/')) {
+    return next();
+  }
+  if (req.path === '/login') {
+    return next();
+  }
+  verifyCsrf(req, res, next);
+});
+
+
+// --- Rate Limiting ---
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 attempts per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many login attempts, please try again later.',
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+app.use('/api/v1', apiLimiter);
+
+
+// --- Health Endpoint ---
+app.get('/health', function (req, res) {
+  try {
+    sqldb.prepare('SELECT 1').get();
+    res.json({ status: 'ok', version: version, uptime: process.uptime() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: 'Database unavailable' });
+  }
+});
 
 
 // Define routes
@@ -170,6 +251,7 @@ app.get('/login',
 
 
 app.post('/login',
+  loginLimiter,
   passport.authenticate('local', { failureRedirect: '/login' }),
   function (req, res) {
     res.redirect('/');
@@ -185,44 +267,31 @@ app.get('/logout',
   });
 
 
-app.get('/',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function (req, res) {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
+// Shared search logic for GET (pagination) and POST (form submit)
+function handleSearch(req, res, next) {
+  try {
+    const searchtype = req.body.searchtype || req.query.searchtype;
+    const search = req.body.search || req.query.search;
+    const page = Math.max(1, parseInt(req.body.page || req.query.page) || 1);
     const perPage = 10;
-    const offset = (page - 1) * perPage;
 
-    const totalCount = sqldb.prepare(`SELECT COUNT(DISTINCT tils.id) AS count
-    FROM tils JOIN tags_join ON tags_join.til_id = tils.id
-    WHERE tils.user_id = ?`).get(req.user.id).count;
+    // No search — show default paginated list
+    if (!search || !validate.searchType(searchtype)) {
+      const offset = (page - 1) * perPage;
+      const totalCount = TilModel.countAll(req.user.id);
+      const rows = TilModel.listPaged(req.user.id, perPage, offset);
+      const tils = tilsObject(rows, req.user.id);
+      const totalPages = Math.ceil(totalCount / perPage);
+      return res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, page: page, totalPages: totalPages });
+    }
 
-    const rows = sqldb.prepare(`${TIL_BASE_QUERY}
-    WHERE tils.user_id = ? GROUP BY tils.id ORDER BY tils.date DESC, tils.id DESC LIMIT ? OFFSET ?`).all(req.user.id, perPage, offset);
-
-    const tils = tilsObject(rows, req.user.id);
-    const totalPages = Math.ceil(totalCount / perPage);
-    res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, page: page, totalPages: totalPages });
-  });
-
-
-app.post('/',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function (req, res) {
-    const searchtype = req.body.searchtype;
-    const search = req.body.search;
     let rows;
 
     if (searchtype === 'title') {
-      rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      JOIN tils_fts ON tils_fts.rowid = tils.id
-      WHERE tils.user_id = ? AND tils_fts.title MATCH ?
-      GROUP BY tils.id ORDER BY rank`).all(req.user.id, `"${search.replace(/"/g, '""')}"`);
+      rows = TilModel.searchByTitle(req.user.id, search);
     }
     else if (searchtype === 'text') {
-      rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      WHERE tils.user_id = ? AND tils.id IN (
-        SELECT rowid FROM tils_fts WHERE tils_fts.description MATCH ?
-      ) GROUP BY tils.id`).all(req.user.id, `"${search.replace(/"/g, '""')}"`);
+      rows = TilModel.searchByText(req.user.id, search);
 
       // Build snippets in JS since snippet() doesn't work with external-content FTS
       const searchLower = search.toLowerCase();
@@ -240,118 +309,141 @@ app.post('/',
       }
     }
     else if (searchtype === 'date') {
-      const range = helpers.getDateRange(new Date(search).getTime());
-      rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      WHERE tils.user_id = ? AND tils.date BETWEEN ? AND ? GROUP BY tils.id`).all(req.user.id, range[0], range[1]);
+      const range = dates.dayRangeMillis(dates.toMillis(search));
+      rows = TilModel.searchByDate(req.user.id, range[0], range[1]);
     }
     else if (searchtype === 'tag') {
-      rows = sqldb.prepare(`SELECT * FROM (
-                  ${TIL_BASE_QUERY}
-                  WHERE tils.user_id = ?
-                  GROUP BY tils.id
-                ) WHERE tags LIKE ? OR tags LIKE ? OR tags LIKE ?`).all(req.user.id, `${search}`, `%${search},%`, `%,${search}`);
+      rows = TilModel.searchByTag(req.user.id, search);
     }
 
     if (!rows) {
       return res.redirect('/');
     }
 
-    const page = Math.max(1, parseInt(req.body.page) || 1);
-    const perPage = 10;
     const totalPages = Math.ceil(rows.length / perPage);
     const paginatedRows = rows.slice((page - 1) * perPage, page * perPage);
     const tils = tilsObject(paginatedRows, req.user.id);
     res.render('index', { tils_objects: tils[0], tils_keys: tils[1], user: req.user, searchtype: searchtype, search: search, page: page, totalPages: totalPages });
-  });
+  } catch (err) { next(err); }
+}
+
+app.get('/',
+  require('connect-ensure-login').ensureLoggedIn(),
+  handleSearch);
+
+app.post('/',
+  require('connect-ensure-login').ensureLoggedIn(),
+  handleSearch);
 
 
 // Public profile page — lists all public TILs for a user
 // (must be registered before /public/:til_id to avoid "user" matching as a til_id)
 app.get('/public/user/:user_id',
-  function (req, res) {
-    const author = sqldb.prepare('SELECT id, displayname FROM users WHERE id = ?').get(req.params.user_id);
-    if (!author) {
-      return res.status(404).render('404', { url: req.url });
-    }
+  function (req, res, next) {
+    try {
+      const author = UserModel.getIdAndDisplayName(req.params.user_id);
+      if (!author) {
+        return res.status(404).render('404', { url: req.url, user: req.user || null });
+      }
 
-    const rows = sqldb.prepare(`${TIL_BASE_QUERY}
-      WHERE tils.user_id = ? AND tils.public = 1
-      GROUP BY tils.id ORDER BY tils.date DESC`).all(req.params.user_id);
+      const rows = TilModel.listPublicByUser(req.params.user_id);
+      const tils = tilsObject(rows);
 
-    const tils = tilsObject(rows);
-
-    res.render('public_profile', { tils_objects: tils[0], tils_keys: tils[1], author: author.displayname, userId: author.id });
+      res.render('public_profile', { tils_objects: tils[0], tils_keys: tils[1], author: author.displayname, userId: author.id });
+    } catch (err) { next(err); }
   });
 
 
 // Public TIL view (no authentication required)
 app.get('/public/:til_id',
-  function (req, res) {
-    const row = sqldb.prepare(`${TIL_BASE_QUERY}
-              WHERE tils.id = ? AND tils.public = 1 GROUP BY tils.id`).get(req.params.til_id);
+  function (req, res, next) {
+    try {
+      const row = TilModel.getPublicById(req.params.til_id);
 
-    if (!row) {
-      return res.status(404).render('404', { url: req.url });
-    }
+      if (!row) {
+        return res.status(404).render('404', { url: req.url, user: req.user || null });
+      }
 
-    const tils = tilsObject([row]);
-    const til = tils[0][tils[1][0]];
-    let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
-    if (til_urls) {
-      til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
-    }
+      const tils = tilsObject([row]);
+      const til = tils[0][tils[1][0]];
+      let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
+      if (til_urls) {
+        til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
+      }
 
-    const tilRow = sqldb.prepare('SELECT user_id FROM tils WHERE id = ?').get(req.params.til_id);
-    const userId = tilRow.user_id;
-    const author = sqldb.prepare('SELECT displayname FROM users WHERE id = ?').get(userId);
-    const til_images = sqldb.prepare('SELECT id, filename, mime_type FROM til_images WHERE til_id = ?').all(req.params.til_id);
-    const publicCount = sqldb.prepare('SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND public = 1').get(userId).count;
+      const tilRow = sqldb.prepare('SELECT user_id FROM tils WHERE id = ?').get(req.params.til_id);
+      const userId = tilRow.user_id;
+      const author = UserModel.getDisplayName(userId);
+      const til_images = ImageModel.listByTil(req.params.til_id);
+      const publicCount = UserModel.getPublicTilCount(userId);
 
-    res.render('public_view', { til: til, til_urls: til_urls, til_images: til_images, author: author ? author.displayname : 'Unknown', authorPublicCount: publicCount, userId: userId });
+      res.render('public_view', { til: til, til_urls: til_urls, til_images: til_images, author: author || 'Unknown', authorPublicCount: publicCount, userId: userId });
+    } catch (err) { next(err); }
   });
 
 
 // Serve images from the database (with ownership check)
-app.get('/image/:id', function (req, res) {
-  const row = sqldb.prepare(`
-    SELECT til_images.image_data, til_images.mime_type, til_images.filename,
-           til_images.til_id, tils.user_id, tils.public AS is_public
-    FROM til_images
-    LEFT JOIN tils ON tils.id = til_images.til_id
-    WHERE til_images.id = ?
-  `).get(req.params.id);
+app.get('/image/:id', function (req, res, next) {
+  try {
+    const row = ImageModel.getWithAccess(req.params.id);
 
-  if (!row) {
-    return res.status(404).send('Image not found');
-  }
+    if (!row) {
+      return res.status(404).send('Image not found');
+    }
 
-  // Access control: owner or public TIL
-  const isOwner = req.isAuthenticated && req.isAuthenticated() && req.user && row.user_id === req.user.id;
-  const isPublic = row.is_public === 1;
-  const isOrphan = row.til_id === null;
+    // Access control: owner or public TIL
+    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
+    const isOwner = isAuthenticated && req.user && row.user_id === req.user.id;
+    const isPublic = row.is_public === 1;
+    const isOrphan = row.til_id === null;
 
-  if (!isOwner && !isPublic && !isOrphan) {
-    return res.status(403).send('Forbidden');
-  }
+    // Orphan images require authentication (uploaded during add flow)
+    if (isOrphan && !isAuthenticated) {
+      return res.status(403).send('Forbidden');
+    }
 
-  // Orphan images require authentication (uploaded during add flow)
-  if (isOrphan && !(req.isAuthenticated && req.isAuthenticated())) {
-    return res.status(403).send('Forbidden');
-  }
+    if (!isOwner && !isPublic && !isOrphan) {
+      return res.status(403).send('Forbidden');
+    }
 
-  res.set('Content-Type', row.mime_type);
-  res.set('Cache-Control', 'private, max-age=31536000, immutable');
-  res.send(row.image_data);
+    res.set('Content-Type', row.mime_type);
+    res.set('Cache-Control', 'private, max-age=31536000, immutable');
+    res.send(row.image_data);
+  } catch (err) { next(err); }
 });
 
 
+// 404 handler
 app.use(function (req, res, next) {
   res.status(404);
 
   if (req.accepts('html')) {
-    res.render('404', { url: req.url });
+    res.render('404', { url: req.url, user: req.user || null });
     return;
   }
+
+  res.json({ error: 'Not found' });
+});
+
+
+// Global error handler
+app.use(function (err, req, res, next) {
+  console.error(err.stack || err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const status = err.status || 500;
+
+  if (req.accepts('json') && !req.accepts('html')) {
+    return res.status(status).json({ error: 'Internal server error' });
+  }
+
+  res.status(status).render('error', {
+    message: status === 500 ? 'An unexpected error occurred.' : err.message,
+    user: req.user || null
+  });
 });
 
 

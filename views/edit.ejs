@@ -10,10 +10,11 @@
 <%- include ('partials/navigation.ejs') %>
 
 <main class="flex-shrink-0">
-    <div class="container">   
+    <div class="container">
       <h2>Edit <em><%= til.title %></em></h2>
       <br>
       <form id="edittil" method="POST" target="">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control" value="<%= til.title %>">
@@ -50,7 +51,10 @@
           </div>
         </form>
         <hr>
-        <a href="/til/edit/<%= til.id %>/delete"><button class="btn btn-danger">Delete</button></a>  
+        <form method="POST" action="/til/edit/<%= til.id %>/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this TIL? This cannot be undone.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
     </div>
 </main>
 

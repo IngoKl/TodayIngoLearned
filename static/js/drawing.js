@@ -14,6 +14,14 @@ function openDrawingCanvas(options = {}) {
     `<button type="button" class="draw-color-preset${i === 0 ? ' active' : ''}" data-color="${c}" style="background:${c};" title="${c}"></button>`
   ).join('');
 
+  // Note color picker (optional — for choosing the sticky note background color)
+  const showNoteColor = options.showNoteColor || false;
+  const noteColors = options.noteColors || penColors;
+  const noteColorBtns = noteColors.map((c, i) =>
+    `<button type="button" class="note-color-picker-btn${i === 0 ? ' active' : ''}" data-color="${c}" style="background:${c};" title="${c}"></button>`
+  ).join('');
+  let selectedNoteColor = noteColors[0];
+
   // Create modal HTML
   const modal = document.createElement('div');
   modal.id = 'drawing-modal';
@@ -38,6 +46,11 @@ function openDrawingCanvas(options = {}) {
         <div class="modal-body">
           <canvas id="drawing-canvas" width="750" height="450" style="width:100%;"></canvas>
         </div>
+        ${options.showNoteColor ? `
+        <div class="px-3 pb-2">
+          <label class="form-label mb-1" style="font-size:0.85rem;">Note Color</label>
+          <div class="d-flex gap-2 flex-wrap" id="draw-note-colors">${noteColorBtns}</div>
+        </div>` : ''}
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" id="draw-save">Save & Insert</button>
@@ -80,6 +93,16 @@ function openDrawingCanvas(options = {}) {
   // Sync custom color picker with presets
   document.getElementById('draw-color').addEventListener('input', () => {
     colorPresets.forEach(b => b.classList.remove('active'));
+  });
+
+  // Note color picker buttons (for sticky note background)
+  const noteColorPickerBtns = modal.querySelectorAll('.note-color-picker-btn');
+  noteColorPickerBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      noteColorPickerBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedNoteColor = btn.dataset.color;
+    });
   });
 
   function getPos(e) {
@@ -160,7 +183,7 @@ function openDrawingCanvas(options = {}) {
     canvas.toBlob(async (blob) => {
       const file = new File([blob], 'drawing.png', { type: 'image/png' });
       if (typeof options.onSave === 'function') {
-        await options.onSave(file, blob);
+        await options.onSave(file, blob, selectedNoteColor);
       } else {
         await uploadImage(file);
       }

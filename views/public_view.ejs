@@ -96,18 +96,20 @@
         </footer>
     </div>
 
-<script src="/static/js/showdown.min.js"></script>
-<script src="/static/js/hljs/highlight.min.js"></script>
-<script>
-// Render markdown
-const converter = new showdown.Converter();
-const mdElements = document.getElementsByClassName('md');
-for (let mde of mdElements) {
-    mde.innerHTML = converter.makeHtml(mde.textContent);
+<script nonce="<%= nonce %>" src="/static/js/showdown.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/purify.min.js"></script>
+<script nonce="<%= nonce %>" src="/static/js/hljs/highlight.min.js"></script>
+<script nonce="<%= nonce %>">
+// Render markdown with DOMPurify sanitization
+var converter = new showdown.Converter();
+var mdElements = document.getElementsByClassName('md');
+for (var i = 0; i < mdElements.length; i++) {
+    var rawHtml = converter.makeHtml(mdElements[i].textContent);
+    mdElements[i].innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
 }
 // Syntax highlighting
 if (typeof hljs !== 'undefined') {
-    document.querySelectorAll('pre code').forEach((block) => {
+    document.querySelectorAll('pre code').forEach(function(block) {
         hljs.highlightElement(block);
     });
 }

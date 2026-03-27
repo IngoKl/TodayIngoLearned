@@ -6,15 +6,23 @@
     if (endPage - startPage < maxVisible - 1) {
         startPage = Math.max(1, endPage - maxVisible + 1);
     }
+    // Build query string preserving search context
+    const _qs = (p) => {
+        const params = new URLSearchParams();
+        params.set('page', p);
+        if (typeof searchtype !== 'undefined' && searchtype) params.set('searchtype', searchtype);
+        if (typeof search !== 'undefined' && search) params.set('search', search);
+        return '?' + params.toString();
+    };
 %>
 <nav aria-label="Page navigation" class="mt-3">
     <ul class="pagination justify-content-center">
         <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
-            <a class="page-link" href="?page=<%= page - 1 %>">Previous</a>
+            <a class="page-link" href="<%= _qs(page - 1) %>">Previous</a>
         </li>
         <% if (startPage > 1) { %>
             <li class="page-item">
-                <a class="page-link" href="?page=1">1</a>
+                <a class="page-link" href="<%= _qs(1) %>">1</a>
             </li>
             <% if (startPage > 2) { %>
                 <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -22,7 +30,7 @@
         <% } %>
         <% for (let p = startPage; p <= endPage; p++) { %>
             <li class="page-item <%= p === page ? 'active' : '' %>">
-                <a class="page-link" href="?page=<%= p %>"><%= p %></a>
+                <a class="page-link" href="<%= _qs(p) %>"><%= p %></a>
             </li>
         <% } %>
         <% if (endPage < totalPages) { %>
@@ -30,11 +38,11 @@
                 <li class="page-item disabled"><span class="page-link">…</span></li>
             <% } %>
             <li class="page-item">
-                <a class="page-link" href="?page=<%= totalPages %>"><%= totalPages %></a>
+                <a class="page-link" href="<%= _qs(totalPages) %>"><%= totalPages %></a>
             </li>
         <% } %>
         <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
-            <a class="page-link" href="?page=<%= page + 1 %>">Next</a>
+            <a class="page-link" href="<%= _qs(page + 1) %>">Next</a>
         </li>
     </ul>
 </nav>

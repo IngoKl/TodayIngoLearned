@@ -376,3 +376,38 @@ main>.container {
     border-color: #333;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
 }
+
+/* Note color picker in drawing modal */
+.note-color-picker-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.note-color-picker-btn:hover {
+    transform: scale(1.15);
+}
+.note-color-picker-btn.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
+}
+
+/* Notes toolbar mobile */
+@media (max-width: 576px) {
+    .notes-toolbar {
+        gap: 0.35rem;
+    }
+    .notes-toolbar .btn {
+        font-size: 0.78rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .notes-toolbar .dropdown .btn {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

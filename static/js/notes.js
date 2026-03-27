@@ -1,8 +1,12 @@
 // notes.js - Sticky notes board interactivity
 
 (function () {
-  const board = document.getElementById('notes-board');
+  var board = document.getElementById('notes-board');
   if (!board) return;
+
+  // CSRF token from meta tag
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
   var currentBoardId = board.dataset.boardId || '';
   var maxZ = 0;
@@ -186,7 +190,7 @@
 
     fetch('/notes/' + noteId + '/position', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ pos_x: posX, pos_y: posY, z_index: maxZ })
     });
   }
@@ -228,43 +232,131 @@
     });
   });
 
-  // --- Add Text Note ---
+  // --- Helper: build a sticky-note DOM element and append to board ---
+
+  function buildNoteElement(data) {
+    var note = document.createElement('div');
+    note.className = 'sticky-note';
+    note.dataset.noteId = data.id;
+    note.dataset.noteType = data.type || 'text';
+    note.dataset.noteTitle = data.title || '';
+    note.dataset.noteBody = data.body || '';
+    note.dataset.noteColor = data.color;
+    note.dataset.noteBoard = data.board_id || '';
+    note.style.left = data.pos_x + 'px';
+    note.style.top = data.pos_y + 'px';
+    note.style.width = (data.width || 200) + 'px';
+    note.style.height = (data.height || 180) + 'px';
+    note.style.backgroundColor = data.color;
+    maxZ++;
+    note.style.zIndex = maxZ;
+
+    // Text color for contrast
+    var lum = luminance(data.color);
+    note.style.color = lum < 0.5 ? '#f0f0f0' : '#222';
+
+    note.innerHTML =
+      '<div class="sticky-note-header">' +
+        '<span class="sticky-note-grip">&#x2817;</span>' +
+        '<span class="sticky-note-title">' + escapeHtml(data.title || '') + '</span>' +
+        '<div class="sticky-note-actions">' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i></button>' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i></button>' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sticky-note-body">' +
+        (data.type === 'drawing' && data.image_id
+          ? '<img src="/image/' + data.image_id + '" alt="Drawing" class="sticky-note-drawing">'
+          : '<p class="sticky-note-text">' + escapeHtml(data.body || '') + '</p>') +
+      '</div>';
+
+    board.appendChild(note);
+    return note;
+  }
+
+  function luminance(hex) {
+    var r = parseInt(hex.slice(1,3),16)/255;
+    var g = parseInt(hex.slice(3,5),16)/255;
+    var b = parseInt(hex.slice(5,7),16)/255;
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // --- Add Text Note (creates note, adds to DOM, opens edit modal) ---
 
   document.getElementById('add-text-note').addEventListener('click', function () {
     var color = (typeof defaultNoteColor !== 'undefined' ? defaultNoteColor : '#fffffc');
-    var body = 'title=New+Note&body=&color=' + encodeURIComponent(color);
-    if (currentBoardId) {
-      body += '&board_id=' + encodeURIComponent(currentBoardId);
-    }
 
     fetch('/notes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body
-    }).then(function () {
-      window.location.reload();
-    });
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ title: 'New Note', body: '', color: color, board_id: currentBoardId || null })
+    }).then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.success) return;
+        var count = board.querySelectorAll('.sticky-note').length;
+        var offset = (count % 10) * 30;
+        var noteEl = buildNoteElement({
+          id: data.id,
+          type: 'text',
+          title: 'New Note',
+          body: '',
+          color: color,
+          board_id: currentBoardId || '',
+          pos_x: 50 + offset,
+          pos_y: 50 + offset,
+          width: 200,
+          height: 180
+        });
+        openEditModal(noteEl);
+      });
   });
 
   // --- Add Drawing Note ---
 
   document.getElementById('add-drawing-note').addEventListener('click', function () {
     openDrawingCanvas({
-      onSave: async function (file) {
+      showNoteColor: true,
+      noteColors: typeof window.noteColorList !== 'undefined' ? window.noteColorList : null,
+      onSave: async function (file, blob, noteColor) {
         const formData = new FormData();
         formData.append('image', file);
         if (currentBoardId) {
           formData.append('board_id', currentBoardId);
         }
+        if (noteColor) {
+          formData.append('color', noteColor);
+        }
 
         const res = await fetch('/notes/drawing', {
           method: 'POST',
+          headers: { 'X-CSRF-Token': csrfToken },
           body: formData
         });
         const data = await res.json();
 
         if (data.success) {
-          window.location.reload();
+          var count = board.querySelectorAll('.sticky-note').length;
+          var offset = (count % 10) * 30;
+          buildNoteElement({
+            id: data.id,
+            type: 'drawing',
+            title: 'Drawing',
+            body: '',
+            color: noteColor || (typeof defaultNoteColor !== 'undefined' ? defaultNoteColor : '#fffffc'),
+            board_id: currentBoardId || '',
+            image_id: data.image_id,
+            pos_x: 50 + offset,
+            pos_y: 50 + offset,
+            width: 200,
+            height: 180
+          });
         }
       }
     });
@@ -284,7 +376,17 @@
       openEditModal(note);
     } else if (action === 'delete') {
       if (confirm('Delete this note?')) {
-        window.location.href = '/notes/' + noteId + '/delete';
+        // Submit via POST form for CSRF
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/notes/' + noteId + '/delete';
+        var csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
       }
     } else if (action === 'to-til') {
       openToTilModal(noteId);
@@ -344,7 +446,7 @@
     // Save content and color
     var savePromise = fetch('/notes/' + noteId, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ title: title, body: body, color: selectedColor })
     });
 
@@ -356,7 +458,7 @@
       savePromise = savePromise.then(function () {
         return fetch('/notes/' + noteId + '/move', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
           body: JSON.stringify({ board_id: newBoardId || null })
         });
       });
@@ -367,6 +469,30 @@
       window.location.reload();
     });
   });
+
+  // --- Delete Empty Notes ---
+
+  var deleteEmptyBtn = document.getElementById('delete-empty-notes');
+  if (deleteEmptyBtn) {
+    deleteEmptyBtn.addEventListener('click', function () {
+      if (!confirm('Delete all notes with empty body and default title?')) return;
+
+      fetch('/notes/delete-empty', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ board_id: currentBoardId || null })
+      }).then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.success && data.deleted > 0) {
+            // Remove empty notes from DOM
+            data.ids.forEach(function (id) {
+              var el = board.querySelector('[data-note-id="' + id + '"]');
+              if (el) el.remove();
+            });
+          }
+        });
+    });
+  }
 
   // --- Convert to TIL Modal ---
 

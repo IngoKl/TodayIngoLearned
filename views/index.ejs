@@ -13,6 +13,7 @@
 <main class="flex-shrink-0">
     <div class="container">
         <form method="POST" action="/">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="row align-items-center">
                 <div class="col-auto">
                     <label class="sr-only form-label" for="searchtype">Search Type</label>
