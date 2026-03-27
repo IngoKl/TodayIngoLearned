@@ -23,7 +23,7 @@ const notesRoutes = require('./routes/notes');
 const packageJson = require('./package.json');
 const version = packageJson.version;
 
-const config = require('./config.json');
+const config = require('./config');
 const sqldb = require('./db');
 const restApiRoutes = require('./routes/rest-api');
 

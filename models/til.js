@@ -1,26 +1,6 @@
 const sqldb = require('../db');
 const { TIL_BASE_QUERY } = require('../helpers/queries');
 
-// FTS index sync helpers (inlined to avoid circular dependency with helpers/index.js)
-function ftsInsert(tilId, title, description) {
-  sqldb.prepare('INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)').run(tilId, title, description);
-}
-
-function ftsUpdate(tilId, title, description) {
-  const old = sqldb.prepare('SELECT title, description FROM tils WHERE id = ?').get(tilId);
-  if (old) {
-    sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
-  }
-  sqldb.prepare('INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)').run(tilId, title, description);
-}
-
-function ftsDelete(tilId) {
-  const old = sqldb.prepare('SELECT title, description FROM tils WHERE id = ?').get(tilId);
-  if (old) {
-    sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
-  }
-}
-
 function searchMatch(search) {
   return `"${search.replace(/"/g, '""')}"`;
 }
@@ -72,15 +52,12 @@ exports.countAll = function (userId) {
 };
 
 exports.create = function (userId, title, description, date) {
-  const result = sqldb.prepare(
+  return sqldb.prepare(
     'INSERT INTO tils(user_id, title, description, date, repetitions) VALUES (?,?,?,?,?)'
   ).run(userId, title, description, date, 0);
-  ftsInsert(result.lastInsertRowid, title, description);
-  return result;
 };
 
 exports.update = function (userId, tilId, title, date, description, isPublic) {
-  ftsUpdate(tilId, title, description);
   sqldb.prepare(
     'UPDATE tils SET title = ?, date = ?, description = ?, public = ? WHERE id = ? AND user_id = ?'
   ).run(title, date, description, isPublic, tilId, userId);
@@ -90,7 +67,6 @@ exports.deleteWithRelated = function (userId, tilId) {
   const til = exports.getIdOnly(userId, tilId);
   if (!til) return false;
 
-  ftsDelete(tilId);
   sqldb.prepare('DELETE FROM tags_join WHERE til_id = ?').run(tilId);
   sqldb.prepare('DELETE FROM bookmarks WHERE til_id = ?').run(tilId);
   sqldb.prepare('DELETE FROM til_comments WHERE til_id = ?').run(tilId);

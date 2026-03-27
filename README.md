@@ -94,4 +94,5 @@ Alternatively, you can create your own [Docker](https://www.docker.com) containe
 
 ## Development
 
-Use `nodemon server.js` to get a development server up and running.
+- Use `nodemon server.js` to get a development server up and running.
+- Use `npm test` to run the test suite.

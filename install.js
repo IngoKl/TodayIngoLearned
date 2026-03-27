@@ -1,8 +1,14 @@
-const create = require('./db/create');
-const helpers = require('./helpers');
 const fs = require('fs');
 
-const config = require('./config.json');
+const config = require('./config');
+
+function getCreate() {
+    return require('./db/create');
+}
+
+function getHelpers() {
+    return require('./helpers');
+}
 
 // Create a backup of the current database and rename it based on the current datetime
 function backupDb(mode='copy') {
@@ -29,13 +35,13 @@ function backupDb(mode='copy') {
 // Create a new database
 function createDb() {
     backupDb('rename');
-    create.newDb();
+    getCreate().newDb();
 }
 
 // Refresh the tags in a database
 function refreshTags() {
     backupDb('copy');
-    helpers.refreshTags();
+    getHelpers().refreshTags();
 }
 
 // CLI
@@ -44,41 +50,41 @@ if (command === 'createdb') {
     createDb();
 }
 else if (command === 'populatedb') {
-    create.populateDb();
+    getCreate().populateDb();
 }
 else if (command === 'backupdb') {
     backupDb('copy');
 }
 else if (command === 'adduser') {
-    helpers.addUser(process.argv.slice(2)[1], process.argv.slice(2)[2]);
+    getHelpers().addUser(process.argv.slice(2)[1], process.argv.slice(2)[2]);
 }
 else if (command === 'setuserpassword') {
-    helpers.changeUserPassword(process.argv.slice(2)[1], process.argv.slice(2)[2]);
+    getHelpers().changeUserPassword(process.argv.slice(2)[1], process.argv.slice(2)[2]);
 }
 else if (command === 'listusers') {
-    helpers.listUsers();
+    getHelpers().listUsers();
 }
 else if (command === 'refreshtags') {
     refreshTags();
 }
 else if (command === 'showtil') {
-    helpers.showTil(process.argv.slice(2)[1] || 1);
+    getHelpers().showTil(process.argv.slice(2)[1] || 1);
 }
 else if (command === 'generatetils') {
     const count = parseInt(process.argv.slice(2)[1]) || 10;
-    helpers.generateRandomTils(count);
+    getHelpers().generateRandomTils(count);
 }
 else if (command === 'fixnulldates') {
-    helpers.fixNullDates();
+    getHelpers().fixNullDates();
 }
 else if (command === 'setadmin') {
-    helpers.setAdmin(process.argv.slice(2)[1], true);
+    getHelpers().setAdmin(process.argv.slice(2)[1], true);
 }
 else if (command === 'removeadmin') {
-    helpers.setAdmin(process.argv.slice(2)[1], false);
+    getHelpers().setAdmin(process.argv.slice(2)[1], false);
 }
 else if (command === 'rebuildfts') {
-    helpers.rebuildFts();
+    getHelpers().rebuildFts();
 }
 else {
     console.log('install.js createdb|populatedb|backupdb|adduser|listusers|setuserpassword|refreshtags|rebuildfts|showtil|generatetils|fixnulldates|setadmin|removeadmin');

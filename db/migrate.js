@@ -120,12 +120,13 @@ module.exports = function () {
     sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?, ?)").run('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551');
   }
 
+  let shouldRebuildFts = false;
+
   // Create FTS5 virtual table for full-text search
   const ftsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tils_fts'").get();
   if (!ftsTable) {
     sqldb.exec(`CREATE VIRTUAL TABLE tils_fts USING fts5(title, description, content='tils', content_rowid='id')`);
-    // Populate FTS index from existing data
-    sqldb.exec(`INSERT INTO tils_fts(rowid, title, description) SELECT id, title, description FROM tils`);
+    shouldRebuildFts = true;
   }
 
   // Add FTS auto-sync triggers so the index stays up-to-date automatically
@@ -141,5 +142,12 @@ module.exports = function () {
     sqldb.exec(`CREATE TRIGGER tils_fts_delete BEFORE DELETE ON tils BEGIN
       INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
     END`);
+    shouldRebuildFts = true;
+  }
+
+  const tilCount = sqldb.prepare('SELECT COUNT(*) AS count FROM tils').get().count;
+  const ftsCount = sqldb.prepare('SELECT COUNT(*) AS count FROM tils_fts').get().count;
+  if (shouldRebuildFts || ftsCount !== tilCount) {
+    sqldb.exec("INSERT INTO tils_fts(tils_fts) VALUES ('rebuild')");
   }
 };

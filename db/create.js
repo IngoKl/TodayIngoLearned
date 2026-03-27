@@ -1,7 +1,5 @@
 const Database = require('better-sqlite3');
-const pwgenerator = require('generate-password');
-const helpers = require('./../helpers');
-const config = require('./../config.json');
+const config = require('./../config');
 
 
 // Create a new SQLite database
@@ -22,8 +20,18 @@ exports.newDb = function () {
     sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('note_colors', '#fffffc,#508991,#fe5f55,#0b1d51,#1e2019')");
     sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551')");
 
-    // Full-text search index (FTS5)
+    // Full-text search index (FTS5) with automatic sync triggers
     sqldb.exec(`CREATE VIRTUAL TABLE tils_fts USING fts5(title, description, content='tils', content_rowid='id')`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_insert AFTER INSERT ON tils BEGIN
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_update AFTER UPDATE OF title, description ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_delete BEFORE DELETE ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+    END`);
 
     sqldb.close();
     console.log('New database created ' + config.dbpath);
@@ -32,6 +40,8 @@ exports.newDb = function () {
 // Populate the database with some initial data
 exports.populateDb = function () {
     const sqldb = new Database(config.dbpath);
+    const pwgenerator = require('generate-password');
+    const helpers = require('./../helpers');
 
     // User
     const username = 'Ingo';

@@ -20,6 +20,9 @@
   "bugs": {
     "url": "https://github.com/IngoKl/TodayIngoLearned/issues"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@highlightjs/cdn-assets": "^11.11.1",
     "better-sqlite3": "^12.8.0",

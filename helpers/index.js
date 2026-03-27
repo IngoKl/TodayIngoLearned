@@ -3,7 +3,7 @@ const dayjs = require('dayjs');
 const sqldb = require('./../db');
 const parseHashtags = require('./parseHashtags');
 
-const config = require('../config.json');
+const config = require('../config');
 
 const SCRYPT_KEYLEN = 64;
 const SCRYPT_SALT_LEN = 16;
@@ -209,31 +209,9 @@ exports.getUserByApiKey = function(api_key) {
     return sqldb.prepare('SELECT id, username FROM users WHERE api_key = ?').get(api_key);
 }
 
-// FTS index sync helpers
-exports.ftsInsert = function(tilId, title, description) {
-    sqldb.prepare("INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)").run(tilId, title, description);
-}
-
-exports.ftsUpdate = function(tilId, title, description) {
-    // For content= tables, delete old then insert new
-    const old = sqldb.prepare("SELECT title, description FROM tils WHERE id = ?").get(tilId);
-    if (old) {
-        sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
-    }
-    sqldb.prepare("INSERT INTO tils_fts(rowid, title, description) VALUES (?, ?, ?)").run(tilId, title, description);
-}
-
-exports.ftsDelete = function(tilId) {
-    const old = sqldb.prepare("SELECT title, description FROM tils WHERE id = ?").get(tilId);
-    if (old) {
-        sqldb.prepare("INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', ?, ?, ?)").run(tilId, old.title, old.description);
-    }
-}
-
 // Rebuild the entire FTS index from scratch
 exports.rebuildFts = function() {
-    sqldb.exec("INSERT INTO tils_fts(tils_fts) VALUES ('delete-all')");
-    sqldb.exec("INSERT INTO tils_fts(rowid, title, description) SELECT id, title, description FROM tils");
+    sqldb.exec("INSERT INTO tils_fts(tils_fts) VALUES ('rebuild')");
     console.log('FTS index rebuilt successfully.');
 }
 
