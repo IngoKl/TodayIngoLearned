@@ -16,30 +16,42 @@
 
 <main class="flex-shrink-0">
     <div class="container">
-        <form method="POST" action="/">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="row g-2 align-items-end search-toolbar">
-                <div class="col-auto">
-                    <label class="sr-only form-label" for="searchtype">Search Type</label>
-                    <select class="form-select" id="searchtype" name="searchtype">
-                        <option value="title" <%= currentSearchType === 'title' ? 'selected' : '' %>>Title</option>
-                        <option value="text" <%= currentSearchType === 'text' ? 'selected' : '' %>>Text</option>
-                        <option value="tag" <%= currentSearchType === 'tag' ? 'selected' : '' %>>Tag</option>
-                        <option value="date" <%= currentSearchType === 'date' ? 'selected' : '' %>>Date</option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <label class="sr-only form-label" for="search">Tag</label>
-                    <input type="<%= currentSearchType === 'date' ? 'date' : 'text' %>" class="form-control" id="search" name="search" placeholder="Search" value="<%= currentSearch %>">
-                </div>
-                <div class="col-auto search-toolbar-actions">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    <a href="/til/add" class="btn btn-secondary">Add</a>
+        <div class="home-primary-actions home-primary-actions-top">
+            <a href="/til/add" class="btn btn-primary home-primary-action">New TIL</a>
+        </div>
+
+        <section class="home-search-panel">
+            <div class="home-search-header">
+                <div>
+                    <p class="home-search-kicker">Browse</p>
+                    <h2 class="home-search-title">Find a TIL</h2>
                 </div>
             </div>
-        </form>
 
-        <hr>
+            <form method="POST" action="/" class="home-search-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="home-search-fields">
+                    <div class="home-search-field home-search-field-type">
+                        <label class="form-label" for="searchtype">Search by</label>
+                        <select class="form-select" id="searchtype" name="searchtype">
+                            <option value="title" <%= currentSearchType === 'title' ? 'selected' : '' %>>Title</option>
+                            <option value="text" <%= currentSearchType === 'text' ? 'selected' : '' %>>Text</option>
+                            <option value="tag" <%= currentSearchType === 'tag' ? 'selected' : '' %>>Tag</option>
+                            <option value="date" <%= currentSearchType === 'date' ? 'selected' : '' %>>Date</option>
+                        </select>
+                    </div>
+                    <div class="home-search-field home-search-field-query">
+                        <label class="form-label" for="search">Query</label>
+                        <input type="<%= currentSearchType === 'date' ? 'date' : 'text' %>" class="form-control" id="search" name="search" placeholder="Search your TILs" value="<%= currentSearch %>">
+                    </div>
+                </div>
+                <div class="home-search-actions">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </form>
+        </section>
+
+        <hr class="home-section-divider">
 
         <p style="font-size: 1.5em;">Hey <strong><%= user.username %></strong>, here are your TILs:</p>
 
@@ -81,10 +93,6 @@
         <% } %>
 
         <%- include ('partials/pagination') %>
-
-        <div class="d-flex justify-content-center">
-            <a class="btn btn-secondary pop" style="text-decoration:none" href="/til/add">Add</a>
-        </div>
     </div>
 </main>
 

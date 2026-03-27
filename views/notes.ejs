@@ -30,10 +30,10 @@
                             <%= board.name %>
                             <% if (currentBoard == board.id) { %>
                             <span class="ms-auto d-flex gap-1">
-                                <button type="button" class="btn btn-sm p-0 border-0 text-muted" data-action="rename-board" data-board-id="<%= board.id %>" data-board-name="<%= board.name %>" title="Rename" onclick="event.preventDefault();event.stopPropagation();renameBoard(<%= board.id %>, '<%= board.name.replace(/'/g, "\\'") %>')"><i class="fas fa-pen fa-xs"></i></button>
+                                <button type="button" class="btn btn-sm p-0 border-0 text-muted notes-inline-action" data-action="rename-board" data-board-id="<%= board.id %>" data-board-name="<%= board.name %>" title="Rename" onclick="event.preventDefault();event.stopPropagation();renameBoard(<%= board.id %>, '<%= board.name.replace(/'/g, "\\'") %>')"><i class="fas fa-pen fa-xs"></i><span class="notes-inline-action-label">Rename</span></button>
                                 <form method="POST" action="/notes/boards/<%= board.id %>/delete" style="display:inline" onsubmit="event.stopPropagation();return confirm('Delete this board? Notes will be moved to All Notes.')">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button type="submit" class="btn btn-sm p-0 border-0 text-muted" title="Delete board"><i class="fas fa-trash fa-xs"></i></button>
+                                    <button type="submit" class="btn btn-sm p-0 border-0 text-muted notes-inline-action" title="Delete board"><i class="fas fa-trash fa-xs"></i><span class="notes-inline-action-label">Delete</span></button>
                                 </form>
                             </span>
                             <% } %>
@@ -52,10 +52,10 @@
                 </ul>
             </div>
 
-            <button id="add-text-note" class="btn btn-sm btn-primary" title="New text note"><i class="fas fa-sticky-note fa-xs"></i> <span class="d-none d-md-inline">Text Note</span></button>
-            <button id="add-drawing-note" class="btn btn-sm btn-secondary" title="New drawing"><i class="fas fa-paint-brush fa-xs"></i> <span class="d-none d-md-inline">Drawing</span></button>
-            <button id="sort-notes" class="btn btn-sm btn-outline-secondary" title="Arrange notes in a grid"><i class="fas fa-th fa-xs"></i> <span class="d-none d-md-inline">Sort</span></button>
-            <button id="delete-empty-notes" class="btn btn-sm btn-outline-danger" title="Delete notes with no content"><i class="fas fa-broom fa-xs"></i> <span class="d-none d-md-inline">Delete Empty</span></button>
+            <button id="add-text-note" class="btn btn-sm btn-primary" title="New text note"><i class="fas fa-sticky-note fa-xs"></i> <span class="notes-toolbar-mobile-label">Text</span> <span class="d-none d-md-inline">Text Note</span></button>
+            <button id="add-drawing-note" class="btn btn-sm btn-secondary" title="New drawing"><i class="fas fa-paint-brush fa-xs"></i> <span class="notes-toolbar-mobile-label">Draw</span> <span class="d-none d-md-inline">Drawing</span></button>
+            <button id="sort-notes" class="btn btn-sm btn-outline-secondary" title="Arrange notes in a grid"><i class="fas fa-th fa-xs"></i> <span class="notes-toolbar-mobile-label">Sort</span> <span class="d-none d-md-inline">Sort</span></button>
+            <button id="delete-empty-notes" class="btn btn-sm btn-outline-danger" title="Delete notes with no content"><i class="fas fa-broom fa-xs"></i> <span class="notes-toolbar-mobile-label">Clean</span> <span class="d-none d-md-inline">Delete Empty</span></button>
         </div>
 
         <div id="notes-board" class="notes-board" data-board-id="<%= currentBoard || '' %>">
@@ -72,9 +72,9 @@
                     <span class="sticky-note-grip">&#x2817;</span>
                     <span class="sticky-note-title"><%= note.title %></span>
                     <div class="sticky-note-actions">
-                        <button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i></button>
-                        <button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i></button>
-                        <button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i><span class="notes-action-label">Edit</span></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i><span class="notes-action-label">TIL</span></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i><span class="notes-action-label">Del</span></button>
                     </div>
                 </div>
                 <div class="sticky-note-body">

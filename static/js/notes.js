@@ -271,9 +271,9 @@
         '<span class="sticky-note-grip">&#x2817;</span>' +
         '<span class="sticky-note-title">' + escapeHtml(data.title || '') + '</span>' +
         '<div class="sticky-note-actions">' +
-          '<button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i></button>' +
-          '<button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i></button>' +
-          '<button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i></button>' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i><span class="notes-action-label">Edit</span></button>' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i><span class="notes-action-label">TIL</span></button>' +
+          '<button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i><span class="notes-action-label">Del</span></button>' +
         '</div>' +
       '</div>' +
       '<div class="sticky-note-body">' +
