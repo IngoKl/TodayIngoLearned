@@ -3,7 +3,7 @@
 
 <head>
     <%- include ('partials/head.ejs') %>
-    <title>TodayIngoLearned</title>
+    <title><%= appName %></title>
 </head>
 
 <body>
@@ -13,7 +13,7 @@
     <div class="container">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">✌️ Hi, <strong><%= user.username %></strong></h5>
+                <h5 class="card-title">&#x270C;&#xFE0F; Hi, <strong><%= user.username %></strong></h5>
                 <p>
                     <ul>
                         <li><strong>Number of TILs</strong>: <%= user_stats.tils %></li>
@@ -31,6 +31,7 @@
                     <p class="text-muted">No API key generated yet.</p>
                 <% } %>
                 <form method="post" action="/user/api-key" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit" class="btn btn-sm btn-outline-primary"><%= api_key ? 'Regenerate' : 'Generate' %> API Key</button>
                 </form>
 
@@ -46,16 +47,52 @@
   -H "X-API-Key: <%= api_key %>" ^
   -H "Content-Type: application/json" ^
   -d "{\"title\": \"My TIL\", \"description\": \"Learned something #misc\", \"date\": \"2026-03-21\"}"</code></pre>
+
+                        <p class="mb-1"><strong>Search TILs</strong> (type: title, text, tag, date)<strong>:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=title&q=javascript"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=text&q=example"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=tag&q=%23misc"
+curl -H "X-API-Key: <%= api_key %>" "http://localhost:3000/api/v1/til/search?type=date&q=2026-03-22"</code></pre>
+
+                        <p class="mb-1"><strong>Upload image to a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -X POST http://localhost:3000/api/v1/til/1/image ^
+  -H "X-API-Key: <%= api_key %>" ^
+  -F "image=@photo.png"</code></pre>
+
+                        <p class="mb-1"><strong>List images for a TIL:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -H "X-API-Key: <%= api_key %>" http://localhost:3000/api/v1/til/1/images</code></pre>
+
+                        <p class="mb-1"><strong>Delete an image:</strong></p>
+                        <pre class="bg-body-secondary p-2 rounded"><code>curl -X DELETE -H "X-API-Key: <%= api_key %>" http://localhost:3000/api/v1/til/1/image/1</code></pre>
                     </div>
                 </details>
                 <% } %>
+                <hr>
+                <h6>Public Profile</h6>
+                <% if (publicCount > 0) { %>
+                    <p>You have <strong><%= publicCount %></strong> public TIL<%= publicCount !== 1 ? 's' : '' %>.
+                    <a href="/public/user/<%= user.id %>">View your public profile</a></p>
+                <% } else { %>
+                    <p class="text-muted">You don't have any public TILs yet. Mark a TIL as public when editing to share it.</p>
+                <% } %>
+
+                <hr>
+                <h6>Export TILs</h6>
+                <p class="text-muted">Download all your TILs in your preferred format.</p>
+                <a href="/user/export/json" class="btn btn-sm btn-outline-secondary">JSON</a>
+                <a href="/user/export/csv" class="btn btn-sm btn-outline-secondary">CSV</a>
+                <a href="/user/export/markdown" class="btn btn-sm btn-outline-secondary">Markdown</a>
+
                 <hr>
 
                 <p>
                     <button id="themeToggle" class="btn btn-primary">Toggle Dark Mode</button>
                 </p>
 
-                <a href="/logout" class="btn btn-secondary">Logout</a>
+                <form method="POST" action="/logout" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-secondary">Logout</button>
+                </form>
             </div>
         </div>
     </div>

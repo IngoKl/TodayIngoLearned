@@ -3,7 +3,7 @@ const dayjs = require('dayjs');
 const sqldb = require('./../db');
 const parseHashtags = require('./parseHashtags');
 
-const config = require('../config.json');
+const config = require('../config');
 
 const SCRYPT_KEYLEN = 64;
 const SCRYPT_SALT_LEN = 16;
@@ -61,7 +61,7 @@ exports.getAddTag = function(tag) {
 
 
 // Add/Update the tags for a TIL
-exports.updateTags = function(til_id, tags) {
+exports.updateTags = sqldb.transaction(function(til_id, tags) {
     // Delete all associations
     sqldb.prepare("DELETE FROM tags_join WHERE til_id = ?").run(til_id);
 
@@ -71,13 +71,18 @@ exports.updateTags = function(til_id, tags) {
         const tag_id = module.exports.getAddTag(tag);
         insertStmt.run(til_id, tag_id);
     }
-}
+});
 
 
 // Changing a user's password
 exports.changeUserPassword = function(username, new_password) {
     const hashed_password = this.hashPassword(new_password);
-    sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
+    const result = sqldb.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashed_password, username);
+    if (result.changes === 0) {
+        console.log(`User not found: ${username}`);
+    } else {
+        console.log(`Password updated for user: ${username}`);
+    }
 }
 
 
@@ -96,15 +101,28 @@ exports.listUsers = function() {
     }
 }
 
+// Set or remove admin status for a user
+exports.setAdmin = function(username, isAdmin) {
+    const result = sqldb.prepare('UPDATE users SET is_admin = ? WHERE username = ?').run(isAdmin ? 1 : 0, username);
+    if (result.changes === 0) {
+        console.log(`User not found: ${username}`);
+    } else {
+        console.log(`${username} is ${isAdmin ? 'now' : 'no longer'} an admin`);
+    }
+}
+
 // Refreshing all tags
 exports.refreshTags = function() {
     const rows = sqldb.prepare('SELECT * FROM tils').all();
+    let updatedCount = 0;
     for (const row of rows) {
         const tags = parseHashtags(row.description);
         if (tags) {
             module.exports.updateTags(row.id, tags);
+            updatedCount++;
         }
     }
+    console.log(`Tags refreshed: ${updatedCount} TILs processed out of ${rows.length} total.`);
 }
 
 
@@ -144,7 +162,8 @@ exports.getUserStats = function(user_id) {
 }
 
 
-// Get the start/end timestamp of a given day
+// Get the start/end timestamp of a given day (kept for backwards compat with install.js)
+// Prefer helpers/dates.dayRangeMillis for new code.
 exports.getDateRange = function(timestamp) {
     const start_date = dayjs(timestamp).startOf('day').valueOf();
     const end_date = dayjs(timestamp).endOf('day').valueOf();
@@ -188,6 +207,19 @@ exports.generateApiKey = function(user_id) {
 // Get user by API key
 exports.getUserByApiKey = function(api_key) {
     return sqldb.prepare('SELECT id, username FROM users WHERE api_key = ?').get(api_key);
+}
+
+// Rebuild the entire FTS index from scratch
+exports.rebuildFts = function() {
+    sqldb.exec("INSERT INTO tils_fts(tils_fts) VALUES ('rebuild')");
+    console.log('FTS index rebuilt successfully.');
+}
+
+// Clean up orphan images (uploaded but never associated with a TIL)
+exports.cleanupOrphanImages = function(maxAgeMs = 24 * 60 * 60 * 1000) {
+    const cutoff = Date.now() - maxAgeMs;
+    const result = sqldb.prepare("DELETE FROM til_images WHERE til_id IS NULL AND (source = 'til' OR source IS NULL) AND created_at < ?").run(cutoff);
+    return result.changes;
 }
 
 // Fix TILs with NULL dates by using the date of the previous TIL

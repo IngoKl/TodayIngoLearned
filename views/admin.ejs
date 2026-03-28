@@ -1,0 +1,111 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= appName %> - Admin</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Admin</h5>
+                <p class="text-muted"><%= users.length %> registered user<%= users.length !== 1 ? 's' : '' %></p>
+
+                <h6 class="mt-4">Create New User</h6>
+                <% if (typeof query !== 'undefined' && query.error) { %>
+                    <div class="alert alert-danger"><%= query.error %></div>
+                <% } %>
+                <% if (typeof query !== 'undefined' && query.success) { %>
+                    <div class="alert alert-success"><%= query.success %></div>
+                <% } %>
+                <form action="/admin/createuser" method="POST" class="row g-2 mb-4">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="col-auto">
+                        <input type="text" class="form-control" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="col-auto">
+                        <input type="password" class="form-control" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" class="form-control" name="displayname" placeholder="Display Name (optional)">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Display Name</th>
+                                <th>TILs</th>
+                                <th>Tags</th>
+                                <th>Bookmarks</th>
+                                <th>Comments</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for (const u of users) { %>
+                            <tr>
+                                <td><%= u.id %></td>
+                                <td><%= u.username %></td>
+                                <td><%= u.displayname %></td>
+                                <td><%= u.tils_count %></td>
+                                <td><%= u.tags_count %></td>
+                                <td><%= u.bookmarks_count %></td>
+                                <td><%= u.comments_count %></td>
+                                <td><%= u.is_admin ? 'Yes' : '' %></td>
+                            </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Default Colors</h5>
+                <p class="text-muted">Comma-separated hex colors (e.g. #fffffc,#508991,#fe5f55)</p>
+
+                <form action="/admin/settings/colors" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="mb-3">
+                        <label for="note_colors" class="form-label">Sticky Note Colors</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <% noteColors.split(',').forEach(function(c) { %>
+                            <span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:<%= c %>;border:2px solid #dee2e6;" title="<%= c %>"></span>
+                            <% }); %>
+                        </div>
+                        <input type="text" class="form-control" id="note_colors" name="note_colors" value="<%= noteColors %>" pattern="^#[0-9a-fA-F]{6}(,#[0-9a-fA-F]{6})*$" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pen_colors" class="form-label">Drawing Pen Colors</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <% penColors.split(',').forEach(function(c) { %>
+                            <span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:<%= c %>;border:2px solid #dee2e6;" title="<%= c %>"></span>
+                            <% }); %>
+                        </div>
+                        <input type="text" class="form-control" id="pen_colors" name="pen_colors" value="<%= penColors %>" pattern="^#[0-9a-fA-F]{6}(,#[0-9a-fA-F]{6})*$" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Colors</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>

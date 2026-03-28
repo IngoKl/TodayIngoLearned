@@ -1,3 +1,9 @@
+:root {
+    --app-accent: #a25776;
+    --app-accent-dark: #7a3f59;
+    --app-accent-bg: #f0dce4;
+}
+
 body {
     background-color: #f5f5f5;
     padding-top: 5rem;
@@ -22,41 +28,14 @@ footer {
 }
 
 .btn-primary {
-    background-color: #a25776 !important;
-    border-color: #a25776;
-}
-
-.bd-placeholder-img {
-    font-size: 1.125rem;
-    text-anchor: middle;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-@media (min-width: 768px) {
-    .bd-placeholder-img-lg {
-        font-size: 3.5rem;
-    }
+    background-color: var(--app-accent) !important;
+    border-color: var(--app-accent);
 }
 
 main>.container {
     padding: 10px 15px 0;
     max-width: 1200px;
     padding-bottom: 200px;
-}
-
-.circle {
-    border-radius: 50%;
-}
-
-.pop {
-    transition-duration: 0.4s;
-}
-
-.pop:hover {
-    transform: scale(1.2);
 }
 
 .description {
@@ -67,32 +46,25 @@ main>.container {
 .tag {
     border-radius: .25rem;
     background-color: #343a40 !important;
-    color: rgb(255, 255, 255);
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    color: #fff;
+    padding: 2px 5px;
     text-decoration: none;
 }
 
 .tag:hover {
     text-decoration: none;
-    color: rgb(255, 255, 255);
+    color: #fff;
     background-color: #646f7a !important;
 }
 
 .tag-grid {
     font-size: 1.2em;
     display: grid;
-    grid-gap: 10px;
+    gap: 10px;
     grid-template-columns: repeat(auto-fit, minmax(200px, 0.5fr));
     padding: 10px;
 }
 
-.darkmode--activated .card {
-    color: #f5f5f5;
-    background-color: #2b353f;
-}
 
 .version-number {
     font-size: 0.8em;
@@ -116,19 +88,127 @@ main>.container {
     font-size: 1.2em;
 }
 
+.home-search-panel {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: var(--bs-tertiary-bg);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.home-search-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.home-search-kicker {
+    margin: 0 0 0.25rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bs-secondary-color);
+}
+
+.home-search-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.home-search-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.home-search-fields {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.home-search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.home-search-field .form-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color);
+}
+
+.home-search-field-type {
+    min-width: 150px;
+}
+
+.home-search-field-query {
+    flex: 1;
+}
+
+.home-search-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+.home-section-divider {
+    margin: 1.25rem 0;
+}
+
+.home-primary-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+}
+
+.home-primary-action {
+    min-width: 140px;
+}
+
+.home-primary-actions-top {
+    margin-top: 0;
+    margin-bottom: 0.9rem;
+}
+
+.search-snippet {
+    background-color: #fefce8;
+    border-left: 3px solid var(--app-accent);
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.95em;
+    color: #555;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+[data-bs-theme="dark"] .search-snippet {
+    background-color: #3a3520;
+    color: #ccc;
+}
+
+.search-snippet mark {
+    background-color: #fbbf24;
+    color: #000;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
 .page-link {
-    color: #a25776;
+    color: var(--app-accent);
 }
 
 .page-link:hover {
-    color: #7a3f59;
-    background-color: #f0dce4;
-    border-color: #a25776;
+    color: var(--app-accent-dark);
+    background-color: var(--app-accent-bg);
+    border-color: var(--app-accent);
 }
 
 .page-item.active .page-link {
-    background-color: #a25776;
-    border-color: #a25776;
+    background-color: var(--app-accent);
+    border-color: var(--app-accent);
     color: #fff;
 }
 
@@ -142,3 +222,331 @@ main>.container {
     gap: 0.25rem;
 }
 
+/* Image gallery in editor */
+#image-gallery img {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+#image-gallery img:hover {
+    opacity: 0.8;
+}
+
+/* Drawing canvas modal */
+#drawing-modal .modal-body {
+    padding: 0;
+}
+
+#drawing-canvas {
+    cursor: crosshair;
+    touch-action: none;
+    border: 1px solid #dee2e6;
+    background: repeating-conic-gradient(#e8e8e8 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+}
+
+#drawing-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+}
+
+.draw-color-presets {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.draw-color-preset {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    padding: 0;
+}
+
+.draw-color-preset:hover {
+    transform: scale(1.15);
+}
+
+.draw-color-preset.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+}
+
+/* Image display in markdown content */
+.description img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+    margin: 0.5rem 0;
+}
+
+/* Images gallery on view page */
+.til-images-gallery img {
+    transition: transform 0.2s;
+}
+
+.til-images-gallery img:hover {
+    transform: scale(1.05);
+}
+
+/* ===== Notes Board ===== */
+.notes-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.notes-toolbar .btn,
+.notes-inline-action,
+.sticky-note-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.notes-toolbar-mobile-label,
+.notes-action-label,
+.notes-inline-action-label {
+    display: none;
+}
+
+.notes-board {
+    position: relative;
+    min-height: 70vh;
+    overflow: auto;
+    background:
+        radial-gradient(circle, #ccc 1px, transparent 1px);
+    background-size: 20px 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+}
+
+.sticky-note {
+    position: absolute;
+    min-width: 150px;
+    min-height: 120px;
+    border-radius: 3px;
+    box-shadow: 2px 3px 7px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    user-select: none;
+}
+
+.sticky-note:hover {
+    box-shadow: 3px 5px 12px rgba(0,0,0,0.25);
+}
+
+.sticky-note.dragging {
+    box-shadow: 5px 8px 20px rgba(0,0,0,0.3);
+    opacity: 0.9;
+}
+
+.sticky-note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    cursor: grab;
+    background: rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    min-height: 28px;
+}
+
+.sticky-note.dragging .sticky-note-header {
+    cursor: grabbing;
+}
+
+/* Drag grip indicator (touch devices only) */
+.sticky-note-grip {
+    display: none;
+}
+
+/* --- Touch device overrides --- */
+@media (pointer: coarse) {
+    .sticky-note-header {
+        min-height: 44px;
+        padding: 8px 10px;
+    }
+    .sticky-note-grip {
+        display: inline-block;
+        margin-right: 6px;
+        color: #999;
+        font-size: 1rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+    .sticky-note-actions {
+        opacity: 1;
+    }
+    .sticky-note-btn {
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
+    .notes-action-label {
+        display: inline;
+        font-size: 0.75rem;
+    }
+    .notes-inline-action-label {
+        display: inline;
+        font-size: 0.75rem;
+    }
+    /* Long-press picked up state */
+    .sticky-note.drag-ready {
+        transform: scale(1.05);
+        box-shadow: 5px 8px 25px rgba(0,0,0,0.35);
+        z-index: 9999;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .sticky-note.dragging {
+        opacity: 0.9;
+    }
+}
+
+.sticky-note-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.sticky-note-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.sticky-note:hover .sticky-note-actions {
+    opacity: 1;
+}
+
+.sticky-note-btn {
+    padding: 1px 4px;
+    line-height: 1;
+    font-size: 0.7rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.sticky-note-btn:hover {
+    opacity: 1;
+    background: rgba(128,128,128,0.2);
+    border-radius: 3px;
+}
+
+.sticky-note-body {
+    flex: 1;
+    padding: 8px;
+    overflow: auto;
+    font-size: 0.85rem;
+}
+
+.sticky-note-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sticky-note-drawing {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Note color picker buttons */
+.note-color-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    padding: 0;
+}
+
+.note-color-btn:hover {
+    transform: scale(1.15);
+}
+
+.note-color-btn.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
+}
+
+/* Note color picker in drawing modal */
+.note-color-picker-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.note-color-picker-btn:hover {
+    transform: scale(1.15);
+}
+.note-color-picker-btn.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .home-search-header,
+    .home-search-form,
+    .home-search-fields {
+        flex-direction: column;
+    }
+
+    .home-search-fields,
+    .home-search-field,
+    .home-search-actions,
+    .home-search-actions .btn,
+    .home-primary-action {
+        width: 100%;
+    }
+
+    .home-search-title {
+        font-size: 1.3rem;
+    }
+
+    .home-primary-actions {
+        justify-content: stretch;
+    }
+
+    .home-primary-actions-top {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Notes toolbar mobile */
+@media (max-width: 576px) {
+    .notes-toolbar {
+        gap: 0.35rem;
+    }
+    .notes-toolbar .btn {
+        font-size: 0.78rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .notes-toolbar .dropdown .btn {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .notes-toolbar-mobile-label {
+        display: inline;
+    }
+}

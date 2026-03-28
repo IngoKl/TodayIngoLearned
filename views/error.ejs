@@ -1,0 +1,28 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= appName %> - Error</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container">
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <h2 class="card-title">Something went wrong</h2>
+                <p class="card-text text-muted"><%= typeof message !== 'undefined' ? message : 'An unexpected error occurred.' %></p>
+                <a href="/" class="btn btn-primary">Go Home</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include ('partials/footer_text.ejs') %>
+<%- include ('partials/footer.ejs') %>
+</body>
+
+</html>

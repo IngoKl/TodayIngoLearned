@@ -8,6 +8,12 @@ db/sessions.db.*
 db/til.db-*
 db/sessions.db-*
 
+# Config (contains session secret)
+config.json
+
+# Temp files
+*.tmp.*
+
 # Logs
 logs
 *.log

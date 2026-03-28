@@ -1,4 +1,5 @@
 {
+    "name": "TodayIngoLearned",
     "dbpath": "./db/til.db",
     "lowercasetags": true,
     "expresssessionsecret": "WlMAkFp1x1AkJBoJySNq",

@@ -1,19 +1,37 @@
 const Database = require('better-sqlite3');
-const pwgenerator = require('generate-password');
-const helpers = require('./../helpers');
-const config = require('./../config.json');
+const config = require('./../config');
 
 
 // Create a new SQLite database
 exports.newDb = function () {
     const sqldb = new Database(config.dbpath);
 
+    // Date convention: `date` stores milliseconds (Date.now()); `last_repetition`/`next_repetition` store Unix seconds
     sqldb.exec('CREATE TABLE tils (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER, `title` TEXT, `description` TEXT, `date` INTEGER, `repetitions` INTEGER DEFAULT 0, `last_repetition` INTEGER DEFAULT 0, `next_repetition` INTEGER DEFAULT 0, `public` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE tags (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `tag` TEXT UNIQUE)');
-    sqldb.exec('CREATE TABLE users (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` TEXT UNIQUE, `password` TEXT, `displayname` TEXT)');
+    sqldb.exec('CREATE TABLE users (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` TEXT UNIQUE, `password` TEXT, `displayname` TEXT, `is_admin` INTEGER DEFAULT 0)');
     sqldb.exec('CREATE TABLE tags_join (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `tag_id` INTEGER)');
     sqldb.exec('CREATE TABLE til_comments (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `comment` TEXT,`user_id` INTEGER)');
     sqldb.exec('CREATE TABLE bookmarks (`id` INTEGER PRIMARY KEY AUTOINCREMENT,`user_id` INTEGER,`til_id` INTEGER)');
+    sqldb.exec('CREATE TABLE til_images (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `til_id` INTEGER, `user_id` INTEGER, `image_data` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT, `created_at` INTEGER DEFAULT 0, `source` TEXT DEFAULT \'til\')');
+    sqldb.exec('CREATE TABLE sticky_notes (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER NOT NULL, `title` TEXT DEFAULT \'\', `body` TEXT DEFAULT \'\', `type` TEXT NOT NULL DEFAULT \'text\', `image_id` INTEGER DEFAULT NULL, `color` TEXT DEFAULT \'#fff9c4\', `pos_x` INTEGER DEFAULT 50, `pos_y` INTEGER DEFAULT 50, `width` INTEGER DEFAULT 200, `height` INTEGER DEFAULT 200, `z_index` INTEGER DEFAULT 0, `board_id` INTEGER DEFAULT NULL, `created_at` INTEGER DEFAULT 0, `updated_at` INTEGER DEFAULT 0)');
+    sqldb.exec('CREATE TABLE note_boards (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `user_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `created_at` INTEGER DEFAULT 0)');
+    sqldb.exec('CREATE TABLE app_settings (`key` TEXT PRIMARY KEY, `value` TEXT NOT NULL)');
+    sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('note_colors', '#fffffc,#508991,#fe5f55,#0b1d51,#1e2019')");
+    sqldb.exec("INSERT INTO app_settings(key, value) VALUES ('pen_colors', '#4ecdc4,#ffc145,#fffbff,#364652,#ca1551')");
+
+    // Full-text search index (FTS5) with automatic sync triggers
+    sqldb.exec(`CREATE VIRTUAL TABLE tils_fts USING fts5(title, description, content='tils', content_rowid='id')`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_insert AFTER INSERT ON tils BEGIN
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_update AFTER UPDATE OF title, description ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+      INSERT INTO tils_fts(rowid, title, description) VALUES (NEW.id, NEW.title, NEW.description);
+    END`);
+    sqldb.exec(`CREATE TRIGGER tils_fts_delete BEFORE DELETE ON tils BEGIN
+      INSERT INTO tils_fts(tils_fts, rowid, title, description) VALUES ('delete', OLD.id, OLD.title, OLD.description);
+    END`);
 
     sqldb.close();
     console.log('New database created ' + config.dbpath);
@@ -22,6 +40,8 @@ exports.newDb = function () {
 // Populate the database with some initial data
 exports.populateDb = function () {
     const sqldb = new Database(config.dbpath);
+    const pwgenerator = require('generate-password');
+    const helpers = require('./../helpers');
 
     // User
     const username = 'Ingo';

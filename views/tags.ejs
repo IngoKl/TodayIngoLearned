@@ -3,8 +3,8 @@
 
 <head>
     <%- include ('partials/head.ejs') %>
-    <title>TodayIngoLearned</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title><%= appName %></title>
+    <script nonce="<%= nonce %>" src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         #graph-container {
             width: 100%;
@@ -48,7 +48,7 @@
 
 <%- include ('partials/footer.ejs') %>
 
-<script>
+<script nonce="<%= nonce %>">
 (function() {
     const container = document.getElementById('graph-container');
     const canvas = document.createElement('canvas');

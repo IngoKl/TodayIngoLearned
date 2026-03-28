@@ -3,7 +3,7 @@
 
 <head>
     <%- include ('partials/head.ejs') %>
-    <title>TodayIngoLearned</title>
+    <title><%= appName %></title>
 </head>
 
 <body>
@@ -16,16 +16,25 @@
         <h2>Study Mode</h2>
         <p><a href="/study/stats" class="btn btn-outline-secondary btn-sm">Study Stats</a></p><br/>
 
+        <% if (til.repetitions > 0) { %>
         <p>
             This is <strong>repetition no. <%=til.repetitions %></strong>. You last looked at this in study mode on <em><%=til.last_repetition.toLocaleString('de-DE') %></em>.
         </p>
+        <% } else { %>
+        <p>This is your <strong>first time</strong> studying this TIL.</p>
+        <% } %>
 
         <hr>
-            <a href="/study/<%= til.til_id %>/easy"><button class="btn btn-success">Easy</button></a>
-            <a href="/study/<%= til.til_id %>/ok"><button class="btn btn-warning">OK</button></a>
-            <a href="/study/<%= til.til_id %>/hard"><button class="btn btn-danger">Hard</button></a>
-            &nbsp;&nbsp;&nbsp;
-            <a href="/study/<%= til.til_id %>/mute"><button class="btn btn-secondary">Mute</button></a>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <% ['easy', 'ok', 'hard', 'mute'].forEach(function(result) { %>
+                <form method="POST" action="/study/<%= til.til_id %>/<%= result %>" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn <%= result === 'easy' ? 'btn-success' : result === 'ok' ? 'btn-warning' : result === 'hard' ? 'btn-danger' : 'btn-secondary' %>">
+                        <%= result === 'ok' ? 'OK' : result.charAt(0).toUpperCase() + result.slice(1) %>
+                    </button>
+                </form>
+            <% }); %>
+        </div>
         <hr>
 
         <div class="card">
@@ -37,7 +46,7 @@
                 <% } %>
 
                 <hr>
-                <p class="card-text md description"><%=til.description %></p>
+                <p class="card-text md description" data-til-id="<%= til.til_id %>"><%=til.description %></p>
                 <hr>
 
                 <a href="/comment/add/<%= til.til_id %>" class="btn btn-secondary">Add Comment</a>

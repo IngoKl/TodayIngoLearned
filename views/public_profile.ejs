@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="<%= author %>'s Learnings">
+    <meta property="og:description" content="<%= tils_keys.length %> public learnings shared by <%= author %>">
+    <meta property="og:site_name" content="<%= appName %>">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="<%= author %>'s Learnings">
+
+    <title><%= author %>'s Learnings &mdash; <%= appName %></title>
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/public.css">
+    <meta name="theme-color" content="#a25776">
+</head>
+
+<body class="public-page">
+
+    <div class="public-container">
+        <!-- Header -->
+        <header class="public-header">
+            <a href="/" class="public-brand">
+                <img src="/static/images/icons/app-icon-96.png" width="28" alt="TIL"/>
+                <span><%= appName %></span>
+            </a>
+        </header>
+
+        <!-- Profile -->
+        <div class="public-profile-header">
+            <div class="public-profile-avatar"><%= author.charAt(0).toUpperCase() %></div>
+            <h1 class="public-profile-name"><%= author %></h1>
+            <p class="public-profile-count"><%= tils_keys.length %> public learning<%= tils_keys.length !== 1 ? 's' : '' %></p>
+        </div>
+
+        <!-- TIL List -->
+        <% if (tils_keys.length > 0) { %>
+            <ul class="public-til-list">
+                <% for (let i in tils_keys) { %>
+                <% let til = tils_objects[tils_keys[i]]; %>
+                <li>
+                    <a href="/public/<%= til.til_id %>" class="public-til-item">
+                        <div class="public-til-item-title"><%= til.title %></div>
+                        <div class="public-til-item-meta">
+                            <time><%= til.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></time>
+                            <% if (til.tags && til.tags.length > 0) { %>
+                                <span class="public-meta-sep">&middot;</span>
+                                <div class="public-til-item-tags">
+                                    <% for (let tag of til.tags.slice(0, 4)) { %>
+                                        <span class="public-til-item-tag"><%= tag %></span>
+                                    <% } %>
+                                    <% if (til.tags.length > 4) { %>
+                                        <span class="public-til-item-tag">+<%= til.tags.length - 4 %></span>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        <% } else { %>
+            <p style="text-align: center; color: #718096;">No public learnings yet.</p>
+        <% } %>
+
+        <!-- Footer -->
+        <footer class="public-footer">
+            <p class="public-footer-brand">
+                Powered by <a href="/"><%= appName %></a>
+            </p>
+        </footer>
+    </div>
+
+</body>
+
+</html>

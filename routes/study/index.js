@@ -1,89 +1,82 @@
 const express = require('express');
 const dayjs = require('dayjs');
-const sqldb = require('./../../db');
+const validate = require('./../../helpers/validate');
+const dates = require('./../../helpers/dates');
+const TilModel = require('./../../models/til');
+const CommentModel = require('./../../models/comment');
 const router = express.Router();
 const tilsObject = require('./../../helpers/tilsObject');
 
 router.get('/stats',
     require('connect-ensure-login').ensureLoggedIn(),
-    function (req, res) {
+    function (req, res, next) {
+    try {
+      const nowUnix = dates.nowUnixSeconds();
+      const stats = TilModel.getStudyStats(req.user.id, nowUnix);
+      const tils = TilModel.getStudiedTils(req.user.id);
 
-    const total_tils = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ?").get(req.user.id).count;
-    const studied = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND repetitions > 0").get(req.user.id).count;
-    const never_studied = total_tils - studied;
-    const due_now = sqldb.prepare("SELECT COUNT(*) AS count FROM tils WHERE user_id = ? AND next_repetition < ?").get(req.user.id, dayjs().unix()).count;
-    const total_repetitions = sqldb.prepare("SELECT COALESCE(SUM(repetitions), 0) AS total FROM tils WHERE user_id = ?").get(req.user.id).total;
-
-    const tils = sqldb.prepare(`SELECT tils.id, tils.title, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
-                FROM tils
-                LEFT JOIN tags_join ON tags_join.til_id = tils.id
-                LEFT JOIN tags ON tags.id = tags_join.tag_id
-                WHERE tils.user_id = ? AND tils.repetitions > 0
-                GROUP BY tils.id
-                ORDER BY tils.next_repetition ASC`).all(req.user.id);
-
-    res.render('study_stats', {
-        user: req.user,
-        stats: { total_tils, studied, never_studied, due_now, total_repetitions },
-        tils: tils
-    });
+      res.render('study_stats', {
+          user: req.user,
+          stats: stats,
+          tils: tils
+      });
+    } catch (err) { next(err); }
 });
 
 router.get('/',
     require('connect-ensure-login').ensureLoggedIn(),
-    function (req, res) {
+    function (req, res, next) {
+    try {
+      const nowUnix = dates.nowUnixSeconds();
+      const pick = TilModel.getNextStudyPick(req.user.id, nowUnix);
 
-    const pick = sqldb.prepare("SELECT tils.id FROM tils WHERE tils.user_id = ? AND tils.next_repetition < ? ORDER BY RANDOM() LIMIT 1").get(req.user.id, dayjs().unix());
+      if (pick) {
+          const rows = [TilModel.getById(req.user.id, pick.id)];
+          const tils = tilsObject(rows);
+          const til = tils[0][tils[1][0]];
+          const comments = CommentModel.listByTil(pick.id, req.user.id);
 
-    if (pick) {
-        const rows = sqldb.prepare(`SELECT tils.id, tils.title, tils.description, tils.date, tils.repetitions, tils.last_repetition, tils.next_repetition, GROUP_CONCAT(tags.tag) AS tags
-                    FROM tils
-                    JOIN tags_join ON tags_join.til_id = tils.id JOIN tags ON tags.id = tags_join.tag_id
-                    WHERE tils.user_id = ? AND tils.id = ? GROUP BY tils.id`).all(req.user.id, pick.id);
-
-        const tils = tilsObject(rows);
-        const til = tils[0][tils[1][0]];
-
-        const comments = sqldb.prepare("SELECT * FROM til_comments WHERE til_id = ? AND user_id = ?").all(pick.id, req.user.id);
-
-        res.render('study', { til: til, comments: comments, user: req.user });
-    } else {
-        res.redirect('/');
-    }
+          res.render('study', { til: til, comments: comments, user: req.user });
+      } else {
+          res.redirect('/');
+      }
+    } catch (err) { next(err); }
 });
 
-router.get('/:til_id/:study_result',
+router.post('/:til_id/:study_result',
     require('connect-ensure-login').ensureLoggedIn(),
-    function (req, res) {
+    function (req, res, next) {
+    try {
+      const study_result = req.params.study_result;
+      if (!validate.studyResult(study_result)) {
+          return res.redirect('/study');
+      }
 
-    const row = sqldb.prepare("SELECT * FROM tils WHERE tils.id = ? AND tils.user_id = ?").get(req.params.til_id, req.user.id);
+      const row = TilModel.getByIdRaw(req.user.id, req.params.til_id);
+      if (!row) return res.redirect('/study');
 
-    let repetitions = row.repetitions;
-    if (repetitions === 0) {
-        repetitions = 1;
-    }
+      let repetitions = row.repetitions;
+      if (repetitions === 0) {
+          repetitions = 1;
+      }
 
-    let current_dt = dayjs();
-    const study_result = req.params.study_result;
+      let current_dt = dayjs();
 
-    // This is a very simple spaced repetition approach
-    let next_repetition;
-    if (study_result === 'easy') {
-        next_repetition = current_dt.add(14 * repetitions, 'day');
-    } else if (study_result === 'ok') {
-        next_repetition = current_dt.add(7 * repetitions, 'day');
-    } else if (study_result === 'hard') {
-        next_repetition = current_dt.add(1, 'day');
-    } else if (study_result === 'mute') {
-        next_repetition = current_dt.add(90, 'day');
-    } else {
-        return res.redirect('/study');
-    }
+      let next_repetition;
+      if (study_result === 'easy') {
+          next_repetition = current_dt.add(14 * repetitions, 'day');
+      } else if (study_result === 'ok') {
+          next_repetition = current_dt.add(7 * repetitions, 'day');
+      } else if (study_result === 'hard') {
+          next_repetition = current_dt.add(1, 'day');
+      } else if (study_result === 'mute') {
+          next_repetition = current_dt.add(90, 'day');
+      }
 
-    sqldb.prepare("UPDATE tils SET repetitions = repetitions + 1, last_repetition = ?, next_repetition = ? WHERE id = ? AND user_id = ?")
-        .run(dayjs().unix(), next_repetition.unix(), req.params.til_id, req.user.id);
+      TilModel.recordStudy(req.user.id, req.params.til_id, dates.nowUnixSeconds(), next_repetition.unix());
 
-    res.redirect('/study');
+      res.redirect('/study');
+    } catch (err) { next(err); }
 });
 
 module.exports = router;

@@ -3,17 +3,18 @@
 
 <head>
     <%- include ('partials/head.ejs') %>
-    <title>TodayIngoLearned</title>
+    <title><%= appName %></title>
 </head>
 
 <body>
 <%- include ('partials/navigation.ejs') %>
 
 <main class="flex-shrink-0">
-    <div class="container">   
+    <div class="container">
       <h2>Edit <em><%= til.title %></em></h2>
       <br>
       <form id="edittil" method="POST" target="">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input id="title" name="title" placeholder="TIL" type="text" required="required" class="form-control" value="<%= til.title %>">
@@ -31,10 +32,14 @@
               <button id="md-link" type="button" class="btn btn-secondary btn-sm">link (e)</button>
               <button id="md-ilink" type="button" class="btn btn-secondary btn-sm">link (i)</button>
               <button id="md-tag" type="button" class="btn btn-secondary btn-sm">#tag</button>
+              <button id="md-image" type="button" class="btn btn-secondary btn-sm">image</button>
+              <button id="md-draw" type="button" class="btn btn-secondary btn-sm">draw</button>
+              <input type="file" id="image-upload" accept="image/*" style="display:none">
             </div>
 
             <textarea id="description" name="description" rows="10" aria-describedby="descriptionHelpBlock" class="form-control"><%= til.description %></textarea>
             <span id="descriptionHelpBlock" class="form-text text-muted">You can simply use hashtags in here that will then be converted to "Tags".</span>
+            <div id="image-gallery" class="mt-2 d-flex flex-wrap gap-2" data-til-id="<%= til.id %>"></div>
           </div>
           <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="public" name="public" value="1" <%= til.public ? 'checked' : '' %>>
@@ -46,7 +51,10 @@
           </div>
         </form>
         <hr>
-        <a href="/til/edit/<%= til.id %>/delete"><button class="btn btn-danger">Delete</button></a>  
+        <form method="POST" action="/til/edit/<%= til.id %>/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this TIL? This cannot be undone.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
     </div>
 </main>
 

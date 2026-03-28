@@ -1,0 +1,218 @@
+<!doctype html>
+<%- include ('partials/html.ejs') %>
+
+<head>
+    <%- include ('partials/head.ejs') %>
+    <title><%= appName %> - Notes</title>
+</head>
+
+<body>
+<%- include ('partials/navigation.ejs') %>
+
+<main class="flex-shrink-0">
+    <div class="container-fluid px-3">
+        <div class="notes-toolbar">
+            <h2 class="me-auto mb-0 d-none d-md-block">Notes</h2>
+
+            <!-- Board Switcher -->
+            <div class="dropdown me-2">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-layer-group fa-xs"></i>
+                    <%= currentBoard ? boards.find(b => b.id == currentBoard)?.name || 'Board' : 'General' %>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item<%= !currentBoard ? ' active' : '' %>" href="/notes">General</a></li>
+                    <% if (boards.length > 0) { %>
+                    <li><hr class="dropdown-divider"></li>
+                    <% for (const board of boards) { %>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center<%= currentBoard == board.id ? ' active' : '' %>" href="/notes?board=<%= board.id %>">
+                            <%= board.name %>
+                            <% if (currentBoard == board.id) { %>
+                            <span class="ms-auto d-flex gap-1">
+                                <button type="button" class="btn btn-sm p-0 border-0 text-muted notes-inline-action" data-action="rename-board" data-board-id="<%= board.id %>" data-board-name="<%= board.name %>" title="Rename" onclick="event.preventDefault();event.stopPropagation();renameBoard(<%= board.id %>, '<%= board.name.replace(/'/g, "\\'") %>')"><i class="fas fa-pen fa-xs"></i><span class="notes-inline-action-label">Rename</span></button>
+                                <form method="POST" action="/notes/boards/<%= board.id %>/delete" style="display:inline" onsubmit="event.stopPropagation();return confirm('Delete this board? Notes will be moved to All Notes.')">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm p-0 border-0 text-muted notes-inline-action" title="Delete board"><i class="fas fa-trash fa-xs"></i><span class="notes-inline-action-label">Delete</span></button>
+                                </form>
+                            </span>
+                            <% } %>
+                        </a>
+                    </li>
+                    <% } %>
+                    <% } %>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="/notes/boards" method="POST" class="px-3 py-1 d-flex gap-2" id="new-board-form">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="text" name="name" class="form-control form-control-sm" placeholder="New board..." required style="min-width:120px;">
+                            <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            <button id="add-text-note" class="btn btn-sm btn-primary" title="New text note"><i class="fas fa-sticky-note fa-xs"></i> <span class="notes-toolbar-mobile-label">Text</span> <span class="d-none d-md-inline">Text Note</span></button>
+            <button id="add-drawing-note" class="btn btn-sm btn-secondary" title="New drawing"><i class="fas fa-paint-brush fa-xs"></i> <span class="notes-toolbar-mobile-label">Draw</span> <span class="d-none d-md-inline">Drawing</span></button>
+            <button id="sort-notes" class="btn btn-sm btn-outline-secondary" title="Arrange notes in a grid"><i class="fas fa-th fa-xs"></i> <span class="notes-toolbar-mobile-label">Sort</span> <span class="d-none d-md-inline">Sort</span></button>
+            <button id="delete-empty-notes" class="btn btn-sm btn-outline-danger" title="Delete notes with no content"><i class="fas fa-broom fa-xs"></i> <span class="notes-toolbar-mobile-label">Clean</span> <span class="d-none d-md-inline">Delete Empty</span></button>
+        </div>
+
+        <div id="notes-board" class="notes-board" data-board-id="<%= currentBoard || '' %>">
+            <% for (const note of notes) { %>
+            <div class="sticky-note"
+                 data-note-id="<%= note.id %>"
+                 data-note-type="<%= note.type %>"
+                 data-note-title="<%= note.title %>"
+                 data-note-body="<%= note.type === 'text' ? note.body : '' %>"
+                 data-note-color="<%= note.color %>"
+                 data-note-board="<%= note.board_id || '' %>"
+                 style="left:<%= note.pos_x %>px; top:<%= note.pos_y %>px; width:<%= note.width || 200 %>px; height:<%= note.height || 200 %>px; background-color:<%= note.color %>; z-index:<%= note.z_index %>;">
+                <div class="sticky-note-header">
+                    <span class="sticky-note-grip">&#x2817;</span>
+                    <span class="sticky-note-title"><%= note.title %></span>
+                    <div class="sticky-note-actions">
+                        <button class="btn btn-sm sticky-note-btn" data-action="edit" title="Edit"><i class="fas fa-pen fa-xs"></i><span class="notes-action-label">Edit</span></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="to-til" title="Convert to TIL"><i class="fas fa-graduation-cap fa-xs"></i><span class="notes-action-label">TIL</span></button>
+                        <button class="btn btn-sm sticky-note-btn" data-action="delete" title="Delete"><i class="fas fa-trash fa-xs"></i><span class="notes-action-label">Del</span></button>
+                    </div>
+                </div>
+                <div class="sticky-note-body">
+                    <% if (note.type === 'drawing' && note.image_id) { %>
+                        <img src="/image/<%= note.image_id %>" alt="Drawing" class="sticky-note-drawing">
+                    <% } else { %>
+                        <p class="sticky-note-text"><%= note.body %></p>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- Edit Note Modal -->
+<div class="modal fade" id="edit-note-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-note-id">
+                <div class="mb-3">
+                    <label for="edit-note-title" class="form-label">Title</label>
+                    <input type="text" id="edit-note-title" class="form-control">
+                </div>
+                <div class="mb-3" id="edit-note-body-group">
+                    <label for="edit-note-body" class="form-label">Content</label>
+                    <textarea id="edit-note-body" class="form-control" rows="5"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Color</label>
+                    <div class="d-flex gap-2" id="edit-note-colors">
+                        <% for (const color of noteColors) { %>
+                        <button type="button" class="note-color-btn" data-color="<%= color %>" style="background:<%= color %>;" title="<%= color %>"></button>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-note-board" class="form-label">Board</label>
+                    <select id="edit-note-board" class="form-select">
+                        <option value="">General</option>
+                        <% for (const board of boards) { %>
+                        <option value="<%= board.id %>"><%= board.name %></option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="edit-note-save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Convert to TIL Modal -->
+<div class="modal fade" id="to-til-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="to-til-form" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Convert to TIL</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="to-til-date" class="form-label">Date</label>
+                        <input type="date" id="to-til-date" name="date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="to-til-tags" class="form-label">Tags</label>
+                        <input type="text" id="to-til-tags" name="tags" class="form-control" value="#misc" placeholder="#tag1 #tag2">
+                        <span class="form-text text-muted">Space-separated hashtags</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create TIL</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Board Modal -->
+<div class="modal fade" id="rename-board-modal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form id="rename-board-form" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rename Board</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="name" id="rename-board-name" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script nonce="<%= nonce %>">
+function renameBoard(boardId, currentName) {
+    document.getElementById('rename-board-form').action = '/notes/boards/' + boardId + '/rename';
+    document.getElementById('rename-board-name').value = currentName;
+    new bootstrap.Modal(document.getElementById('rename-board-modal')).show();
+}
+</script>
+
+<%- include ('partials/footer_text.ejs') %>
+<%- include ('partials/footer.ejs') %>
+<script nonce="<%= nonce %>">
+// Auto-set text color for contrast on dark/light note backgrounds
+(function() {
+  function luminance(hex) {
+    var r = parseInt(hex.slice(1,3),16)/255;
+    var g = parseInt(hex.slice(3,5),16)/255;
+    var b = parseInt(hex.slice(5,7),16)/255;
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+  document.querySelectorAll('.sticky-note').forEach(function(note) {
+    var color = note.dataset.noteColor || '#ffffff';
+    note.style.color = luminance(color) < 0.5 ? '#f0f0f0' : '#222';
+  });
+})();
+</script>
+<script nonce="<%= nonce %>">var defaultNoteColor = '<%= noteColors[0] %>'; var noteColorList = [<%= noteColors.map(c => "'" + c + "'").join(',') %>];</script>
+<script nonce="<%= nonce %>" src="/static/js/notes.js"></script>
+</body>
+
+</html>

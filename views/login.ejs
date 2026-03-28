@@ -3,7 +3,7 @@
 
 <head>
 	<%- include ('partials/head.ejs') %>
-	<title>TodayIngoLearned</title>
+	<title><%= appName %></title>
 	<link href="/static/css/login.css" rel="stylesheet">
 </head>
 
@@ -11,9 +11,13 @@
 
 	<main class="form-signin">
 		<form method="post" action="/login">
-			<img class="mb-4" src="/static/images/icons/app-icon.png" alt="TodayIngoLearned" width="144" height="144">
+			<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+			<img class="mb-4" src="/static/images/icons/app-icon.png" alt="<%= appName %>" width="144" height="144">
 			<h1 class="h3 mb-3 font-weight-normal">Welcome to TIL!</h1>
 			<br>
+			<% if (typeof error !== 'undefined' && error) { %>
+				<div class="alert alert-danger text-start" role="alert"><%= error %></div>
+			<% } %>
 
 			<div class="form-floating mb-3">
 				<input autocomplete="username" type="text" name="username" id="username" class="form-control" placeholder="Ingo">
