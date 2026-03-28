@@ -1,5 +1,5 @@
 // Keep in sync with package.json version
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0';
 const CACHE_NAME = 'precache-' + CACHE_VERSION;
 
 const PRECACHE_URLS = [

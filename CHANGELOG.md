@@ -46,20 +46,33 @@
 * Updated the application icon
 * Updated dependencies (for increased security)
 * Updated the in some minor ways (e.g., Spacing on the login page)
-* Removed the Darkmode.js CDN depedency
+* Removed the Darkmode.js CDN dependency
 * Fixed a routing bug related to bookmarking
 * Matched GitHub and `package.json` keywords
 
-## Version 1.0.8 (XXXX-XX-XX)
+## Version 1.0.8 - 1.1.0 (2026-03-28)
 
 * Added timeline feature
 * Added a function to generate random TILs for testing
 * Added a functon to fix TILs with NULL-dates
 * Added visual in the footer
+* Added notes feature
+* Added a visualization for tags
+* Added image support
+* Added tests
+* Added REST API
 * Changed to database-based sessions
 * Changed the dark mode implementation to Bootstraps (removed `darkmode-js`)
+* Changed to a models approach
 * Optimized the UI in some minor ways
 * Optimized the handling of hashtags (RegEx)
+* Optimized PWA
+* Optimized the code base
+* Optimized security
 * Fixed app icons
 * Fixed missing showtil functionality in `install.js`
 * Fixed favicon path
+
+## Version 1.2.0 (XXXX-XX-XX)
+
+* TBD
