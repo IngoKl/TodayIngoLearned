@@ -96,6 +96,8 @@ module.exports = function () {
   `);
   sqldb.exec('CREATE INDEX IF NOT EXISTS idx_til_images_til_id ON til_images(til_id)');
   sqldb.exec('CREATE INDEX IF NOT EXISTS idx_til_images_user_id ON til_images(user_id)');
+  sqldb.exec('CREATE INDEX IF NOT EXISTS idx_tils_user_id ON tils(user_id)');
+  sqldb.exec('CREATE INDEX IF NOT EXISTS idx_tags_join_til_id ON tags_join(til_id)');
 
   // Create note_boards table
   const noteBoardsTable = sqldb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='note_boards'").get();

@@ -9,7 +9,7 @@ router.get('/tags',
   function (req, res, next) {
     try {
       const tags = TagModel.getUserTagsSorted(req.user.id);
-      res.render('tags', { tags: tags });
+      res.render('tags', { tags: tags, user: req.user });
     } catch (err) { next(err); }
   });
 
@@ -26,9 +26,9 @@ router.get('/:tag',
       const related_tags = TagModel.getRelatedTags(req.user.id, request_tag).filter(tag => tag !== request_tag);
 
       if (tils[1].length > 0) {
-        const page = Math.max(1, parseInt(req.query.page) || 1);
         const perPage = 10;
         const totalPages = Math.ceil(tils[1].length / perPage);
+        const page = Math.min(totalPages, Math.max(1, parseInt(req.query.page, 10) || 1));
         const pagedKeys = tils[1].slice((page - 1) * perPage, page * perPage);
         res.render('tag', { tag: request_tag, tils_objects: tils[0], tils_keys: pagedKeys, related_tags: related_tags, user: req.user, page: page, totalPages: totalPages });
       } else {

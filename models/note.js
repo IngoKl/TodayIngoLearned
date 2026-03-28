@@ -18,10 +18,10 @@ exports.renameBoard = function (boardId, userId, name) {
   sqldb.prepare('UPDATE note_boards SET name = ? WHERE id = ? AND user_id = ?').run(name, boardId, userId);
 };
 
-exports.deleteBoard = function (boardId, userId) {
+exports.deleteBoard = sqldb.transaction(function (boardId, userId) {
   sqldb.prepare('UPDATE sticky_notes SET board_id = NULL WHERE board_id = ? AND user_id = ?').run(boardId, userId);
   sqldb.prepare('DELETE FROM note_boards WHERE id = ? AND user_id = ?').run(boardId, userId);
-};
+});
 
 // Notes
 exports.listNotes = function (userId, boardId) {

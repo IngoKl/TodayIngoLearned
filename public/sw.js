@@ -62,7 +62,7 @@ self.addEventListener('fetch', function(event) {
                     return caches.match(event.request)
                         .then(function(cached) {
                             return cached || new Response(
-                                '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline - TIL</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;color:#2d3748;text-align:center}h1{color:#a25776}a{color:#a25776}</style></head><body><div><h1>You are offline</h1><p>Please check your connection and try again.</p><p><a href="/">Retry</a></p></div></body></html>',
+                                '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline - TIL</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;color:#2d3748;text-align:center}h1{color:#a25776}a{color:#a25776}</style></head><body><div><h1>You are offline</h1><p>Please check your connection and try again.</p></div></body></html>',
                                 { headers: { 'Content-Type': 'text/html' } }
                             );
                         });

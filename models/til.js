@@ -63,7 +63,7 @@ exports.update = function (userId, tilId, title, date, description, isPublic) {
   ).run(title, date, description, isPublic, tilId, userId);
 };
 
-exports.deleteWithRelated = function (userId, tilId) {
+exports.deleteWithRelated = sqldb.transaction(function (userId, tilId) {
   const til = exports.getIdOnly(userId, tilId);
   if (!til) return false;
 
@@ -73,7 +73,7 @@ exports.deleteWithRelated = function (userId, tilId) {
   sqldb.prepare('DELETE FROM til_images WHERE til_id = ?').run(tilId);
   sqldb.prepare('DELETE FROM tils WHERE id = ?').run(tilId);
   return true;
-};
+});
 
 exports.getRandom = function (userId) {
   return sqldb.prepare('SELECT * FROM tils WHERE user_id = ? ORDER BY RANDOM() LIMIT 1').get(userId);
@@ -238,6 +238,23 @@ exports.getStudiedTils = function (userId) {
     WHERE tils.user_id = ? AND tils.repetitions > 0
     GROUP BY tils.id
     ORDER BY tils.next_repetition ASC`).all(userId);
+};
+
+// Todo: TILs tagged #todo
+exports.getTodoTils = function (userId) {
+  return sqldb.prepare(`SELECT * FROM (
+    ${TIL_BASE_QUERY}
+    WHERE tils.user_id = ?
+    GROUP BY tils.id
+  ) WHERE tags LIKE '#todo' OR tags LIKE '#todo,%' OR tags LIKE '%,#todo,%' OR tags LIKE '%,#todo'`).all(userId);
+};
+
+// Todo: TILs with empty descriptions
+exports.getEmptyTils = function (userId) {
+  return sqldb.prepare(`${TIL_BASE_QUERY}
+    WHERE tils.user_id = ? AND (tils.description IS NULL OR TRIM(tils.description) = '')
+    GROUP BY tils.id
+    ORDER BY tils.id DESC`).all(userId);
 };
 
 // Export

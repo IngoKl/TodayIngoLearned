@@ -16,9 +16,13 @@
         <h2>Study Mode</h2>
         <p><a href="/study/stats" class="btn btn-outline-secondary btn-sm">Study Stats</a></p><br/>
 
+        <% if (til.repetitions > 0) { %>
         <p>
             This is <strong>repetition no. <%=til.repetitions %></strong>. You last looked at this in study mode on <em><%=til.last_repetition.toLocaleString('de-DE') %></em>.
         </p>
+        <% } else { %>
+        <p>This is your <strong>first time</strong> studying this TIL.</p>
+        <% } %>
 
         <hr>
         <div class="d-flex flex-wrap gap-2 align-items-center">

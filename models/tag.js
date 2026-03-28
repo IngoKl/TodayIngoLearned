@@ -20,7 +20,7 @@ exports.findTilsByTag = function (userId, tag) {
     ${TIL_BASE_QUERY}
     WHERE tils.user_id = ?
     GROUP BY tils.id
-  ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(userId, escaped, `%${escaped},%`, `%,${escaped}`);
+  ) WHERE tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'`).all(userId, escaped, `${escaped},%`, `%,${escaped},%`, `%,${escaped}`);
 };
 
 exports.getRelatedTags = function (userId, tag) {

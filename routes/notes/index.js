@@ -3,6 +3,7 @@ const multer = require('multer');
 const helpers = require('./../../helpers');
 const parseHashtags = require('./../../helpers/parseHashtags');
 const validate = require('./../../helpers/validate');
+const dates = require('./../../helpers/dates');
 const NoteModel = require('./../../models/note');
 const ImageModel = require('./../../models/image');
 const Settings = require('./../../models/settings');
@@ -220,7 +221,12 @@ router.post('/:id/position',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res, next) {
     try {
-      const { pos_x, pos_y, z_index } = req.body;
+      const pos_x = parseInt(req.body.pos_x, 10);
+      const pos_y = parseInt(req.body.pos_y, 10);
+      const z_index = parseInt(req.body.z_index, 10);
+      if (isNaN(pos_x) || isNaN(pos_y) || isNaN(z_index)) {
+        return res.status(400).json({ error: 'Invalid position values' });
+      }
       NoteModel.updatePosition(req.params.id, req.user.id, pos_x, pos_y, z_index);
       res.json({ success: true });
     } catch (err) { next(err); }
@@ -273,7 +279,8 @@ router.post('/:id/to-til',
       if (!note) return res.status(404).send('Note not found');
 
       const title = note.title || 'Untitled Note';
-      const date = new Date(req.body.date || Date.now()).getTime();
+      const dateMs = dates.toMillis(req.body.date);
+      const date = isNaN(dateMs) ? Date.now() : dateMs;
       const tags = req.body.tags || '#misc';
 
       let description;

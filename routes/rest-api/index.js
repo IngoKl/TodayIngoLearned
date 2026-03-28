@@ -101,12 +101,12 @@ router.get('/til/:id', function (req, res, next) {
 // POST /api/v1/til - Create a new TIL
 router.post('/til', function (req, res, next) {
     try {
-        const { title, description, date } = req.body;
-
-        if (!title || !description) {
-            return res.status(400).json({ error: 'title and description are required' });
+        const check = validate.til(req.body);
+        if (!check.valid) {
+            return res.status(400).json({ error: check.error });
         }
 
+        const { title, description, date } = req.body;
         const tilDate = date ? dates.toMillis(date) : dates.nowMillis();
 
         let tags = parseHashtags(description);
@@ -116,6 +116,7 @@ router.post('/til', function (req, res, next) {
 
         const result = TilModel.create(req.apiUser.id, title, description, tilDate);
         helpers.updateTags(result.lastInsertRowid, tags);
+        TilModel.associateImages(result.lastInsertRowid, req.apiUser.id, description);
 
         res.status(201).json({
             id: Number(result.lastInsertRowid),

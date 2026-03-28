@@ -274,7 +274,7 @@ function handleSearch(req, res, next) {
   try {
     const searchtype = req.body.searchtype || req.query.searchtype;
     const search = req.body.search || req.query.search;
-    const requestedPage = Math.max(1, parseInt(req.body.page || req.query.page) || 1);
+    const requestedPage = Math.max(1, parseInt(req.body.page || req.query.page, 10) || 1);
     const perPage = 10;
 
     // No search — show default paginated list
@@ -396,12 +396,13 @@ app.get('/public/:til_id',
 
       const tils = tilsObject([row]);
       const til = tils[0][tils[1][0]];
-      let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
+      let til_urls = til.description ? til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi) : null;
       if (til_urls) {
         til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
       }
 
       const tilRow = sqldb.prepare('SELECT user_id FROM tils WHERE id = ?').get(req.params.til_id);
+      if (!tilRow) return res.status(404).render('404', { url: req.url, user: req.user || null });
       const userId = tilRow.user_id;
       const author = UserModel.getDisplayName(userId);
       const til_images = ImageModel.listByTil(req.params.til_id);

@@ -61,7 +61,7 @@ exports.getAddTag = function(tag) {
 
 
 // Add/Update the tags for a TIL
-exports.updateTags = function(til_id, tags) {
+exports.updateTags = sqldb.transaction(function(til_id, tags) {
     // Delete all associations
     sqldb.prepare("DELETE FROM tags_join WHERE til_id = ?").run(til_id);
 
@@ -71,7 +71,7 @@ exports.updateTags = function(til_id, tags) {
         const tag_id = module.exports.getAddTag(tag);
         insertStmt.run(til_id, tag_id);
     }
-}
+});
 
 
 // Changing a user's password

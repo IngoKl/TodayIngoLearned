@@ -25,12 +25,7 @@ exports.get = function (key) {
 };
 
 exports.set = function (key, value) {
-  const existing = sqldb.prepare('SELECT key FROM app_settings WHERE key = ?').get(key);
-  if (existing) {
-    sqldb.prepare('UPDATE app_settings SET value = ? WHERE key = ?').run(value, key);
-  } else {
-    sqldb.prepare("INSERT INTO app_settings(key, value) VALUES (?,?)").run(key, value);
-  }
+  sqldb.prepare('INSERT OR REPLACE INTO app_settings(key, value) VALUES (?,?)').run(key, value);
   if (settingsCache) {
     settingsCache[key] = value;
   }

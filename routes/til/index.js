@@ -38,7 +38,7 @@ router.get('/view/:til_id',
       til.public = row.public;
 
       // Find all urls in the description (including www. without protocol)
-      let til_urls = til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi);
+      let til_urls = til.description ? til.description.match(/\b(?:https?:\/\/|www\.)(\S(?<!\)))+/gi) : null;
       if (til_urls) {
         til_urls = [...new Set(til_urls.map(url => url.match(/^https?:\/\//) ? url : 'https://' + url))];
       }

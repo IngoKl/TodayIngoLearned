@@ -17,7 +17,7 @@ router.get('/view/:comment_id',
 router.get('/add/:til_id',
   require('connect-ensure-login').ensureLoggedIn(),
   function (req, res) {
-    res.render('addcomment', { user: req.user });
+    res.render('addcomment', { user: req.user, til_id: req.params.til_id });
   });
 
 

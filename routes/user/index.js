@@ -67,7 +67,7 @@ router.get('/export/csv',
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
 
-      const escapeCsv = (val) => `"${String(val).replace(/"/g, '""')}"`;
+      const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
       const header = 'id,title,description,date,tags,public,repetitions\n';
       const rows = data.map(row =>
         [row.id, escapeCsv(row.title), escapeCsv(row.description), row.date, escapeCsv(row.tags.join('; ')), row.public, row.repetitions].join(',')
